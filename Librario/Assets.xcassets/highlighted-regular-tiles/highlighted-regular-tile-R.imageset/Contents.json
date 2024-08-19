@@ -1,0 +1,23 @@
+{
+  "images" : [
+    {
+      "filename" : "highlighted-regular-tile-R.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "highlighted-regular-tile-R@2x.png",
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "highlighted-regular-tile-R@3x.png",
+      "idiom" : "universal",
+      "scale" : "3x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
