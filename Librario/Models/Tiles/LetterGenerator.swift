@@ -51,8 +51,7 @@ class LetterGenerator {
         6.95,  // N (common)
         7.68,  // O (common)
         1.82,  // P (less common)
-        0.04,  // Q (rare, adjusted)
-        0.08,  // Qu (added)
+        0.12,  // Q (rare)
         6.02,  // R (common)
         6.28,  // S (common)
         9.10,  // T (common)
@@ -70,7 +69,7 @@ class LetterGenerator {
     // Letters corresponding to the probabilities (A-Z + "Qu")
     let letters = [
         "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
-        "N", "O", "P", "Q", "Qu", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
+        "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
     ]
     
     // Minimum threshold for any probability to avoid extremely small values
@@ -95,7 +94,6 @@ class LetterGenerator {
         30.0,  // O
         55.0,  // P
         70.0,  // Q
-        70.0,  // Qu
         40.0,  // R
         35.0,  // S
         30.0,  // T
@@ -112,7 +110,7 @@ class LetterGenerator {
     }
 
     // Function to generate a letter based on the current probabilities
-    func generateLetter() -> String {
+    func generateLetter(isWeighted: Bool) -> String {
         let totalProbability = currentProbabilities.reduce(0, +)
         let randomValue = Double.random(in: 0..<totalProbability)
         var cumulativeProbability: Double = 0.0
@@ -120,21 +118,26 @@ class LetterGenerator {
         for (index, probability) in currentProbabilities.enumerated() {
             cumulativeProbability += probability
             if randomValue < cumulativeProbability {
-                let selectedLetter = letters[index]
-                updateProbabilities(for: index)
+                var selectedLetter = letters[index]
+                if selectedLetter == "Q" {
+                    selectedLetter = generateQorQu()
+                }
+                if isWeighted {
+                    updateProbabilities(for: index)
+                }
                 return selectedLetter // Return the letter as a String
             }
         }
-        
         // Fallback in case something goes wrong
         return letters[0] // Return "A" as a fallback
     }
+
     
     // Function to generate a collection of n letters
     func generateLetters(count: Int) -> [String] {
         var generatedLetters: [String] = []
         for _ in 0..<count {
-            generatedLetters.append(generateLetter())
+            generatedLetters.append(generateLetter(isWeighted: true))
         }
         return generatedLetters
     }
@@ -145,7 +148,7 @@ class LetterGenerator {
         let reductionPercentage = reductionPercentages[selectedIndex]
         let deduction = selectedProbability * reductionPercentage / 100.0
         
-        let smallestIndices = findSmallestProbabilities(limit: 5, excluding: selectedIndex)
+        let smallestIndices = findSmallestProbabilities(limit: 6, excluding: selectedIndex)
         let redistribution = deduction / Double(smallestIndices.count)
         
         currentProbabilities[selectedIndex] -= deduction
@@ -179,5 +182,14 @@ class LetterGenerator {
     // Function to reset probabilities back to base
     func resetProbabilities() {
         self.currentProbabilities = baseProbabilities
+    }
+    
+    func generateQorQu() -> String {
+        let qProbability = Double.random(in: 0..<1.0)
+        if qProbability < 1.0 / 3.0 {
+            return "Q"
+        } else {
+            return "Qu"
+        }
     }
 }

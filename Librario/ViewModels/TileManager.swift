@@ -164,16 +164,20 @@ class TileManager: ObservableObject {
         }
 
     func moveTilesDown() {
+        //Initialize grid bounds
             let rows = grid.count
             let columns = grid[0].count
 
+        //Iterate by column
             for column in 0..<columns {
+                // Start at the bottom row index of the grid
                 var emptyRow = rows - 1
-
                 for row in stride(from: rows - 1, through: 0, by: -1) {
+                    // If a tile is marked for removal, ignore it
                     if grid[row][column].isMarkedForRemoval {
                         continue
                     }
+                    // Check if there is room between the current tile of the column and the row that has been left empty If so, fill the row with the above tile and move up to the next index
                     if row != emptyRow {
                         grid[emptyRow][column] = grid[row][column]
                         grid[emptyRow][column].position = Position(row: emptyRow, column: column)
@@ -181,7 +185,7 @@ class TileManager: ObservableObject {
                     emptyRow -= 1
                 }
 
-                // Fill the top rows with dummy tiles to be replaced later
+                // There will be tiles that will be left empty after moving everything down. Use a placeholder tile before we generate new tiles
                 for row in stride(from: emptyRow, through: 0, by: -1) {
                     grid[row][column] = Tile.placeholder(at: Position(row: row, column: column))
                 }
@@ -205,8 +209,8 @@ class TileManager: ObservableObject {
                     break
                 }
             }
+        }
             
-            print(placeholdersToReplace)
             // If there are placeholders to replace, generate new tiles for them
             if !placeholdersToReplace.isEmpty {
                 // Generate the new tiles using the provided generateTiles function
@@ -218,14 +222,12 @@ class TileManager: ObservableObject {
                     shortWordStreak: shortWordStreak
                 )
                 
-                print("Generated TileS: ", newTiles)
                 
                 // Replace the placeholders with the newly generated tiles
                 for i in 0..<newTiles.count {
                     grid[placeholdersToReplace[i].row][placeholdersToReplace[i].column] = newTiles[i]
                 }
             }
-        }
     }
 
     
