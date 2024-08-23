@@ -61,13 +61,15 @@ class TileTypeGenerator {
     private func decideNextTileType(greenTileGenerated: Bool, fireTileGenerated: Bool) -> TileType {
         let randomValue = Double.random(in: 0...1)
         
+        print("Fire tile probability: ", fireTileProbability)
+        
         if !greenTileGenerated && greenTileProbability >= 1.0 {
             return .green
         } else if !fireTileGenerated && fireTileProbability >= 1.0 {
             return .fire
         } else if randomValue < greenTileProbability {
             return .green
-        } else if randomValue < greenTileProbability + fireTileProbability {
+        } else if randomValue < fireTileProbability {
             return .fire
         } else {
             return .regular
@@ -80,7 +82,7 @@ class TileTypeGenerator {
         case .green:
             greenTileProbability *= 0.2 // Reduce by 80%
         case .fire:
-            fireTileProbability *= fireTileReductionFactor(level: level)
+            fireTileProbability *= 0.2
         default:
             break
         }
@@ -124,6 +126,8 @@ class TileTypeGenerator {
     
     private func fireTileReductionFactor(level: Int) -> Double {
         // Calculate the reduction factor based on the level
+        print("fire tile probability reduction factor: ", 1.0 - min(0.8, 0.8 * (Double(level) / 50.0)))
+        
         return 1.0 - min(0.8, 0.8 * (Double(level) / 50.0))
     }
         

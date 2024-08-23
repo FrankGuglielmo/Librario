@@ -13,13 +13,15 @@ class GameState: ObservableObject {
     @Published var level: Int = 1
     
     var tileManager: TileManager
+    var shortWordStreak: Int = 0
 
-    init() {
+    init(dictionaryManager:DictionaryManager) {
         let letterGenerator = LetterGenerator()
         let tileTypeGenerator = TileTypeGenerator()
         let tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator)
         let tileConverter = TileConverter()
-        let wordChecker = WordChecker(wordStore: WordStore())
+        //Initialize the WordChecker with the given wordDictioanry
+        let wordChecker = WordChecker(wordStore: dictionaryManager.wordDictionary)
         
         self.tileManager = TileManager(
             tileGenerator: tileGenerator,
@@ -50,13 +52,32 @@ class GameState: ObservableObject {
         tileManager.toggleTileSelection(at: position)
     }
     
-    
+    /**
+     If able to submit word, update the game score and shortWordStreak 
+     */
     func submitWord() -> Bool {
-        if tileManager.validateWord() {
-            return tileManager.submitWord()
-        } else {
+        
+        //Check if selected words is word
+        if !tileManager.validateWord() {
             return false
         }
+        
+        // Word is valid, update GameState
+        let word = tileManager.getWord()
+        if word.count == 3 {
+            self.shortWordStreak += 1
+        } else {
+            self.shortWordStreak = 0
+        }
+        
+        let points = tileManager.getScore()
+        
+        tileManager.processWordSubmission(word: word, points: points, level: level, shortWordStreak: self.shortWordStreak)
+        
+        score += points
+        
+        //Check the current game score, update level if necessary
+        return true
     }
 }
 

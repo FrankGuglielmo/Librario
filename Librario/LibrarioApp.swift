@@ -9,24 +9,27 @@ import SwiftUI
 import SwiftData
 
 @main
-struct LibrarioApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+struct MyApp: App {
+    // Declare @StateObject properties
+    @StateObject private var dictionaryManager: DictionaryManager
+    @StateObject private var gameState: GameState
 
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
+    // Initializer for MyApp
+    init() {
+        // Initialize instances of DictionaryManager and GameState
+        let manager = DictionaryManager()
+        let state = GameState(dictionaryManager: manager)
+        
+        // Assign instances to @StateObject properties
+        _dictionaryManager = StateObject(wrappedValue: manager)
+        _gameState = StateObject(wrappedValue: state)
+    }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(dictionaryManager)
+                .environmentObject(gameState)
         }
-        .modelContainer(sharedModelContainer)
     }
 }

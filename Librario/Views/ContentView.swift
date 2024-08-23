@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var gameState = GameState() // Initialize your GameState
-
+    @EnvironmentObject var gameState: GameState
+    
     var body: some View {
         VStack {
             GameStatusView(gameState: gameState)

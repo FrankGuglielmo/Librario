@@ -18,8 +18,6 @@ class TileManager: ObservableObject {
     private var wordChecker: WordChecker
     
     
-    
-    
     private var tileMultiplier: [TileType:Double] = [
         TileType.fire: 1.0,
         TileType.regular: 1.0,
@@ -28,8 +26,6 @@ class TileManager: ObservableObject {
         TileType.diamond: 3.0
         
     ]
-    
-    var wordStore: WordStore = WordStore() //TODO
 
     init(tileGenerator: TileGenerator, tileConverter: TileConverter, wordChecker: WordChecker) {
         self.tileGenerator = tileGenerator
@@ -135,79 +131,106 @@ class TileManager: ObservableObject {
             selectedTiles.removeAll()
         }
 
-    func validateWord() -> Bool {
-        let word = selectedTiles.map { $0.letter }.joined()
-        print(word.count)
-        return !selectedTiles.isEmpty && word.count > 2 // Simple validation example
-    }
-
     // MARK: - Word Submission Handling
 
-    func submitWord() -> Bool {
-        guard validateWord() else {
-            clearSelection()
+    
+    func validateWord() -> Bool {
+        if wordChecker.isWord(tiles: selectedTiles) {
+            return true
+        } else {
             return false
         }
-        processWordSubmission()
-        return true
     }
 
-    private func processWordSubmission() {
-        // 1. Remove the used tiles from the grid
-        selectedTiles.forEach { tile in
-            if let position = findTilePosition(tile) {
-                grid[position.row][position.column] = Tile(letter: "", type: .regular, points: 100, position: position) //TODO
+    /**
+     Remove the tiles that were used for word submission. If there are any tiles above the ones removed (meaning it is in the same column and a lower row number), move them down until there are no more empty gaps. Add new tiles for the top of the board to fill in.
+     */
+    func processWordSubmission(word: String, points: Int, level: Int, shortWordStreak: Int) {
+            // 1. Mark tiles for removal
+            selectedTiles.forEach { tile in
+                if let position = findTilePosition(tile) {
+                    grid[position.row][position.column].isMarkedForRemoval = true
+                }
             }
+            
+            // 2. Move tiles down to fill gaps
+            moveTilesDown()
+
+            // 3. Generate new tiles for the top
+            generateNewTilesForTop(word: word, points: points, level: level, shortWordStreak: shortWordStreak)
+
+            // Clear the selection
+            clearSelection()
         }
 
-        // 2. Make tiles above fall to fill the gaps
-        fillGridGaps()
+    func moveTilesDown() {
+            let rows = grid.count
+            let columns = grid[0].count
 
-        // 3. Generate new tiles and place them at the top of the grid
-        generateNewTilesForTop()
+            for column in 0..<columns {
+                var emptyRow = rows - 1
+
+                for row in stride(from: rows - 1, through: 0, by: -1) {
+                    if grid[row][column].isMarkedForRemoval {
+                        continue
+                    }
+                    if row != emptyRow {
+                        grid[emptyRow][column] = grid[row][column]
+                        grid[emptyRow][column].position = Position(row: emptyRow, column: column)
+                    }
+                    emptyRow -= 1
+                }
+
+                // Fill the top rows with dummy tiles to be replaced later
+                for row in stride(from: emptyRow, through: 0, by: -1) {
+                    grid[row][column] = Tile.placeholder(at: Position(row: row, column: column))
+                }
+            }
+        }
+    
+    func generateNewTilesForTop(word: String, points: Int, level: Int, shortWordStreak: Int) {
+        let rows = grid.count
+        let columns = grid[0].count
+
+        var placeholdersToReplace: [Position] = []
         
-        // Clear selection after processing
-        clearSelection()
-    }
-
-    private func fillGridGaps() {
-        for column in 0..<grid[0].count {
-            var emptySpots = 0
-            for row in (0..<grid.count).reversed() {
-                if grid[row][column].letter.isEmpty {
-                    emptySpots += 1
-                } else if emptySpots > 0 {
-                    grid[row + emptySpots][column] = grid[row][column]
-                    grid[row][column] = Tile(letter: "", type: .regular, points: 100, position: Position(row: row, column: column)) //TODO
+        // Iterate through each column
+        for column in 0..<columns {
+            
+            // Collect the positions of placeholders in the current column
+            for row in 0..<rows {
+                if grid[row][column].isPlaceholder {
+                    placeholdersToReplace.append(Position(row: row, column: column))
+                } else {
+                    break
+                }
+            }
+            
+            print(placeholdersToReplace)
+            // If there are placeholders to replace, generate new tiles for them
+            if !placeholdersToReplace.isEmpty {
+                // Generate the new tiles using the provided generateTiles function
+                let newTiles = tileGenerator.generateTiles(
+                    positions: placeholdersToReplace,
+                    word: word,
+                    points: points,
+                    level: level,
+                    shortWordStreak: shortWordStreak
+                )
+                
+                print("Generated TileS: ", newTiles)
+                
+                // Replace the placeholders with the newly generated tiles
+                for i in 0..<newTiles.count {
+                    grid[placeholdersToReplace[i].row][placeholdersToReplace[i].column] = newTiles[i]
                 }
             }
         }
     }
 
-    private func generateNewTilesForTop() {
-        for column in 0..<grid[0].count {
-            for row in 0..<grid.count where grid[row][column].letter.isEmpty {
-                let newTile = tileGenerator.generateTile(at: Position(row: row, column: column)) ///TODO: Use weighted generation function
-                grid[row][column] = newTile
-            }
-        }
-    }
+    
+    
 
-    private func calculateScore(for tiles: [Tile]) -> Int {
-        var score: Int = 0
-        var multiplier: Double = 1.0
-        
-        for tile in tiles {
-            score += tile.points
-            if tileMultiplier[tile.type]! > multiplier {
-                multiplier = tileMultiplier[tile.type]!
-            }
-        }
-        
-        var weightedScore = Double(score) * multiplier
-        
-        return Int(weightedScore)
-    }
 
     private func shouldConvertTile(word: String, points: Int) -> Bool {
         return word.count >= 4 || points >= 1000 // Example conversion criteria
@@ -265,10 +288,20 @@ class TileManager: ObservableObject {
         return grid[position.row][position.column]
     }
     
+    /**
+     Given the selected tiles, evaluate the score of the word.
+     */
+    func getScore() -> Int {
+        return wordChecker.calculateScore(for: selectedTiles, tileMultiplier: tileMultiplier)
+    }
     
     
-    
-    
+    /**
+     Get the current word that's selected
+     */
+    func getWord() -> String {
+        return selectedTiles.map {$0.letter}.joined()
+    }
     
 }
 

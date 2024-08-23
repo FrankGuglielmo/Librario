@@ -22,8 +22,12 @@ struct Tile: Identifiable, Codable {
     
     var points: Int
     
+    var isMarkedForRemoval:Bool = false
+    
     // Position of the tile in the grid
     var position: Position
+    
+    var isPlaceholder: Bool
     
     // Computed property to get the image name based on the tile's state
     var imageName: String {
@@ -43,12 +47,17 @@ struct Tile: Identifiable, Codable {
     mutating func deselect() {
         isSelected = false
     }
+    
+    static func placeholder(at position: Position) -> Tile {
+        return Tile(letter: "", type: .regular, points: 0, position: position, isPlaceholder: true)
+    }
 }
 
 struct Position: Codable, Equatable {
     var row: Int
     var column: Int
 }
+
 
 //An enumerator for all the different types of tiles
 enum TileType: String, Codable {

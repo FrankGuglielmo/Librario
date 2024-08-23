@@ -8,9 +8,9 @@
 import Foundation
 
 class WordChecker {
-    private let wordStore: WordStore
+    private let wordStore: [String:String?]
 
-    init(wordStore: WordStore) {
+    init(wordStore: [String:String?]) {
         self.wordStore = wordStore
     }
 
@@ -27,7 +27,7 @@ class WordChecker {
         }
         
         //Multiply the base score by the weight of the most significant TileType in the word
-        var weightedScore = Double(score) * multiplier
+        let weightedScore = Double(score) * multiplier
         return Int(weightedScore)
     }
     
@@ -39,7 +39,7 @@ class WordChecker {
     
     // Checks the wordStore to see if word is valid
     func isWord(word: String) -> Bool {
-        return wordStore.isWordValid(word)
+        return wordStore.keys.contains(word.lowercased())
     }
         
     

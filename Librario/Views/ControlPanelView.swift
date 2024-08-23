@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ControlPanelView: View {
+    @EnvironmentObject var dictionaryManager: DictionaryManager
     @ObservedObject var gameState: GameState
     @ObservedObject var tileManager: TileManager
 
