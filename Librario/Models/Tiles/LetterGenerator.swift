@@ -33,6 +33,9 @@ import Foundation
 
 class LetterGenerator {
     
+    // Minimum threshold for any probability to avoid extremely small values
+    let minimumProbability: Double = 0.01
+    
     // Base probabilities for each letter, including "Qu"
     let baseProbabilities: [Double] = [
         8.12,  // A (common)
@@ -72,9 +75,6 @@ class LetterGenerator {
         "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
     ]
     
-    // Minimum threshold for any probability to avoid extremely small values
-    let minimumProbability: Double = 0.01
-    
     // Reduction percentages for each letter (A-Z + "Qu")
     let reductionPercentages: [Double] = [
         30.0,  // A
@@ -109,26 +109,30 @@ class LetterGenerator {
         self.currentProbabilities = baseProbabilities
     }
 
+    //TODO: Refactor isWeighted parameter. Need one that uses base probability and one that uses dynamic probabilities.
     // Function to generate a letter based on the current probabilities
     func generateLetter(isWeighted: Bool) -> String {
+        // Sum of all letter probabiblities, should be ~100.0
         let totalProbability = currentProbabilities.reduce(0, +)
         let randomValue = Double.random(in: 0..<totalProbability)
         var cumulativeProbability: Double = 0.0
         
+        // Increment the index and current probability until it falls within letter threshhold
         for (index, probability) in currentProbabilities.enumerated() {
             cumulativeProbability += probability
             if randomValue < cumulativeProbability {
                 var selectedLetter = letters[index]
+                // Special logic if letter is a Q. Returns either Q or Qu.
                 if selectedLetter == "Q" {
                     selectedLetter = generateQorQu()
                 }
+                //TODO: Try and make this more efficient
                 if isWeighted {
                     updateProbabilities(for: index)
                 }
-                return selectedLetter // Return the letter as a String
+                return selectedLetter
             }
         }
-        // Fallback in case something goes wrong
         return letters[0] // Return "A" as a fallback
     }
 

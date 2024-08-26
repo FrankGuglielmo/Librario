@@ -16,8 +16,7 @@ class TileManager: ObservableObject {
     private var tileGenerator: TileGenerator
     private var tileConverter: TileConverter
     private var wordChecker: WordChecker
-    
-    
+
     private var tileMultiplier: [TileType:Double] = [
         TileType.fire: 1.0,
         TileType.regular: 1.0,
@@ -77,8 +76,6 @@ class TileManager: ObservableObject {
         tile.isSelected = true  // Change to selected state
         updateTile(at: position, with: tile)  // Update the grid with the new state
         selectedTiles.append(tile)  // Push the selected tile onto the stack
-        //selectedTiles = selectionStack  // Update the selectedTiles array
-        print(selectedTiles)
     }
 
     /**
@@ -146,51 +143,53 @@ class TileManager: ObservableObject {
      Remove the tiles that were used for word submission. If there are any tiles above the ones removed (meaning it is in the same column and a lower row number), move them down until there are no more empty gaps. Add new tiles for the top of the board to fill in.
      */
     func processWordSubmission(word: String, points: Int, level: Int, shortWordStreak: Int) {
-            // 1. Mark tiles for removal
-            selectedTiles.forEach { tile in
-                if let position = findTilePosition(tile) {
-                    grid[position.row][position.column].isMarkedForRemoval = true
-                }
+        // 1. Mark tiles for removal
+        selectedTiles.forEach { tile in
+            if let position = findTilePosition(tile) {
+                grid[position.row][position.column].isMarkedForRemoval = true
             }
-            
-            // 2. Move tiles down to fill gaps
-            moveTilesDown()
-
-            // 3. Generate new tiles for the top
-            generateNewTilesForTop(word: word, points: points, level: level, shortWordStreak: shortWordStreak)
-
-            // Clear the selection
-            clearSelection()
         }
+        
+        // 2. Move tiles down to fill gaps
+        moveTilesDown()
+
+        // 3. Generate new tiles for the top
+        generateNewTilesForTop(word: word, points: points, level: level, shortWordStreak: shortWordStreak)
+
+        tileConverter.upgradeRandomTile(word: word, pointValue: points, grid: &self.grid)
+    
+        // Clear the selection
+        clearSelection()
+    }
 
     func moveTilesDown() {
         //Initialize grid bounds
-            let rows = grid.count
-            let columns = grid[0].count
+        let rows = grid.count
+        let columns = grid[0].count
 
         //Iterate by column
-            for column in 0..<columns {
-                // Start at the bottom row index of the grid
-                var emptyRow = rows - 1
-                for row in stride(from: rows - 1, through: 0, by: -1) {
-                    // If a tile is marked for removal, ignore it
-                    if grid[row][column].isMarkedForRemoval {
-                        continue
-                    }
-                    // Check if there is room between the current tile of the column and the row that has been left empty If so, fill the row with the above tile and move up to the next index
-                    if row != emptyRow {
-                        grid[emptyRow][column] = grid[row][column]
-                        grid[emptyRow][column].position = Position(row: emptyRow, column: column)
-                    }
-                    emptyRow -= 1
+        for column in 0..<columns {
+            // Start at the bottom row index of the grid
+            var emptyRow = rows - 1
+            for row in stride(from: rows - 1, through: 0, by: -1) {
+                // If a tile is marked for removal, ignore it
+                if grid[row][column].isMarkedForRemoval {
+                    continue
                 }
+                // Check if there is room between the current tile of the column and the row that has been left empty If so, fill the row with the above tile and move up to the next index
+                if row != emptyRow {
+                    grid[emptyRow][column] = grid[row][column]
+                    grid[emptyRow][column].position = Position(row: emptyRow, column: column)
+                }
+                emptyRow -= 1
+            }
 
-                // There will be tiles that will be left empty after moving everything down. Use a placeholder tile before we generate new tiles
-                for row in stride(from: emptyRow, through: 0, by: -1) {
-                    grid[row][column] = Tile.placeholder(at: Position(row: row, column: column))
-                }
+            // There will be tiles that will be left empty after moving everything down. Use a placeholder tile before we generate new tiles
+            for row in stride(from: emptyRow, through: 0, by: -1) {
+                grid[row][column] = Tile.placeholder(at: Position(row: row, column: column))
             }
         }
+    }
     
     func generateNewTilesForTop(word: String, points: Int, level: Int, shortWordStreak: Int) {
         let rows = grid.count

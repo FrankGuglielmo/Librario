@@ -14,6 +14,9 @@ class GameState: ObservableObject {
     
     var tileManager: TileManager
     var shortWordStreak: Int = 0
+    
+    private var levelThreshold: Int = 2500 // Initial threshold to reach level 2
+    private let thresholdMultiplier: Double = 1.2 // Increase the threshold by 20% each level
 
     init(dictionaryManager:DictionaryManager) {
         let letterGenerator = LetterGenerator()
@@ -37,8 +40,6 @@ class GameState: ObservableObject {
         tileManager.clearSelection()
         tileManager.generateInitialGrid()
     }
-
-    // Other game state methods...
 
     func selectTile(position: Position) {
         tileManager.selectTile(at: position)
@@ -77,7 +78,18 @@ class GameState: ObservableObject {
         score += points
         
         //Check the current game score, update level if necessary
+        checkLevelProgression()
+        
         return true
+    }
+    
+    private func checkLevelProgression() {
+        // Check if the current score exceeds the level threshold
+        if score >= levelThreshold {
+            level += 1
+            // Increase the threshold for the next level
+            levelThreshold = level + Int(Double(levelThreshold) * thresholdMultiplier)
+        }
     }
 }
 

@@ -13,7 +13,7 @@ struct GameGridView: View {
     var body: some View {
         GeometryReader { geometry in
             let columns = 7
-            let spacing: CGFloat = 2
+            let spacing: CGFloat = 1
             let totalSpacing = spacing * CGFloat(columns - 1)
             let availableWidth = geometry.size.width - totalSpacing
             let tileSize = availableWidth / CGFloat(columns)

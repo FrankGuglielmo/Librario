@@ -11,22 +11,24 @@ struct ContentView: View {
     @EnvironmentObject var gameState: GameState
     
     var body: some View {
-        VStack {
-            GameStatusView(gameState: gameState)
-                .padding()
+            GeometryReader { geometry in
+                VStack {
+                    ControlPanelView(gameState: gameState, tileManager: gameState.tileManager)
+                        .padding()
+                        .frame(height: geometry.size.height * 0.30) // 30% of the available height
 
-            GameGridView(tileManager: gameState.tileManager)
-                .padding()
+                    GameGridView(tileManager: gameState.tileManager)
+                        .padding()
+                        .frame(height: geometry.size.height * 0.50) // 50% of the available height
 
-            ControlPanelView(gameState: gameState, tileManager: gameState.tileManager)
-                .padding()
+                    GameStatusView(gameState: gameState)
+                        .padding()
+                        .frame(height: geometry.size.height * 0.15) // 15% of the available height
+                }
+                .frame(maxHeight: .infinity) // Ensure the VStack fills the available space
+            }
+            .background(Color.cyan)
+            .ignoresSafeArea()
         }
-        .background(Color.white)
-        .ignoresSafeArea()
-    }
 }
 
-
-#Preview {
-    ContentView()
-}
