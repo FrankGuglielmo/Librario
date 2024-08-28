@@ -64,7 +64,6 @@ class DictionaryManager: ObservableObject {
         do {
             let data = try Data(contentsOf: filePath)
             if let dictionary = try NSKeyedUnarchiver.unarchivedObject(ofClasses: [NSDictionary.self, NSString.self, NSNull.self], from: data) as? [String: String?] {
-                print("Dictionary successfully loaded from disk.")
                 return dictionary
             } else {
                 print("Failed to decode dictionary from file.")

@@ -15,7 +15,7 @@ struct ControlPanelView: View {
     var body: some View {
             VStack {
                 // Only show the bubble if there are selected tiles
-                if !tileManager.selectedTiles.isEmpty {
+                if true {
                     ZStack {
                         RoundedRectangle(cornerRadius: 10)
                             .fill(Color.white)
@@ -84,8 +84,15 @@ struct ControlPanelView: View {
                             .cornerRadius(10)
                     }
                 }
+                .background(Color.blue)
                 .padding()
             }
+            .background(Color.red)
             .padding()
         }
+}
+
+
+#Preview {
+    ControlPanelView(gameState: GameState(dictionaryManager: DictionaryManager()), tileManager: TileManager(tileGenerator: TileGenerator(letterGenerator: LetterGenerator(), tileTypeGenerator: TileTypeGenerator()), tileConverter: TileConverter(), wordChecker: WordChecker(wordStore: [:])))
 }

@@ -69,7 +69,7 @@ class TileManager: ObservableObject {
         guard var tile = getTile(at: position) else { return }
 
         // Ensure the tile is selectable (it must be adjacent to the last selected tile if the stack is not empty)
-        if let lastSelectedTile = selectedTiles.last, !isAdjacent(tile, to: lastSelectedTile) {
+        if let lastSelectedTile = selectedTiles.last, !isAdjacent(lastSelectedTile, to: tile) {
             return // Cannot select a non-adjacent tile
         }
         
@@ -241,32 +241,32 @@ class TileManager: ObservableObject {
     // MARK: - Tile Utility Methods
 
     private func isAdjacent(_ tile1: Tile, to tile2: Tile) -> Bool {
-        let rowDiff = abs(tile1.position.row - tile2.position.row)
-        let colDiff = abs(tile1.position.column - tile2.position.column)
+            let rowDiff = abs(tile1.position.row - tile2.position.row)
+            let colDiff = abs(tile1.position.column - tile2.position.column)
 
-        // Tiles must be in the same column, adjacent row, or adjacent columns with adjusted rows
-        if colDiff > 1 {
+            // Tiles must be in the same column, adjacent row, or adjacent columns with adjusted rows
+            if colDiff > 1 {
+                return false
+            }
+
+            if colDiff == 0 {
+                // Same column, tiles are neighbors if they are directly above/below each other
+                return rowDiff == 1
+            } else if colDiff == 1 {
+                // Adjacent columns
+                if tile1.position.column % 2 == 0 {
+                    // Even column: can connect to the same row or the row above
+                    print(tile2.position.row - tile1.position.row)
+                    return rowDiff == 0 || rowDiff == 1 && (tile1.position.row - tile2.position.row == 1)
+                } else {
+                    // Odd column: can connect to the same row or the row below
+                    print(tile2.position.row - tile1.position.row)
+                    return rowDiff == 0 || rowDiff == 1 && (tile2.position.row - tile1.position.row == 1)
+                }
+            }
+
             return false
         }
-
-        if colDiff == 0 {
-            // Same column, tiles are neighbors if they are directly above/below each other
-            return rowDiff == 1
-        } else if colDiff == 1 {
-            // Adjacent columns
-            if tile1.position.column % 2 == 0 {
-                // Even column: can connect to the same row or the row above
-                print(tile2.position.row - tile1.position.row)
-                return rowDiff == 0 || rowDiff == 1 && (tile1.position.row - tile2.position.row == 1)
-            } else {
-                // Odd column: can connect to the same row or the row below
-                print(tile2.position.row - tile1.position.row)
-                return rowDiff == 0 || rowDiff == 1 && (tile2.position.row - tile1.position.row == 1)
-            }
-        }
-
-        return false
-    }
 
 
 
