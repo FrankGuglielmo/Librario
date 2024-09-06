@@ -27,7 +27,7 @@ struct MyApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HomeView()
                 .environmentObject(dictionaryManager)
                 .environmentObject(gameState)
         }

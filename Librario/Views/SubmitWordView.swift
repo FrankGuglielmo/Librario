@@ -23,7 +23,6 @@ struct SubmitWordView: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
                         .fill(Color.white)
-                        .frame(width: 300, height: 150) // Adjust to fit your design
                         .shadow(radius: 5)
                         .opacity(!tileManager.selectedTiles.isEmpty ? 1 : 0) // Visible when there are selected tiles
                     
@@ -31,8 +30,8 @@ struct SubmitWordView: View {
                         // Display the selected tiles
                         HStack {
                             ForEach(tileManager.selectedTiles, id: \.id) { tile in
-                                Text(tile.letter)
-                                    .font(.largeTitle)
+                                Text(tile.letter.uppercased())
+                                    .font(.title)
                                     .foregroundColor(.black)
                                     .padding(.horizontal, 4)
                             }

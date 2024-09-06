@@ -15,8 +15,8 @@ class GameState: ObservableObject {
     var tileManager: TileManager
     var shortWordStreak: Int = 0
     
-    private var levelThreshold: Int = 2500 // Initial threshold to reach level 2
-    private let thresholdMultiplier: Double = 1.2 // Increase the threshold by 20% each level
+    // Define the level system dictionary
+    var levelSystem: [Int: Int] = [:]
 
     init(dictionaryManager:DictionaryManager) {
         let letterGenerator = LetterGenerator()
@@ -31,6 +31,9 @@ class GameState: ObservableObject {
             tileConverter: tileConverter,
             wordChecker: wordChecker
         )
+        
+        setupLevelSystem()
+        
         startNewGame()
     }
 
@@ -84,13 +87,38 @@ class GameState: ObservableObject {
     }
     
     private func checkLevelProgression() {
-        // Check if the current score exceeds the level threshold
-        if score >= levelThreshold {
+        // Check if the current score exceeds the required points for the next level
+        if level < 999 && score >= levelSystem[level]! {
             level += 1
-            // Increase the threshold for the next level
-            levelThreshold = level + Int(Double(levelThreshold) * thresholdMultiplier)
         }
     }
+    
+    private func setupLevelSystem() {
+        let experienceScale = 2250.0 // Your experience scale
+        
+        for level in 1...999 {
+            // Experience required to reach this level
+            let requiredExperience = Double(level) * experienceScale
+            
+            // If it's the first level, just set it to the required experience
+            if level == 1 {
+                levelSystem[level] = Int(requiredExperience)
+            } else {
+                // For all subsequent levels, add the required experience to the previous level's total
+                levelSystem[level] = levelSystem[level - 1]! + Int(requiredExperience)
+            }
+        }
+        
+        // Example output to see the first 10 levels
+        for level in 1...10 {
+            print("Level \(level): \(levelSystem[level]!) points")
+        }
+
+        print("...")
+        print("Level 999: \(levelSystem[999]!) points")
+    }
+
+        
 }
 
 
