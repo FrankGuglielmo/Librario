@@ -33,7 +33,7 @@ class TileTypeGenerator {
             generatedTileTypes.append(nextTileType)
         }
         // Ensure no more than 3 consecutive green or fire tiles
-        return generatedTileTypes
+        return generatedTileTypes.shuffled()
     }
     
     // Adjust probabilities for green and fire tiles based on initial game state

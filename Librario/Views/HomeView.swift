@@ -14,7 +14,10 @@ struct HomeView: View {
         NavigationStack(path: $navigationPath) {
             ZStack {
                 // Background color filling the entire safe area
-                Color(red: 0.55, green: 0.0, blue: 0.0)
+                Image("red_curtain")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(minWidth: 0)
                     .edgesIgnoringSafeArea(.all)
 
                 VStack {
@@ -30,14 +33,15 @@ struct HomeView: View {
                     }
 
                     // Center with Navigation to various views
-                    VStack(spacing: 0) {
+                    VStack(alignment: .trailing, spacing: 0) {
                         Button(action: {
                             navigationPath.append(ViewType.game)
                         }, label: {
                             ZStack {
-                                Image("Title_Book_1")
+                                Image("Title_Book_3")
                                 Text("Classic Game")
                                     .font(.title)
+                                    .fontWeight(.bold)
                                     .foregroundColor(.white)
                             }
                         })
@@ -47,11 +51,13 @@ struct HomeView: View {
                             navigationPath.append(ViewType.settings)
                         }, label: {
                             ZStack {
-                                Image("Title_Book_1")
+                                Image("Title_Book_2")
                                 Text("Settings")
                                     .font(.title)
+                                    .fontWeight(.bold)
                                     .foregroundColor(.white)
                             }
+                            .padding(.trailing, 5)
                         })
 
                         Button(action: {
@@ -61,6 +67,7 @@ struct HomeView: View {
                                 Image("Title_Book_1")
                                 Text("Stats")
                                     .font(.title)
+                                    .fontWeight(.bold)
                                     .foregroundColor(.white)
                             }
                         })

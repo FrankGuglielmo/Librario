@@ -14,26 +14,35 @@ struct GameView: View {
     @Binding var navigationPath: NavigationPath
 
     var body: some View {
-        GeometryReader { geometry in
-            VStack {
-                HStack {
-                    Image("nervous_sprite(1)")
-                        .resizable()
-                        .frame(width: 142, height: 150)
+        
+        ZStack {
+            // Background color filling the entire safe area
+            Image("red_curtain")
+                .resizable()
+                .scaledToFill()
+                .frame(minWidth: 0)
+                .edgesIgnoringSafeArea(.all)
+            
+            GeometryReader { geometry in
+                VStack {
+                    HStack {
+                        Image("normal_sprite")
+                            .resizable()
+                            .frame(width: 142, height: 150)
+                        
+                        SubmitWordView(gameState: gameState, tileManager: gameState.tileManager)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: 300)
+                    .padding()
+                    .fixedSize(horizontal: false, vertical: true)
                     
-                    SubmitWordView(gameState: gameState, tileManager: gameState.tileManager)
+                    GameGridView(tileManager: gameState.tileManager)
+                    
+                    GameStatusView(gameState: gameState, navigationPath: $navigationPath)
+                    
                 }
-                .frame(maxWidth: .infinity, maxHeight: 300)
-                .padding()
-                .fixedSize(horizontal: false, vertical: true)
-                
-                GameGridView(tileManager: gameState.tileManager)
-                
-                GameStatusView(gameState: gameState, navigationPath: $navigationPath)
-                
+                .frame(maxHeight: .infinity)
             }
-            .frame(maxHeight: .infinity)
-            .background(Color(red: 0.55, green: 0.0, blue: 0.0))
         }
     }
 

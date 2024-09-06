@@ -72,12 +72,18 @@ struct GameStatusView: View {
             
             
 
-            // Level Box
-            Text("LVL \(gameState.level)")
-                .foregroundColor(.green)
-                .frame(height: 70)
-                .padding(.horizontal, 20)
-                .background(Color.brown)
+            VStack(alignment: .center, content: {
+                Text("LVL")
+                    .foregroundColor(.green)
+                
+                Text("\(gameState.level)")
+                    .foregroundColor(.green)
+            })
+            .frame(height: 70)
+            .padding(.horizontal, 20)
+            .background(Color.brown)
+            
+                
         }
         .frame(height: 70)
         .padding(.vertical)
