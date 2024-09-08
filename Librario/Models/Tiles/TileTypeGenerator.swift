@@ -15,7 +15,7 @@
 
 import Foundation
 
-class TileTypeGenerator {
+class TileTypeGenerator: Codable {
     
     var greenTileProbabilities: [Double] = []
     var fireTileProbabilities: [Double] = []

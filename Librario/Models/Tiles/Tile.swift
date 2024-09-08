@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Tile: Identifiable, Codable {
+struct Tile: Identifiable, Codable, Hashable {
     
     var id = UUID()
     
@@ -51,6 +51,16 @@ struct Tile: Identifiable, Codable {
     static func placeholder(at position: Position) -> Tile {
         return Tile(letter: "", type: .regular, points: 0, position: position, isPlaceholder: true)
     }
+    
+    // Conform to Hashable
+        static func == (lhs: Tile, rhs: Tile) -> Bool {
+            return lhs.id == rhs.id
+        }
+
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(id)
+        }
+    
 }
 
 struct Position: Codable, Equatable {

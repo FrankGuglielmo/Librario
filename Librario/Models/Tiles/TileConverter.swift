@@ -10,7 +10,7 @@
 
 import Foundation
 
-class TileConverter {
+class TileConverter: Codable {
     
     // If the previous word submitted is worth upgrading, decide the upgrade type. if unable to upgrade, return a regular tile.
     func decideUpgradeType(word:String, pointValue:Int) -> TileType {

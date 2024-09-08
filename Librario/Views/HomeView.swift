@@ -8,10 +8,11 @@
 import SwiftUI
 
 struct HomeView: View {
-    @State private var navigationPath = NavigationPath()
+    @State private var navigationPath = NavigationPath() // Create PathStore instance
+    @EnvironmentObject var gameState: GameState
 
     var body: some View {
-        NavigationStack(path: $navigationPath) {
+        NavigationStack(path: $navigationPath) { // Use pathStore's path
             ZStack {
                 // Background color filling the entire safe area
                 Image("red_curtain")
@@ -38,14 +39,18 @@ struct HomeView: View {
                             navigationPath.append(ViewType.game)
                         }, label: {
                             ZStack {
-                                Image("Title_Book_3")
+                                // Conditionally show different images based on the game state
+                                if gameState.score > 0 { // Assume game is active if score > 0
+                                    Image("Resume_book") // Image when game is active
+                                } else {
+                                    Image("Title_Book_3") // Default image for new game
+                                }
                                 Text("Classic Game")
                                     .font(.title)
                                     .fontWeight(.bold)
                                     .foregroundColor(.white)
                             }
                         })
-                        
 
                         Button(action: {
                             navigationPath.append(ViewType.settings)
@@ -61,7 +66,7 @@ struct HomeView: View {
                         })
 
                         Button(action: {
-                            navigationPath.append(ViewType.game)
+                            navigationPath.append(ViewType.stats)
                         }, label: {
                             ZStack {
                                 Image("Title_Book_1")
@@ -81,16 +86,17 @@ struct HomeView: View {
                     GameView(navigationPath: $navigationPath)
                         .navigationBarBackButtonHidden(true) // Disable back button
                 case .settings:
-                    SettingsView() //TODO: Add nav path
+                    SettingsView()
                 case .stats:
-                    StatsView() //TODO: Add nav path
+                    StatsView()
                 }
             }
         }
     }
 }
 
-enum ViewType: Hashable {
+
+enum ViewType: Hashable, Codable {
     case game
     case settings
     case stats

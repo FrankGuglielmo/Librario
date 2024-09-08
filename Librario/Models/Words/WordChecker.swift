@@ -7,7 +7,7 @@
 
 import Foundation
 
-class WordChecker {
+class WordChecker: Codable {
     private let wordStore: [String:String?]
 
     init(wordStore: [String:String?]) {

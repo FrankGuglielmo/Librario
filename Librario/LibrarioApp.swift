@@ -10,17 +10,13 @@ import SwiftData
 
 @main
 struct MyApp: App {
-    // Declare @StateObject properties
     @StateObject private var dictionaryManager: DictionaryManager
     @StateObject private var gameState: GameState
+    @Environment(\.scenePhase) var scenePhase
 
-    // Initializer for MyApp
     init() {
-        // Initialize instances of DictionaryManager and GameState
         let manager = DictionaryManager()
-        let state = GameState(dictionaryManager: manager)
-        
-        // Assign instances to @StateObject properties
+        let state = GameState.loadGameState(dictionaryManager: manager)
         _dictionaryManager = StateObject(wrappedValue: manager)
         _gameState = StateObject(wrappedValue: state)
     }
@@ -30,6 +26,11 @@ struct MyApp: App {
             HomeView()
                 .environmentObject(dictionaryManager)
                 .environmentObject(gameState)
+        }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            if newPhase == .background || newPhase == .inactive {
+                gameState.saveGameState()
+            }
         }
     }
 }

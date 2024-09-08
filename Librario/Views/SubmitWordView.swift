@@ -56,7 +56,7 @@ struct SubmitWordView: View {
                     }
                 }
             }
-            .disabled(tileManager.selectedTiles.isEmpty) // Disable button if no tiles are selected
+            .disabled(gameState.gameOver || tileManager.selectedTiles.isEmpty) // Disable button if no tiles are selected
             .buttonStyle(PlainButtonStyle()) // Ensure the button doesn't have default styling
         }
 }

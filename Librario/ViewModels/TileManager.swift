@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 
-class TileManager: ObservableObject {
+class TileManager: ObservableObject, Codable {
     @Published var grid: [[Tile]] = []
     // Stack to keep track of the order in which tiles were selected
     @Published var selectedTiles: [Tile] = []
@@ -23,15 +23,54 @@ class TileManager: ObservableObject {
         TileType.green: 1.5,
         TileType.gold: 2.0,
         TileType.diamond: 3.0
-        
     ]
 
-    init(tileGenerator: TileGenerator, tileConverter: TileConverter, wordChecker: WordChecker) {
-        self.tileGenerator = tileGenerator
-        self.tileConverter = tileConverter
-        self.wordChecker = wordChecker //TODO
-        generateInitialGrid()
-    }
+    
+    var gameOverHandler: (() -> Void)? // Closure to notify GameState when the game is over
+    
+    // Coding Keys
+        private enum CodingKeys: String, CodingKey {
+            case grid, selectedTiles, tileMultiplier
+        }
+
+        // Initializer
+        init(tileGenerator: TileGenerator, tileConverter: TileConverter, wordChecker: WordChecker) {
+            self.tileGenerator = tileGenerator
+            self.tileConverter = tileConverter
+            self.wordChecker = wordChecker
+            generateInitialGrid()
+        }
+
+    // Codable Conformance
+    required init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            grid = try container.decode([[Tile]].self, forKey: .grid)
+            selectedTiles = try container.decode([Tile].self, forKey: .selectedTiles)
+            tileMultiplier = try container.decode([TileType: Double].self, forKey: .tileMultiplier)
+            
+            // Reinitialize the non-Codable properties
+            let letterGenerator = LetterGenerator()
+            let tileTypeGenerator = TileTypeGenerator()
+            self.tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator)
+            self.tileConverter = TileConverter()
+            self.wordChecker = WordChecker(wordStore: DictionaryManager().wordDictionary)
+        }
+
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(grid, forKey: .grid)
+            try container.encode(selectedTiles, forKey: .selectedTiles)
+            try container.encode(tileMultiplier, forKey: .tileMultiplier)
+        }
+
+        // Method to re-initialize non-Codable properties
+        func reinitializeNonCodableProperties(dictionaryManager: DictionaryManager) {
+            let letterGenerator = LetterGenerator()
+            let tileTypeGenerator = TileTypeGenerator()
+            self.tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator)
+            self.tileConverter = TileConverter()
+            self.wordChecker = WordChecker(wordStore: dictionaryManager.wordDictionary)
+        }
 
     // MARK: - Grid and Tile Management
 
@@ -157,9 +196,10 @@ class TileManager: ObservableObject {
         generateNewTilesForTop(word: word, points: points, level: level, shortWordStreak: shortWordStreak)
 
         tileConverter.upgradeRandomTile(word: word, pointValue: points, grid: &self.grid)
-    
+        
         // Clear the selection
         clearSelection()
+    
     }
 
     func moveTilesDown() {
@@ -230,7 +270,60 @@ class TileManager: ObservableObject {
     }
 
     
-    
+    //Function the checks the board for any fire tiles. If a fire tile is still present, move it down one row and generate a tile for the top. If a fire tile cannot move down anymore, end the game.
+    func checkFireTiles() {
+            let rows = grid.count
+            let columns = grid[0].count
+
+            for column in 0..<columns {
+                // Find the bottom-most fire tile
+                for row in stride(from: rows - 1, through: 0, by: -1) {
+                    let tile = grid[row][column]
+                    
+                    if tile.type == .fire {
+                        // If the fire tile is at the bottom row, trigger game over
+                        if row == rows - 1 {
+                            print("Fire tile reached the bottom. Triggering game over.")
+                            gameOverHandler?() // Notify GameState about game over
+                            return
+                        } else {
+                            // Otherwise, move the fire tile down and consume the tile below
+                            moveFireTileDown(from: Position(row: row, column: column))
+                            break // Only move one fire tile per column
+                        }
+                    }
+                }
+            }
+        }
+
+    func moveFireTileDown(from position: Position) {
+        let belowPosition = Position(row: position.row + 1, column: position.column)
+
+        // Get the fire tile and the tile below it
+        guard var fireTile = getTile(at: position),
+              let belowTile = getTile(at: belowPosition) else { return }
+
+        // Ensure the tile below is not a fire tile
+        if belowTile.type == .fire {
+            return
+        }
+
+        // Move all tiles above the fire tile down by one row
+        for row in stride(from: position.row - 1, through: 0, by: -1) {
+            let currentTile = grid[row][position.column]
+            grid[row + 1][position.column] = currentTile
+            grid[row + 1][position.column].position = Position(row: row + 1, column: position.column)
+        }
+
+        // Move the fire tile down to the consumed tile's position
+        fireTile.position = belowPosition
+        updateTile(at: belowPosition, with: fireTile)
+
+        // Generate a new tile at the top of the column
+        let topPosition = Position(row: 0, column: position.column)
+        let newTile = tileGenerator.generateTile(at: topPosition)
+        updateTile(at: topPosition, with: newTile)
+    }
 
 
     private func shouldConvertTile(word: String, points: Int) -> Bool {
@@ -256,11 +349,9 @@ class TileManager: ObservableObject {
                 // Adjacent columns
                 if tile1.position.column % 2 == 0 {
                     // Even column: can connect to the same row or the row above
-                    print(tile2.position.row - tile1.position.row)
                     return rowDiff == 0 || rowDiff == 1 && (tile1.position.row - tile2.position.row == 1)
                 } else {
                     // Odd column: can connect to the same row or the row below
-                    print(tile2.position.row - tile1.position.row)
                     return rowDiff == 0 || rowDiff == 1 && (tile2.position.row - tile1.position.row == 1)
                 }
             }
@@ -296,13 +387,48 @@ class TileManager: ObservableObject {
         return wordChecker.calculateScore(for: selectedTiles, tileMultiplier: tileMultiplier)
     }
     
-    
     /**
      Get the current word that's selected
      */
     func getWord() -> String {
         return selectedTiles.map {$0.letter}.joined()
     }
+    
+    /**
+     Function to generate a new board with a penalty.
+     */
+    func scramble() {
+        // Clear current grid and selected tiles
+        clearSelection()
+        
+        // Regenerate all tiles for a fresh grid
+        grid = (0..<7).map { row in
+            (0..<7).map { column in
+                tileGenerator.generateTile(at: Position(row: row, column: column))
+            }
+        }
+        
+        // Convert some tiles in the top rows to fire tiles
+        _ = grid.count
+        let columns = grid[0].count
+        let fireTileCount = Int.random(in: 3...5) // Number of fire tiles to generate, you can adjust this
+
+        // Generate fire tiles in the top 3 rows (rows 0 to 2)
+        for _ in 0..<fireTileCount {
+            let randomRow = Int.random(in: 0..<3) // Restrict fire tiles to rows 0, 1, and 2
+            let randomColumn = Int.random(in: 0..<columns)
+
+            var tile = grid[randomRow][randomColumn]
+            tile.type = .fire // Convert to fire tile
+            grid[randomRow][randomColumn] = tile
+        }
+
+        // Notify that the grid has changed (optional)
+        objectWillChange.send()
+    }
+    
+    
+    
     
 }
 

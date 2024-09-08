@@ -9,6 +9,7 @@ import SwiftUI
 
 struct GameGridView: View {
     @ObservedObject var tileManager: TileManager
+    @EnvironmentObject var gameState: GameState
 
     var body: some View {
         VStack {

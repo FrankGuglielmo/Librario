@@ -38,19 +38,22 @@ struct GameView: View {
                     
                     GameGridView(tileManager: gameState.tileManager)
                     
+                    Button(action: {
+                        gameState.tileManager.scramble() // Trigger the scramble function
+                    }) {
+                        Text("Scramble Tiles")
+                            .padding()
+                            .background(Color.red)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                    }
+                    
                     GameStatusView(gameState: gameState, navigationPath: $navigationPath)
                     
                 }
                 .frame(maxHeight: .infinity)
             }
         }
-    }
-
-    private func progressBarWidth(totalWidth: CGFloat) -> CGFloat {
-        guard let nextLevelThreshold = gameState.levelSystem[gameState.level] else { return 0 }
-        let currentLevelThreshold = gameState.level > 1 ? gameState.levelSystem[gameState.level - 1]! : 0
-        let levelProgress = CGFloat(gameState.score - currentLevelThreshold) / CGFloat(nextLevelThreshold - currentLevelThreshold)
-        return totalWidth * min(levelProgress, 1.0)
     }
     
     // Determines the top padding based on the device type
