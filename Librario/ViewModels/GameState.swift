@@ -87,8 +87,6 @@ class GameState: ObservableObject, Codable {
     func handleGameOver() {
         print("Game over triggered in GameState!")
         gameOver = true // Set game over flag
-        
-        startNewGame()
     }
 
     func startNewGame() {

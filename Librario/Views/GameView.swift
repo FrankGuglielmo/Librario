@@ -11,50 +11,55 @@ import SwiftUI
 
 struct GameView: View {
     @EnvironmentObject var gameState: GameState
-    @Binding var navigationPath: NavigationPath
+        @Binding var navigationPath: NavigationPath
 
-    var body: some View {
-        
-        ZStack {
-            // Background color filling the entire safe area
-            Image("red_curtain")
-                .resizable()
-                .scaledToFill()
-                .frame(minWidth: 0)
-                .edgesIgnoringSafeArea(.all)
-            
-            GeometryReader { geometry in
-                VStack {
-                    HStack {
-                        Image("normal_sprite")
-                            .resizable()
-                            .frame(width: 142, height: 150)
+        var body: some View {
+            ZStack {
+                // Background color filling the entire safe area
+                Image("red_curtain")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(minWidth: 0)
+                    .edgesIgnoringSafeArea(.all)
+
+                GeometryReader { geometry in
+                    VStack {
+                        HStack {
+                            Image("normal_sprite")
+                                .resizable()
+                                .frame(width: 142, height: 150)
+
+                            SubmitWordView(gameState: gameState, tileManager: gameState.tileManager)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: 300)
+                        .padding()
+                        .fixedSize(horizontal: false, vertical: true)
+
+                        GameGridView(tileManager: gameState.tileManager)
+
+                        Button(action: {
+                            gameState.tileManager.scramble() // Trigger the scramble function
+                        }) {
+                            Text("Scramble Tiles")
+                                .padding()
+                                .background(Color.red)
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
+                        }
+
+                        GameStatusView(gameState: gameState, navigationPath: $navigationPath)
                         
-                        SubmitWordView(gameState: gameState, tileManager: gameState.tileManager)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: 300)
-                    .padding()
-                    .fixedSize(horizontal: false, vertical: true)
-                    
-                    GameGridView(tileManager: gameState.tileManager)
-                    
-                    Button(action: {
-                        gameState.tileManager.scramble() // Trigger the scramble function
-                    }) {
-                        Text("Scramble Tiles")
-                            .padding()
-                            .background(Color.red)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
-                    
-                    GameStatusView(gameState: gameState, navigationPath: $navigationPath)
-                    
+                    .frame(maxHeight: .infinity)
                 }
-                .frame(maxHeight: .infinity)
+
+                // Show GameOverView directly based on gameState.gameOver
+                if gameState.gameOver {
+                    GameOverView(gameState: gameState, navigationPath: $navigationPath)
+                        .zIndex(1) // Ensure the GameOverView appears on top
+                }
             }
         }
-    }
     
     // Determines the top padding based on the device type
         private func topPaddingForDevice() -> CGFloat {

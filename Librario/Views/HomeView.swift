@@ -86,7 +86,8 @@ struct HomeView: View {
                     GameView(navigationPath: $navigationPath)
                         .navigationBarBackButtonHidden(true) // Disable back button
                 case .settings:
-                    SettingsView()
+                    SettingsView(navigationPath: $navigationPath)
+                        .navigationBarBackButtonHidden(true)
                 case .stats:
                     StatsView()
                 }

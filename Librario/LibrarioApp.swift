@@ -12,6 +12,7 @@ import SwiftData
 struct MyApp: App {
     @StateObject private var dictionaryManager: DictionaryManager
     @StateObject private var gameState: GameState
+//    @StateObject private var settings = Settings.load()
     @Environment(\.scenePhase) var scenePhase
 
     init() {
@@ -26,6 +27,7 @@ struct MyApp: App {
             HomeView()
                 .environmentObject(dictionaryManager)
                 .environmentObject(gameState)
+//                .environmentObject(settings)
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             if newPhase == .background || newPhase == .inactive {
