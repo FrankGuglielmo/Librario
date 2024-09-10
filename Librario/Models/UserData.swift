@@ -6,51 +6,63 @@
 //
 
 import Foundation
-import SwiftUI
 
-class UserData: ObservableObject {
-    
-    @Published var highScore: Int
-    @Published var settings: GameSettings
+class UserData: ObservableObject, Codable {
 
-    // Initializer
-    init() {
-        // Load saved data, or use defaults
-        self.highScore = UserDefaults.standard.integer(forKey: "highScore")
-        self.settings = GameSettings.load() ?? GameSettings.defaultSettings()
+    // User data components
+    @Published var userStatistics: UserStatistics
+    @Published var settings: Settings
+
+    // Key for UserDefaults
+    private let userDataKey = "userData"
+
+    // Coding keys for encoding/decoding
+    private enum CodingKeys: String, CodingKey {
+        case userStatistics, settings
     }
 
-    // Save high score if it's higher than the current one
-    func saveHighScore(_ score: Int) {
-        if score > highScore {
-            highScore = score
-            UserDefaults.standard.set(highScore, forKey: "highScore")
+    // Initializer with default values
+    init(userStatistics: UserStatistics = UserStatistics(), settings: Settings = Settings.defaultSettings) {
+        self.userStatistics = userStatistics
+        self.settings = settings
+    }
+
+    // Codable conformance for decoding
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        userStatistics = try container.decode(UserStatistics.self, forKey: .userStatistics)
+        settings = try container.decode(Settings.self, forKey: .settings)
+    }
+
+    // Codable conformance for encoding
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(userStatistics, forKey: .userStatistics)
+        try container.encode(settings, forKey: .settings)
+    }
+
+    // Save UserData to UserDefaults
+    func saveUserData() {
+        do {
+            let data = try JSONEncoder().encode(self)
+            UserDefaults.standard.set(data, forKey: userDataKey)
+            print("User data saved to UserDefaults.")
+        } catch {
+            print("Failed to save user data to UserDefaults: \(error)")
         }
     }
-}
 
-struct GameSettings: Codable {
-    var soundOn: Bool
-    var musicOn: Bool
-
-    // Load settings from UserDefaults
-    static func load() -> GameSettings? {
-        if let data = UserDefaults.standard.data(forKey: "gameSettings"),
-           let settings = try? JSONDecoder().decode(GameSettings.self, from: data) {
-            return settings
+    // Load UserData from UserDefaults
+    static func loadUserData() -> UserData {
+        guard let data = UserDefaults.standard.data(forKey: "userData") else {
+            // Return a default instance if loading fails or data doesn't exist
+            return UserData()
         }
-        return nil
-    }
-
-    // Save settings to UserDefaults
-    func save() {
-        if let data = try? JSONEncoder().encode(self) {
-            UserDefaults.standard.set(data, forKey: "gameSettings")
+        do {
+            return try JSONDecoder().decode(UserData.self, from: data)
+        } catch {
+            print("Failed to load user data from UserDefaults: \(error)")
+            return UserData() // Return a default instance if loading fails
         }
-    }
-
-    // Default settings
-    static func defaultSettings() -> GameSettings {
-        return GameSettings(soundOn: true, musicOn: true)
     }
 }

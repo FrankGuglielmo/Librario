@@ -10,8 +10,8 @@ import SwiftUI
 import SwiftUI
 
 struct GameView: View {
-    @EnvironmentObject var gameState: GameState
-        @Binding var navigationPath: NavigationPath
+    @EnvironmentObject var gameManager: GameManager
+    @Binding var navigationPath: NavigationPath
 
         var body: some View {
             ZStack {
@@ -29,16 +29,16 @@ struct GameView: View {
                                 .resizable()
                                 .frame(width: 142, height: 150)
 
-                            SubmitWordView(gameState: gameState, tileManager: gameState.tileManager)
+                            SubmitWordView(tileManager: gameManager.tileManager, gameManager: gameManager)
                         }
                         .frame(maxWidth: .infinity, maxHeight: 300)
                         .padding()
                         .fixedSize(horizontal: false, vertical: true)
 
-                        GameGridView(tileManager: gameState.tileManager)
+                        GameGridView(tileManager: gameManager.tileManager)
 
                         Button(action: {
-                            gameState.tileManager.scramble() // Trigger the scramble function
+                            gameManager.tileManager.scramble() // Trigger the scramble function
                         }) {
                             Text("Scramble Tiles")
                                 .padding()
@@ -47,15 +47,15 @@ struct GameView: View {
                                 .cornerRadius(10)
                         }
 
-                        GameStatusView(gameState: gameState, navigationPath: $navigationPath)
+                        GameStatusView(gameManager: gameManager, navigationPath: $navigationPath)
                         
                     }
                     .frame(maxHeight: .infinity)
                 }
 
                 // Show GameOverView directly based on gameState.gameOver
-                if gameState.gameOver {
-                    GameOverView(gameState: gameState, navigationPath: $navigationPath)
+                if gameManager.gameState.gameOver {
+                    GameOverView(gameManager: gameManager, navigationPath: $navigationPath)
                         .zIndex(1) // Ensure the GameOverView appears on top
                 }
             }
@@ -75,8 +75,20 @@ struct GameView: View {
 }
 
 #Preview {
-    GameView(navigationPath: .constant(NavigationPath()))
-        .environmentObject(GameState(dictionaryManager: DictionaryManager()))
+    let mockDictionaryManager = DictionaryManager()
+    let mockGameManager = GameManager(dictionaryManager: mockDictionaryManager)
+    
+    // Set up some sample tiles based on the provided Tile structure
+    let sampleTiles = [
+        Tile(letter: "A", type: .regular, points: 1, position: Position(row: 0, column: 0), isPlaceholder: false),
+        Tile(letter: "B", type: .green, points: 2, position: Position(row: 0, column: 1), isPlaceholder: false),
+        Tile(letter: "C", type: .gold, points: 3, position: Position(row: 0, column: 2), isPlaceholder: false)
+    ]
+    mockGameManager.tileManager.selectedTiles = sampleTiles // Add some sample selected tiles
+    
+    return GameView(navigationPath: .constant(NavigationPath()))
+        .environmentObject(mockGameManager) // Inject GameManager into the environment
 }
+
 
 

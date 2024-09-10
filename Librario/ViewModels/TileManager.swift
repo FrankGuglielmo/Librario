@@ -29,48 +29,82 @@ class TileManager: ObservableObject, Codable {
     var gameOverHandler: (() -> Void)? // Closure to notify GameState when the game is over
     
     // Coding Keys
-        private enum CodingKeys: String, CodingKey {
-            case grid, selectedTiles, tileMultiplier
-        }
+    private enum CodingKeys: String, CodingKey {
+        case grid, selectedTiles, tileMultiplier
+    }
 
-        // Initializer
-        init(tileGenerator: TileGenerator, tileConverter: TileConverter, wordChecker: WordChecker) {
-            self.tileGenerator = tileGenerator
-            self.tileConverter = tileConverter
-            self.wordChecker = wordChecker
-            generateInitialGrid()
-        }
+    // Initializer
+    init(tileGenerator: TileGenerator, tileConverter: TileConverter, wordChecker: WordChecker) {
+        self.tileGenerator = tileGenerator
+        self.tileConverter = tileConverter
+        self.wordChecker = wordChecker
+        generateInitialGrid()
+    }
 
     // Codable Conformance
     required init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            grid = try container.decode([[Tile]].self, forKey: .grid)
-            selectedTiles = try container.decode([Tile].self, forKey: .selectedTiles)
-            tileMultiplier = try container.decode([TileType: Double].self, forKey: .tileMultiplier)
-            
-            // Reinitialize the non-Codable properties
-            let letterGenerator = LetterGenerator()
-            let tileTypeGenerator = TileTypeGenerator()
-            self.tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator)
-            self.tileConverter = TileConverter()
-            self.wordChecker = WordChecker(wordStore: DictionaryManager().wordDictionary)
-        }
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        grid = try container.decode([[Tile]].self, forKey: .grid)
+        selectedTiles = try container.decode([Tile].self, forKey: .selectedTiles)
+        tileMultiplier = try container.decode([TileType: Double].self, forKey: .tileMultiplier)
+        
+        // Reinitialize the non-Codable properties
+        let letterGenerator = LetterGenerator()
+        let tileTypeGenerator = TileTypeGenerator()
+        self.tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator)
+        self.tileConverter = TileConverter()
+        self.wordChecker = WordChecker(wordStore: DictionaryManager().wordDictionary)
+    }
 
-        func encode(to encoder: Encoder) throws {
-            var container = encoder.container(keyedBy: CodingKeys.self)
-            try container.encode(grid, forKey: .grid)
-            try container.encode(selectedTiles, forKey: .selectedTiles)
-            try container.encode(tileMultiplier, forKey: .tileMultiplier)
-        }
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(grid, forKey: .grid)
+        try container.encode(selectedTiles, forKey: .selectedTiles)
+        try container.encode(tileMultiplier, forKey: .tileMultiplier)
+    }
 
-        // Method to re-initialize non-Codable properties
-        func reinitializeNonCodableProperties(dictionaryManager: DictionaryManager) {
-            let letterGenerator = LetterGenerator()
-            let tileTypeGenerator = TileTypeGenerator()
-            self.tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator)
-            self.tileConverter = TileConverter()
-            self.wordChecker = WordChecker(wordStore: dictionaryManager.wordDictionary)
+    // Method to re-initialize non-Codable properties
+    func reinitializeNonCodableProperties(dictionaryManager: DictionaryManager) {
+        let letterGenerator = LetterGenerator()
+        let tileTypeGenerator = TileTypeGenerator()
+        self.tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator)
+        self.tileConverter = TileConverter()
+        self.wordChecker = WordChecker(wordStore: dictionaryManager.wordDictionary)
+    }
+    
+    
+    // MARK: - Persistence Methods
+    
+    func saveTileManager() {
+        let fileURL = TileManager.getDocumentsDirectory().appendingPathComponent("tileManager.json")
+        do {
+            let data = try JSONEncoder().encode(self)
+            try data.write(to: fileURL)
+            print("TileManager saved successfully.")
+        } catch {
+            print("Failed to save TileManager: \(error)")
         }
+    }
+    
+    static func loadTileManager(dictionaryManager: DictionaryManager) -> TileManager? {
+            let fileURL = getDocumentsDirectory().appendingPathComponent("tileManager.json")
+            do {
+                let data = try Data(contentsOf: fileURL)
+                let tileManager = try JSONDecoder().decode(TileManager.self, from: data)
+                tileManager.reinitializeNonCodableProperties(dictionaryManager: dictionaryManager)
+                print("TileManager loaded successfully.")
+                return tileManager
+            } catch {
+                print("Failed to load TileManager: \(error)")
+                return nil
+            }
+        }
+    
+    static func getDocumentsDirectory() -> URL {
+        return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+    }
+    
+    
 
     // MARK: - Grid and Tile Management
 
@@ -426,8 +460,6 @@ class TileManager: ObservableObject, Codable {
         // Notify that the grid has changed (optional)
         objectWillChange.send()
     }
-    
-    
     
     
 }

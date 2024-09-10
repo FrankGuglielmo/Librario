@@ -8,13 +8,14 @@
 import SwiftUI
 
 struct GameStatusView: View {
-    @ObservedObject var gameState: GameState
+    @ObservedObject var gameManager: GameManager
     @Binding var navigationPath: NavigationPath
     
     // Function to calculate progress (you can customize this logic)
     private var progress: CGFloat {
-        guard let nextLevelThreshold = gameState.levelSystem[gameState.level] else { return 0 }
-        let currentLevelThreshold = gameState.level > 1 ? gameState.levelSystem[gameState.level - 1]! : 0
+        let gameState = gameManager.gameState
+        guard let nextLevelThreshold = gameManager.levelSystem[gameState.level] else { return 0 }
+        let currentLevelThreshold = gameState.level > 1 ? gameManager.levelSystem[gameState.level - 1]! : 0
         return CGFloat(gameState.score - currentLevelThreshold) / CGFloat(nextLevelThreshold - currentLevelThreshold)
     }
 
@@ -59,7 +60,7 @@ struct GameStatusView: View {
                     )
                 
                 
-                Text("\(gameState.score)")
+                Text("\(gameManager.gameState.score)")
                     .font(.largeTitle)
                     .bold()
                     .foregroundColor(.yellow)
@@ -76,7 +77,7 @@ struct GameStatusView: View {
                 Text("LVL")
                     .foregroundColor(.green)
                 
-                Text("\(gameState.level)")
+                Text("\(gameManager.gameState.level)")
                     .foregroundColor(.green)
             })
             .frame(height: 70)
@@ -91,6 +92,6 @@ struct GameStatusView: View {
 }
 
 #Preview {
-    GameStatusView(gameState: GameState(dictionaryManager: DictionaryManager()), navigationPath: .constant(NavigationPath()))
+    GameStatusView(gameManager: GameManager(dictionaryManager: DictionaryManager()), navigationPath: .constant(NavigationPath()))
 }
 

@@ -5,18 +5,19 @@
 //  Created by Frank Guglielmo on 8/26/24.
 //
 
+
 import SwiftUI
+import Foundation
 
 struct SubmitWordView: View {
-    @EnvironmentObject var dictionaryManager: DictionaryManager
-    @ObservedObject var gameState: GameState
     @ObservedObject var tileManager: TileManager
+    @ObservedObject var gameManager: GameManager
     
     var body: some View {
         // Conditionally show and make clickable the submit word bubble
             Button(action: {
                 // Handle word submission
-                if gameState.submitWord() {
+                if gameManager.submitWord() {
                     print("Good Word!")
                 }
             }) {
@@ -56,12 +57,24 @@ struct SubmitWordView: View {
                     }
                 }
             }
-            .disabled(gameState.gameOver || tileManager.selectedTiles.isEmpty) // Disable button if no tiles are selected
+            .disabled(gameManager.gameState.gameOver || tileManager.selectedTiles.isEmpty) // Disable button if no tiles are selected
             .buttonStyle(PlainButtonStyle()) // Ensure the button doesn't have default styling
         }
 }
 
 
 #Preview {
-    SubmitWordView(gameState: GameState(dictionaryManager: DictionaryManager()), tileManager: TileManager(tileGenerator: TileGenerator(letterGenerator: LetterGenerator(), tileTypeGenerator: TileTypeGenerator()), tileConverter: TileConverter(), wordChecker: WordChecker(wordStore: [:])))
+    // Mock data for preview
+    let mockDictionaryManager = DictionaryManager()
+    let mockGameManager = GameManager(dictionaryManager: mockDictionaryManager)
+    
+    // Set up some sample tiles based on the provided Tile structure
+    let sampleTiles = [
+        Tile(letter: "B", type: .regular, points: 1, position: Position(row: 0, column: 0), isPlaceholder: false),
+        Tile(letter: "A", type: .green, points: 2, position: Position(row: 0, column: 1), isPlaceholder: false),
+        Tile(letter: "D", type: .gold, points: 3, position: Position(row: 0, column: 2), isPlaceholder: false)
+    ]
+    mockGameManager.tileManager.selectedTiles = sampleTiles
+    
+    return SubmitWordView(tileManager: mockGameManager.tileManager, gameManager: mockGameManager)
 }

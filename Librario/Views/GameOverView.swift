@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct GameOverView: View {
-    @ObservedObject var gameState: GameState
+    @ObservedObject var gameManager: GameManager
     @Binding var navigationPath: NavigationPath
 
     var body: some View {
@@ -19,14 +19,14 @@ struct GameOverView: View {
                 .fontWeight(.bold)
                 .padding()
 
-            Text("Your score: \(gameState.score)")
+            Text("Your score: \(gameManager.gameState.score)")
                 .foregroundStyle(Color.black)
                 .font(.title)
                 .padding()
 
             Button(action: {
                 // Restart the game by resetting the gameState
-                gameState.startNewGame() // This resets the game over flag and restarts the game
+                gameManager.startNewGame() // This resets the game over flag and restarts the game
             }) {
                 Text("Restart Game")
                     .font(.headline)
@@ -41,7 +41,7 @@ struct GameOverView: View {
                 // Exit the game and return to the home screen by clearing the navigation path
                 if !navigationPath.isEmpty {
                     navigationPath.removeLast() // Pop the current view from the navigation path
-                    gameState.startNewGame() // This resets the game over flag and
+                    gameManager.startNewGame() // This resets the game over flag and
                 }
                 
             }) {
@@ -61,7 +61,4 @@ struct GameOverView: View {
     }
 }
 
-#Preview {
-    GameOverView(gameState: GameState(dictionaryManager: DictionaryManager()), navigationPath: .constant(NavigationPath()))
-}
 

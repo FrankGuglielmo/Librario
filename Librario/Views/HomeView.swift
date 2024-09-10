@@ -9,7 +9,8 @@ import SwiftUI
 
 struct HomeView: View {
     @State private var navigationPath = NavigationPath() // Create PathStore instance
-    @EnvironmentObject var gameState: GameState
+    @EnvironmentObject var gameManager: GameManager
+    @EnvironmentObject var userData: UserData
 
     var body: some View {
         NavigationStack(path: $navigationPath) { // Use pathStore's path
@@ -40,7 +41,7 @@ struct HomeView: View {
                         }, label: {
                             ZStack {
                                 // Conditionally show different images based on the game state
-                                if gameState.score > 0 { // Assume game is active if score > 0
+                                if gameManager.gameState.score > 0 { // Assume game is active if score > 0
                                     Image("Resume_book") // Image when game is active
                                 } else {
                                     Image("Title_Book_3") // Default image for new game
@@ -104,5 +105,11 @@ enum ViewType: Hashable, Codable {
 }
 
 #Preview {
-    HomeView()
+    let mockDictionaryManager = DictionaryManager()
+    let mockGameManager = GameManager(dictionaryManager: mockDictionaryManager)
+    let mockUserData = UserData()
+
+    return HomeView()
+        .environmentObject(mockGameManager) // Inject GameManager into the environment
+        .environmentObject(mockUserData)    // Inject UserData into the environment
 }
