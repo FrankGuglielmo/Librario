@@ -53,6 +53,12 @@ struct GameView: View {
                     .frame(maxHeight: .infinity)
                 }
 
+                if gameManager.checkLevelProgression() {
+                    LevelUpView(gameManager: gameManager, navigationPath: $navigationPath)
+                        .zIndex(1)
+                }
+                
+                
                 // Show GameOverView directly based on gameState.gameOver
                 if gameManager.gameState.gameOver {
                     GameOverView(gameManager: gameManager, navigationPath: $navigationPath)

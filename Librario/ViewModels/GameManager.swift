@@ -84,20 +84,23 @@ class GameManager: ObservableObject, Codable {
     }
 
     // Method to start a new game
-    func startNewGame() {
-        gameState.reset()
-        levelData = LevelStatistics()
-        sessionData = SessionStatistics()
-        tileManager.saveTileManager()
+    func startNewGame(userStatistics: UserStatistics) {
+        // If there was a meaningful game that was being played before, (score > 0), reset everything
+        if gameState.score != 0 {
+            handleSessionCompletion(userStatistics: userStatistics)
+            userStatistics.totalGamesPlayed += 1
+            gameState.reset()
+            levelData = LevelStatistics()
+            sessionData = SessionStatistics()
+            tileManager.generateInitialGrid()
+        }
+        // Otherwise, keep the board and gameState as is
+        
     }
 
     // Submit a word and handle score/word streak updates
     func submitWord() -> Bool {
-        if gameState.gameOver {
-            return false
-        }
-
-        if !tileManager.validateWord() {
+        if gameState.gameOver || !tileManager.validateWord() {
             return false
         }
 
@@ -109,19 +112,32 @@ class GameManager: ObservableObject, Codable {
         tileManager.processWordSubmission(word: word, points: points, level: gameState.level, shortWordStreak: gameState.shortWordStreak)
         tileManager.checkFireTiles()
 
-        if !gameState.gameOver {
-            checkLevelProgression()
-        }
-
         return true
     }
 
     // Check if the player should progress to the next level
-    func checkLevelProgression() {
+    func checkLevelProgression() -> Bool{
         if gameState.level < 999 && gameState.score >= levelSystem[gameState.level]! {
             gameState.level += 1
             print("Level progressed to: \(gameState.level)")
+            return true
         }
+        return false
+    }
+    
+    func handleLevelCompletion() {
+        //Update the session statistics with the level statistics
+        sessionData.updateFromLevel(levelData)
+    }
+    
+    func handleSessionCompletion(userStatistics: UserStatistics) {
+        handleLevelCompletion() // Update the session with the current level statistics
+        userStatistics.updateFromSession(sessionData)
+        userStatistics.saveUserStatistics()
+    }
+    
+    func resetLevelStatistics() {
+        levelData = LevelStatistics()
     }
 
     // Method to complete a level and update session data
@@ -140,6 +156,7 @@ class GameManager: ObservableObject, Codable {
 
     // Update UserStatistics with session data at the end of a game
     func updateUserStatistics(_ userStatistics: UserStatistics) {
+        sessionData.updateFromLevel(levelData)
         userStatistics.updateFromSession(sessionData)
         userStatistics.saveUserStatistics()
     }

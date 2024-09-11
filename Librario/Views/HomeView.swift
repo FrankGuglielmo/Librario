@@ -8,12 +8,13 @@
 import SwiftUI
 
 struct HomeView: View {
-    @State private var navigationPath = NavigationPath() // Create PathStore instance
+    @State private var pathStore = PathStore() // Create PathStore instance
     @EnvironmentObject var gameManager: GameManager
     @EnvironmentObject var userData: UserData
+    @State private var showActionSheet = false
 
     var body: some View {
-        NavigationStack(path: $navigationPath) { // Use pathStore's path
+        NavigationStack(path: $pathStore.path) { // Use pathStore's path
             ZStack {
                 // Background color filling the entire safe area
                 Image("red_curtain")
@@ -37,10 +38,16 @@ struct HomeView: View {
                     // Center with Navigation to various views
                     VStack(alignment: .trailing, spacing: 0) {
                         Button(action: {
-                            navigationPath.append(ViewType.game)
+                            if gameManager.gameState.score > 0 {
+                                // If there is an active game, show the action sheet to resume or start new
+                                showActionSheet = true
+                            } else {
+                                // Start a new game directly
+                                gameManager.startNewGame(userStatistics: userData.userStatistics)
+                                pathStore.path.append(ViewType.game)
+                            }
                         }, label: {
                             ZStack {
-                                // Conditionally show different images based on the game state
                                 if gameManager.gameState.score > 0 { // Assume game is active if score > 0
                                     Image("Resume_book") // Image when game is active
                                 } else {
@@ -52,9 +59,27 @@ struct HomeView: View {
                                     .foregroundColor(.white)
                             }
                         })
+                        .actionSheet(isPresented: $showActionSheet) {
+                            ActionSheet(
+                                title: Text("Active Game Detected"),
+                                message: Text("Would you like to resume your current game or start a new one?"),
+                                buttons: [
+                                    .default(Text("Resume Game")) {
+                                        // Resume the current game
+                                        pathStore.path.append(ViewType.game)
+                                    },
+                                    .destructive(Text("Start New Game")) {
+                                        // Start a new game
+                                        gameManager.startNewGame(userStatistics: userData.userStatistics)
+                                        pathStore.path.append(ViewType.game)
+                                    },
+                                    .cancel()
+                                ]
+                            )
+                        }
 
                         Button(action: {
-                            navigationPath.append(ViewType.settings)
+                            pathStore.path.append(ViewType.settings)
                         }, label: {
                             ZStack {
                                 Image("Title_Book_2")
@@ -67,7 +92,20 @@ struct HomeView: View {
                         })
 
                         Button(action: {
-                            navigationPath.append(ViewType.stats)
+                            pathStore.path.append(ViewType.tips)
+                        }, label: {
+                            ZStack {
+                                Image("Title_Book_4")
+                                Text("How To Play")
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                            }
+                        })
+                        
+                        Button(action: {
+                            gameManager.updateUserStatistics(userData.userStatistics)
+                            pathStore.path.append(ViewType.stats)
                         }, label: {
                             ZStack {
                                 Image("Title_Book_1")
@@ -77,6 +115,7 @@ struct HomeView: View {
                                     .foregroundColor(.white)
                             }
                         })
+                        
                     }
                     .padding()
                 }
@@ -84,14 +123,20 @@ struct HomeView: View {
             .navigationDestination(for: ViewType.self) { viewType in
                 switch viewType {
                 case .game:
-                    GameView(navigationPath: $navigationPath)
+                    GameView(navigationPath: $pathStore.path)
                         .navigationBarBackButtonHidden(true) // Disable back button
                 case .settings:
-                    SettingsView(navigationPath: $navigationPath)
+                    SettingsView(navigationPath: $pathStore.path)
                         .navigationBarBackButtonHidden(true)
                 case .stats:
-                    StatsView()
+                    StatsView(navigationPath: $pathStore.path)
+                        .navigationBarBackButtonHidden(true)
+                case .tips:
+                    TipView(navigationPath: $pathStore.path)
+                        .navigationBarBackButtonHidden(true)
                 }
+                
+                
             }
         }
     }
@@ -102,6 +147,7 @@ enum ViewType: Hashable, Codable {
     case game
     case settings
     case stats
+    case tips
 }
 
 #Preview {

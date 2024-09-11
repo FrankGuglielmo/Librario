@@ -35,6 +35,7 @@ struct MyApp: App {
             if newPhase == .background || newPhase == .inactive {
                 print("App going into background")
                 gameManager.saveGame()
+                userData.saveUserData()
             }
         }
     }

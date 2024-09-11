@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct GameOverView: View {
+    @EnvironmentObject var userData: UserData
     @ObservedObject var gameManager: GameManager
     @Binding var navigationPath: NavigationPath
 
@@ -26,7 +27,7 @@ struct GameOverView: View {
 
             Button(action: {
                 // Restart the game by resetting the gameState
-                gameManager.startNewGame() // This resets the game over flag and restarts the game
+                gameManager.startNewGame(userStatistics: userData.userStatistics) // This resets the game over flag and restarts the game
             }) {
                 Text("Restart Game")
                     .font(.headline)
@@ -41,7 +42,7 @@ struct GameOverView: View {
                 // Exit the game and return to the home screen by clearing the navigation path
                 if !navigationPath.isEmpty {
                     navigationPath.removeLast() // Pop the current view from the navigation path
-                    gameManager.startNewGame() // This resets the game over flag and
+                    gameManager.startNewGame(userStatistics: userData.userStatistics) // This resets the game over flag and
                 }
                 
             }) {
