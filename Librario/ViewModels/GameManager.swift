@@ -32,8 +32,9 @@ class GameManager: ObservableObject, Codable {
         }
         
         // Initialize level and session data
-        self.levelData = LevelStatistics()
-        self.sessionData = SessionStatistics()
+        
+        self.levelData = LevelStatistics.loadLevelData()
+        self.sessionData = SessionStatistics.loadSessionData()
         
         // Load TileManager from disk if available, otherwise initialize a new TileManager
         if let loadedTileManager = TileManager.loadTileManager(dictionaryManager: dictionaryManager) {
