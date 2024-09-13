@@ -63,7 +63,7 @@ struct Tile: Identifiable, Codable, Hashable {
     
 }
 
-struct Position: Codable, Equatable {
+struct Position: Codable, Equatable, Hashable {
     var row: Int
     var column: Int
 }

@@ -28,6 +28,8 @@ class TileManager: ObservableObject, Codable {
     
     var gameOverHandler: (() -> Void)? // Closure to notify GameState when the game is over
     
+    let animationDuration: Double = 0.5
+    
     // Coding Keys
     private enum CodingKeys: String, CodingKey {
         case grid, selectedTiles, tileMultiplier
@@ -224,57 +226,75 @@ class TileManager: ObservableObject, Codable {
         }
         
         // 2. Move tiles down to fill gaps
-        moveTilesDown()
-
-        // 3. Generate new tiles for the top
-        generateNewTilesForTop(word: word, points: points, level: level, shortWordStreak: shortWordStreak)
-
-        tileConverter.upgradeRandomTile(word: word, pointValue: points, grid: &self.grid)
+        withAnimation(.easeOut(duration: animationDuration / 2)) {
+            moveTilesDown()
+        }
         
-        // Clear the selection
+        // 3. After the existing tiles have fallen, generate new tiles
+        DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
+            withAnimation(.easeInOut(duration: self.animationDuration)) {
+                self.generateNewTilesForTop(word: word, points: points, level: level, shortWordStreak: shortWordStreak)
+            }
+        }
+        
+        // 4. Upgrade random tile if necessary (after new tiles are in place)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2 * animationDuration) {
+            self.tileConverter.upgradeRandomTile(word: word, pointValue: points, grid: &self.grid)
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2 * animationDuration) {
+            withAnimation(.easeInOut(duration: self.animationDuration)) {
+                self.checkFireTiles()
+            }
+        }
+        
+        // 5. Clear the selection
         clearSelection()
-    
     }
 
+
     func moveTilesDown() {
-        //Initialize grid bounds
         let rows = grid.count
         let columns = grid[0].count
 
-        //Iterate by column
         for column in 0..<columns {
-            // Start at the bottom row index of the grid
-            var emptyRow = rows - 1
-            for row in stride(from: rows - 1, through: 0, by: -1) {
-                // If a tile is marked for removal, ignore it
-                if grid[row][column].isMarkedForRemoval {
-                    continue
+            var newColumn: [Tile] = []
+            // Collect tiles not marked for removal
+            for row in 0..<rows {
+                let tile = grid[row][column]
+                if !tile.isMarkedForRemoval {
+                    newColumn.append(tile)
                 }
-                // Check if there is room between the current tile of the column and the row that has been left empty If so, fill the row with the above tile and move up to the next index
-                if row != emptyRow {
-                    grid[emptyRow][column] = grid[row][column]
-                    grid[emptyRow][column].position = Position(row: emptyRow, column: column)
-                }
-                emptyRow -= 1
             }
 
-            // There will be tiles that will be left empty after moving everything down. Use a placeholder tile before we generate new tiles
-            for row in stride(from: emptyRow, through: 0, by: -1) {
-                grid[row][column] = Tile.placeholder(at: Position(row: row, column: column))
+            // Determine how many empty spaces are at the top
+            let missingTiles = rows - newColumn.count
+
+            // Update positions of existing tiles
+            for i in 0..<newColumn.count {
+                newColumn[i].position = Position(row: i + missingTiles, column: column)
+            }
+
+            // Replace the column in the grid
+            for i in 0..<newColumn.count {
+                grid[i + missingTiles][column] = newColumn[i]
+            }
+
+            // Fill empty spaces at the top with placeholders
+            for i in 0..<missingTiles {
+                let position = Position(row: i, column: column)
+                grid[i][column] = Tile.placeholder(at: position)
             }
         }
     }
-    
+
     func generateNewTilesForTop(word: String, points: Int, level: Int, shortWordStreak: Int) {
         let rows = grid.count
         let columns = grid[0].count
-
         var placeholdersToReplace: [Position] = []
-        
-        // Iterate through each column
+
+        // Collect positions of placeholders across all columns
         for column in 0..<columns {
-            
-            // Collect the positions of placeholders in the current column
             for row in 0..<rows {
                 if grid[row][column].isPlaceholder {
                     placeholdersToReplace.append(Position(row: row, column: column))
@@ -283,27 +303,48 @@ class TileManager: ObservableObject, Codable {
                 }
             }
         }
-            
-            // If there are placeholders to replace, generate new tiles for them
-            if !placeholdersToReplace.isEmpty {
-                // Generate the new tiles using the provided generateTiles function
-                let newTiles = tileGenerator.generateTiles(
-                    positions: placeholdersToReplace,
-                    word: word,
-                    points: points,
-                    level: level,
-                    shortWordStreak: shortWordStreak
-                )
-                
-                
-                // Replace the placeholders with the newly generated tiles
-                for i in 0..<newTiles.count {
-                    grid[placeholdersToReplace[i].row][placeholdersToReplace[i].column] = newTiles[i]
+
+        let numberOfNewTiles = placeholdersToReplace.count
+
+        if numberOfNewTiles > 0 {
+            // Generate the new tiles using the provided generateTiles function
+            let newTiles = tileGenerator.generateTiles(
+                positions: placeholdersToReplace,
+                word: word,
+                points: points,
+                level: level,
+                shortWordStreak: shortWordStreak
+            )
+
+            // Assign the new tiles starting above the grid
+            for i in 0..<newTiles.count {
+                let positionAboveGrid = Position(row: -numberOfNewTiles + i, column: placeholdersToReplace[i].column)
+                var newTile = newTiles[i]
+                newTile.position = positionAboveGrid // Start above the grid
+                grid[placeholdersToReplace[i].row][placeholdersToReplace[i].column] = newTile
+            }
+
+            // Animate new tiles falling down to their correct positions
+            for i in 0..<numberOfNewTiles {
+                let targetPosition = placeholdersToReplace[i]
+                let startingRow = -numberOfNewTiles + i
+                _ = abs(startingRow - targetPosition.row)
+
+                // Calculate duration based on the distance (inverse, so tiles further away move faster)
+                let duration = animationDuration * (Double(targetPosition.row + 1) / Double(numberOfNewTiles))
+
+                DispatchQueue.main.asyncAfter(deadline: .now()) {
+                    withAnimation(.easeInOut(duration: duration)) {
+                        self.grid[targetPosition.row][targetPosition.column].position = targetPosition
+                    }
                 }
             }
+        }
     }
 
-    
+
+
+
     //Function the checks the board for any fire tiles. If a fire tile is still present, move it down one row and generate a tile for the top. If a fire tile cannot move down anymore, end the game.
     func checkFireTiles() {
             let rows = grid.count

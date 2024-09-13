@@ -10,73 +10,130 @@ import SwiftUI
 struct GameGridView: View {
     @ObservedObject var tileManager: TileManager
     @EnvironmentObject var gameState: GameState
+    @State private var selectedDuringDrag: Set<Position> = []
+    @Namespace private var tileNamespace
 
     var body: some View {
-        VStack {
-            GeometryReader { geometry in
-                let columns = 7
-                let spacing: CGFloat = 1
-                let availableWidth = geometry.size.width
-                let tileSize = availableWidth / CGFloat(columns)
+        GeometryReader { geometry in
+            let columns = 7
+            let rows = 7
+            let tileSize = geometry.size.width / CGFloat(columns)
+            let gridWidth = geometry.size.width
+            let gridHeight = calculateGridHeight(for: tileManager.grid, tileSize: tileSize)
 
-                // Set the actual grid height based on rows
-                let gridHeight = tileSize * CGFloat(tileManager.grid.count) + tileSize / 2
-                
-                ZStack {
-                    HStack(alignment: .top, spacing: spacing) {
-                        ForEach(0..<columns, id: \.self) { columnIndex in
-                            VStack(spacing: spacing) {
-                                ForEach(0..<tileManager.grid.count, id: \.self) { rowIndex in
-                                    TileView(tile: tileManager.grid[rowIndex][columnIndex], tileSize: tileSize) {
-                                        tileManager.toggleTileSelection(at: Position(row: rowIndex, column: columnIndex))
-                                    }
-                                }
-                                .offset(y: columnIndex % 2 == 0 ? 0 : tileSize / 2)
-                            }
-                            .padding(.bottom, tileSize / 2)
-                        }
+            ZStack {
+                // Display tiles
+                ForEach(tileManager.grid.flatMap { $0 }) { tile in
+                    TileView(tile: tile, tileSize: tileSize) {
+                        tileManager.toggleTileSelection(at: tile.position)
                     }
-                    .background(Color(red: 0.33, green: 0.29, blue: 0.21))
-                    .border(Color(red: 0.68, green: 0.47, blue: 0.29), width: 3)
-                    .frame(width: availableWidth, height: gridHeight)
-                    
-                    // Conditionally overlay the arrows only if selected tiles are more than one
-                    if tileManager.selectedTiles.count > 1 {
-                        drawArrows(tileSize: tileSize)
-                            .frame(width: availableWidth, height: gridHeight)
+                    .position(
+                        x: xPosition(for: tile, tileSize: tileSize),
+                        y: yPosition(for: tile, tileSize: tileSize)
+                    )
+                    .matchedGeometryEffect(id: tile.id, in: tileNamespace)
+                }
+
+                // Draw arrows between selected tiles
+                if tileManager.selectedTiles.count > 1 {
+                    drawArrows(tileSize: tileSize)
+                }
+            }
+            .frame(width: gridWidth, height: gridHeight)
+            .background(Color(red: 0.33, green: 0.29, blue: 0.21))
+            .border(Color(red: 0.68, green: 0.47, blue: 0.29), width: 3)
+            .gesture(dragGesture(tileSize: tileSize, columns: columns, rows: rows))
+        }
+        .frame(height: calculateGridHeight(for: tileManager.grid, tileSize: UIScreen.main.bounds.width / 7))
+    }
+
+    // MARK: - Helper Functions
+
+    private func xPosition(for tile: Tile, tileSize: CGFloat) -> CGFloat {
+        return CGFloat(tile.position.column) * tileSize + tileSize / 2
+    }
+
+    private func yPosition(for tile: Tile, tileSize: CGFloat) -> CGFloat {
+        var y = CGFloat(tile.position.row) * tileSize + tileSize / 2
+        if tile.position.column % 2 == 1 {
+            y += tileSize / 2
+        }
+        return y
+    }
+
+    private func calculateGridHeight(for grid: [[Tile]], tileSize: CGFloat) -> CGFloat {
+        let numberOfRows = CGFloat(grid.count)
+        return numberOfRows * tileSize + tileSize / 2
+    }
+
+    private func dragGesture(tileSize: CGFloat, columns: Int, rows: Int) -> some Gesture {
+        DragGesture(minimumDistance: 0)
+            .onChanged { value in
+                let location = value.location
+                if let position = positionFrom(location: location, tileSize: tileSize, columns: columns, rows: rows) {
+                    if !selectedDuringDrag.contains(position) {
+                        selectedDuringDrag.insert(position)
+                        tileManager.toggleTileSelection(at: position)
                     }
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center) // Center the entire content
-        }
+            .onEnded { _ in
+                selectedDuringDrag.removeAll()
+            }
     }
 
+    private func positionFrom(location: CGPoint, tileSize: CGFloat, columns: Int, rows: Int) -> Position? {
+        let columnIndex = Int(location.x / tileSize)
+        guard columnIndex >= 0 && columnIndex < columns else { return nil }
+
+        let columnOffsetY = columnIndex % 2 == 0 ? 0 : tileSize / 2
+        let adjustedY = location.y - columnOffsetY
+
+        let rowIndex = Int(adjustedY / tileSize)
+        guard rowIndex >= 0 && rowIndex < rows else { return nil }
+
+        return Position(row: rowIndex, column: columnIndex)
+    }
+
+    // Include your existing drawArrows function here...
+
+
     private func drawArrows(tileSize: CGFloat) -> some View {
-        ZStack {
-            ForEach(0..<(tileManager.selectedTiles.count - 1), id: \.self) { index in
-                let currentTile = tileManager.selectedTiles[index]
-                let nextTile = tileManager.selectedTiles[index + 1]
+        let selectedTiles = tileManager.selectedTiles
 
-                let direction = calculateDirection(from: currentTile.position, to: nextTile.position)
+        return Group {
+            if selectedTiles.count > 1 {
+                // Create pairs of tiles using zip
+                let tilePairs = zip(selectedTiles, selectedTiles.dropFirst())
 
-                // Calculate the start and end points based on the direction
-                let start = calculatePoint(for: currentTile.position, tileSize: tileSize, direction: direction, isStart: true)
-                let end = calculatePoint(for: nextTile.position, tileSize: tileSize, direction: direction, isStart: false)
+                ZStack {
+                    ForEach(Array(tilePairs.enumerated()), id: \.offset) { (index, pair) in
+                        let (currentTile, nextTile) = pair
+                        let direction = calculateDirection(from: currentTile.position, to: nextTile.position)
 
-                // Position the arrow between start and end points
-                let adjustedMidPoint = CGPoint(
-                    x: (start.x + end.x) / 2,
-                    y: (start.y + end.y) / 2
-                )
+                        // Calculate the start and end points based on the direction
+                        let start = calculatePoint(for: currentTile.position, tileSize: tileSize, direction: direction, isStart: true)
+                        let end = calculatePoint(for: nextTile.position, tileSize: tileSize, direction: direction, isStart: false)
 
-                Image(direction)
-                    .resizable()
-                    .frame(width: tileSize / 2.5, height: tileSize / 2.5) // Adjust the size as needed
-                    .position(adjustedMidPoint)
-                    .zIndex(-1) // Ensure it doesn't affect the grid's height
+                        // Position the arrow between start and end points
+                        let adjustedMidPoint = CGPoint(
+                            x: (start.x + end.x) / 2,
+                            y: (start.y + end.y) / 2
+                        )
+
+                        Image(direction)
+                            .resizable()
+                            .frame(width: tileSize / 2.5, height: tileSize / 2.5)
+                            .position(adjustedMidPoint)
+                            .zIndex(-1)
+                    }
+                }
+            } else {
+                EmptyView()
             }
         }
     }
+
 
     private func calculatePoint(for position: Position, tileSize: CGFloat, direction: String, isStart: Bool) -> CGPoint {
         let isEvenColumn = position.column % 2 == 0

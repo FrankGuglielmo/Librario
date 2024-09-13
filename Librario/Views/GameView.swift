@@ -37,16 +37,6 @@ struct GameView: View {
 
                         GameGridView(tileManager: gameManager.tileManager)
 
-                        Button(action: {
-                            gameManager.tileManager.scramble() // Trigger the scramble function
-                        }) {
-                            Text("Scramble Tiles")
-                                .padding()
-                                .background(Color.red)
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
-                        }
-
                         GameStatusView(gameManager: gameManager, navigationPath: $navigationPath)
                         
                     }

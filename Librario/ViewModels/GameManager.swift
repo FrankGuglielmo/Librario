@@ -111,7 +111,6 @@ class GameManager: ObservableObject, Codable {
         gameState.score += points
         levelData.trackWord(word, score: points)
         tileManager.processWordSubmission(word: word, points: points, level: gameState.level, shortWordStreak: gameState.shortWordStreak)
-        tileManager.checkFireTiles()
 
         return true
     }

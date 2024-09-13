@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-import SwiftUI
-
 struct TileView: View {
     let tile: Tile
     let tileSize: CGFloat
@@ -20,12 +18,6 @@ struct TileView: View {
             .aspectRatio(contentMode: .fit)
             .frame(width: tileSize, height: tileSize)
             .animation(.spring(), value: tile.isSelected)
-            .onTapGesture {
-                onTap()  // Trigger the onTap closure when the tile is tapped
-            }
     }
 }
 
-//#Preview {
-//    TileView(tile: Tile(letter: "Qu", type: .fire, isSelected: true))
-//}

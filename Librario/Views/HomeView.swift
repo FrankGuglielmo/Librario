@@ -136,7 +136,6 @@ struct HomeView: View {
                         .navigationBarBackButtonHidden(true)
                 }
                 
-                
             }
         }
     }
@@ -150,12 +149,44 @@ enum ViewType: Hashable, Codable {
     case tips
 }
 
-#Preview {
-    let mockDictionaryManager = DictionaryManager()
-    let mockGameManager = GameManager(dictionaryManager: mockDictionaryManager)
-    let mockUserData = UserData()
 
-    return HomeView()
-        .environmentObject(mockGameManager) // Inject GameManager into the environment
-        .environmentObject(mockUserData)    // Inject UserData into the environment
-}
+
+
+
+struct HomeView_Previews: PreviewProvider {
+    static var previews: some View {
+        let mockDictionaryManager = DictionaryManager()
+        let mockGameManager = GameManager(dictionaryManager: mockDictionaryManager)
+        let mockUserData = UserData()
+        
+        HomeView()
+            .previewDevice("iPhone 15 Pro") // Preview for iPhone 14 Pro
+            .previewDisplayName("iPhone 15 Pro")
+            .environmentObject(mockGameManager)
+            .environmentObject(mockUserData)
+        
+        HomeView()
+            .previewDevice("iPhone 15 Pro Max") // Preview for iPhone 15 Pro
+            .previewDisplayName("iPhone 15 Pro Max")
+            .environmentObject(mockGameManager)
+            .environmentObject(mockUserData)
+        
+        HomeView()
+            .previewDevice("iPad (10th generation)") // Preview for iPad Pro 11"
+            .previewDisplayName("iPad 11-inch")
+            .environmentObject(mockGameManager)
+            .environmentObject(mockUserData)
+        
+        HomeView()
+            .previewDevice("iPhone SE (3rd generation)") // Preview for smaller iPhone SE
+            .previewDisplayName("iPhone SE 3rd Gen")
+            .environmentObject(mockGameManager)
+            .environmentObject(mockUserData)
+        
+        HomeView()
+            .previewDevice("iPad mini (6th generation)") // Preview for iPad mini
+            .previewDisplayName("iPad mini 6th Gen")
+            .environmentObject(mockGameManager)
+            .environmentObject(mockUserData)
+        }
+    }

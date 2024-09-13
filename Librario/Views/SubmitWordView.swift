@@ -20,6 +20,7 @@ struct SubmitWordView: View {
                 if gameManager.submitWord() {
                     print("Good Word!")
                 }
+               
             }) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)

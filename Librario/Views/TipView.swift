@@ -38,9 +38,10 @@ struct TipView: View {
                         VStack(alignment: .leading) {
                             Text("Link Letters")
                                 .font(.headline)
+                                .foregroundStyle(.black)
                             Text("Click on the letters to link them into words. The longer the word, the higher the score.")
                                 .font(.body)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.gray)
                         }
                     }
                     
@@ -54,9 +55,10 @@ struct TipView: View {
                         VStack(alignment: .leading) {
                             Text("Submit Words")
                                 .font(.headline)
+                                .foregroundStyle(.black)
                             Text("Click on 'Submit' to confirm your word. You earn points based on the word length and tile values.")
                                 .font(.body)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.gray)
                         }
                     }
                     
@@ -70,9 +72,10 @@ struct TipView: View {
                         VStack(alignment: .leading) {
                             Text("Beware of Burning Tiles")
                                 .font(.headline)
+                                .foregroundStyle(.black)
                             Text("Burning tiles will appear occasionally. If they reach the bottom, it's game over!")
                                 .font(.body)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.gray)
                         }
                     }
                     
@@ -86,9 +89,10 @@ struct TipView: View {
                         VStack(alignment: .leading) {
                             Text("Scramble Letters")
                                 .font(.headline)
+                                .foregroundStyle(.black)
                             Text("Scramble letters if you can't make a word, but beware, this comes at a cost!")
                                 .font(.body)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.gray)
                         }
                     }
                     
@@ -102,9 +106,10 @@ struct TipView: View {
                         VStack(alignment: .leading) {
                             Text("Special Reward Tiles")
                                 .font(.headline)
+                                .foregroundStyle(.black)
                             Text("Green, Gold, and Diaomnd tiles appear when making good words. Use them in words for bonus points!")
                                 .font(.body)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.gray)
                         }
                     }
                 }
@@ -119,13 +124,13 @@ struct TipView: View {
                         Text("Back")
                             .font(.headline)
                     }
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.gray)
                 })
                 .padding()
                 
             }
             .padding()
-            .background(Color(.systemBackground).cornerRadius(15))
+            .background(Color(.white).cornerRadius(15))
             .shadow(radius: 10)
         }
     }

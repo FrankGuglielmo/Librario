@@ -20,74 +20,81 @@ struct GameStatusView: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
-            // Custom back button using NavigationPath
-            Button(action: {
-                navigationPath.removeLast() // Navigate back to HomeView
-                print("Back to home")
-            }) {
-                VStack {
-                    Image(systemName: "arrow.left")
-                        .font(.title)
-                        .foregroundColor(.green)
-                         // Ensure background is properly defined
-                        .cornerRadius(0) // Make the button look nicer
-                    
-                    Text("Menu")
-                        .foregroundStyle(.green)
-                    
-                }
-                
-            }
-            
-            .contentShape(Rectangle()) // Ensure entire button area is tappable
-            .frame(width: 70, height: 70) // Define the button size explicitly
-            .background(Color.brown)
-
+        VStack(spacing: 0) {
             ZStack(alignment: .leading) {
                 // Background (faded) progress bar
                 Image("faded_progress_bar")
                     .resizable()
-                    .frame(width: 280, height: 70) // Fixed size
+                    .frame(height: 70) // Keep height fixed, width will expand
                 
                 // Foreground (progress) bar, showing only part of the image based on progress
                 Image("progress_bar")
                     .resizable()
-                    .frame(width: 280, height: 70) // Fixed size
+                    .frame(height: 70) // Fixed height, width adjusts based on progress
                     .clipShape(
                         Rectangle()
-                            .size(width: progress * 280, height: 70) // Reveal only part of the image based on progress
+                            .size(width: progress * UIScreen.main.bounds.width, height: 70) // Reveal only part of the image based on progress
                     )
                 
-                
+                // Score text in the center of the progress bar
                 Text("\(gameManager.gameState.score)")
                     .font(.largeTitle)
                     .bold()
                     .foregroundColor(.yellow)
                     .shadow(radius: 5)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center) // Center the text
-                
             }
-            .frame(width: 280, height: 70)
+            .frame(maxWidth: .infinity) // Expand to screen width, fixed height
             
-            
-            
+            HStack(spacing: 0) {
+                // Custom back button using NavigationPath
+                Button(action: {
+                    navigationPath.removeLast() // Navigate back to HomeView
+                    print("Back to home")
+                }) {
+                    VStack {
+                        Image(systemName: "arrow.left")
+                            .font(.title)
+                            .foregroundColor(.green)
+                        Text("Menu")
+                            .foregroundStyle(.green)
+                    }
+                }
+                .frame(width: 70, height: 70) // Fixed size button
+                .background(Color.brown)
+                .contentShape(Rectangle()) // Ensure entire button area is tappable
 
-            VStack(alignment: .center, content: {
-                Text("LVL")
-                    .foregroundColor(.green)
-                
-                Text("\(gameManager.gameState.level)")
-                    .foregroundColor(.green)
-            })
-            .frame(height: 70)
-            .padding(.horizontal, 20)
-            .background(Color.brown)
-            
-                
+                // Scramble button
+                Button(action: {
+                    gameManager.tileManager.scramble()
+                    print("Scrambling Tiles...")
+                }) {
+                    ZStack {
+                        Rectangle()
+                            .strokeBorder(.green, lineWidth: 5)
+                            .background(Rectangle().fill(.brown))
+                            .foregroundStyle(.brown)
+                        
+                        Text("Scramble")
+                            .font(.title)
+                            .foregroundStyle(.green)
+                    }
+                }
+                .frame(maxWidth: .infinity) // Make this button stretch to fill available space
+
+                // Level display
+                VStack(alignment: .center) {
+                    Text("LVL")
+                        .foregroundColor(.green)
+                    Text("\(gameManager.gameState.level)")
+                        .foregroundColor(.green)
+                }
+                .frame(width: 70, height: 70) // Fixed size for the level indicator
+                .background(Color.brown)
+            }
+            .frame(maxWidth: .infinity) // Expand HStack to screen width, fixed height
         }
-        .frame(height: 70)
-        .padding(.vertical)
+        .frame(maxWidth: .infinity, maxHeight: 140, alignment: .top) // Ensure the entire view fills width and aligns properly
     }
 }
 
