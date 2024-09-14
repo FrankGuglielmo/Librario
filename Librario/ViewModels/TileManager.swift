@@ -190,6 +190,7 @@ class TileManager: ObservableObject, Codable {
             } else {
                 selectTile(at: position)
             }
+            AudioManager.shared.playSoundEffect(named: "tile_click2")
         }
     }
 

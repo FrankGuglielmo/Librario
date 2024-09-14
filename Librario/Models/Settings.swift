@@ -6,10 +6,31 @@
 //
 
 import Foundation
+import Combine
 
 class Settings: ObservableObject, Codable {
-    @Published var musicEnabled: Bool
-    @Published var soundEffectsEnabled: Bool
+    // Singleton instance
+    static let shared: Settings = {
+        if let savedData = UserDefaults.standard.data(forKey: "userSettings"),
+           let decodedSettings = try? JSONDecoder().decode(Settings.self, from: savedData) {
+            return decodedSettings
+        } else {
+            // If no settings are found, return the default settings
+            return defaultSettings
+        }
+    }()
+
+    @Published var musicEnabled: Bool {
+        didSet {
+            save()
+        }
+    }
+
+    @Published var soundEffectsEnabled: Bool {
+        didSet {
+            save()
+        }
+    }
 
     // Default settings
     static let defaultSettings = Settings(musicEnabled: true, soundEffectsEnabled: true)
@@ -48,15 +69,5 @@ class Settings: ObservableObject, Codable {
             UserDefaults.standard.set(encoded, forKey: "userSettings")
         }
     }
-
-    // Method to load the settings from UserDefaults
-    static func load() -> Settings {
-        if let savedData = UserDefaults.standard.data(forKey: "userSettings"),
-           let decodedSettings = try? JSONDecoder().decode(Settings.self, from: savedData) {
-            return decodedSettings
-        } else {
-            // If no settings are found, return the default settings
-            return defaultSettings
-        }
-    }
 }
+

@@ -1,8 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @State private var musicEnabled: Bool = true
-    @State private var effectsEnabled: Bool = false
+    @ObservedObject var settings = Settings.shared
     @Binding var navigationPath: NavigationPath
 
     var body: some View {
@@ -24,9 +23,9 @@ struct SettingsView: View {
 
                     // Music Button
                     Button(action: {
-                        musicEnabled.toggle()
+                        settings.musicEnabled.toggle()
                     }) {
-                        Text("Music: \(musicEnabled ? "On" : "Off")")
+                        Text("Music: \(settings.musicEnabled ? "On" : "Off")")
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.black)
@@ -37,9 +36,9 @@ struct SettingsView: View {
 
                     // Effects Button
                     Button(action: {
-                        effectsEnabled.toggle()
+                        settings.soundEffectsEnabled.toggle()
                     }) {
-                        Text("Effects: \(effectsEnabled ? "On" : "Off")")
+                        Text("Effects: \(settings.soundEffectsEnabled ? "On" : "Off")")
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.black)
@@ -73,6 +72,14 @@ struct SettingsView: View {
         }
     }
 }
+
+// Preview
+struct SettingsView_Previews: PreviewProvider {
+    static var previews: some View {
+        SettingsView(navigationPath: .constant(NavigationPath()))
+    }
+}
+
 
 // Preview
 #Preview {

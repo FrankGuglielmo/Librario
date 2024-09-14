@@ -23,6 +23,7 @@ struct MyApp: App {
         _dictionaryManager = StateObject(wrappedValue: dictionaryManager)
         _gameManager = StateObject(wrappedValue: gameManager)
         _userData = StateObject(wrappedValue: userData)
+        AudioManager.shared.playMusic(named: "gameLoop1", loop: true)
     }
 
     var body: some Scene {
