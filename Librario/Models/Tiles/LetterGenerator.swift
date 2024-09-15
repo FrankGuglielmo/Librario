@@ -108,7 +108,11 @@ class LetterGenerator: Codable {
                 for (index, probability) in probabilities.enumerated() {
                     cumulativeProbability += probability
                     if randomProbability < cumulativeProbability {
-                        return letters[index]
+                        if letters[index] == "Q" { // Calculate Q or Qu tile
+                            return generateQorQu()
+                        } else {
+                            return letters[index]
+                        }
                     }
                 }
                 return nil
@@ -288,7 +292,7 @@ class LetterGenerator: Codable {
     // Function to generate "Q" or "Qu" (if needed)
     func generateQorQu() -> String {
         let qProbability = Double.random(in: 0..<1.0)
-        if qProbability < 1.0 / 3.0 {
+        if qProbability < (1.0 / 3.0) {
             return "Q"
         } else {
             return "Qu"
