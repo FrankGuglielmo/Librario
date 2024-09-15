@@ -14,7 +14,8 @@ struct GameView: View {
     @Binding var navigationPath: NavigationPath
 
         var body: some View {
-            ZStack {
+            print("GameView: body evaluated at \(Date())")
+            return ZStack {
                 // Background color filling the entire safe area
                 Image("red_curtain")
                     .resizable()

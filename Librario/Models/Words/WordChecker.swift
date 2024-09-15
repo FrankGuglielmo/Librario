@@ -15,19 +15,23 @@ class WordChecker: Codable {
     }
 
     // Calculate the score of the selected tiles
-    func calculateScore(for tiles:[Tile], tileMultiplier:[TileType:Double]) -> Int {
+    func calculateScore(for tiles: [Tile], tileMultiplier: [TileType: Double]) -> Int {
         var score: Int = 0
-        var multiplier: Double = 1.0
+        var totalMultiplier: Double = 1.0
         
         for tile in tiles {
             score += tile.points
-            if tileMultiplier[tile.type]! > multiplier {
-                multiplier = tileMultiplier[tile.type]!
+            
+            // Stack multipliers for tiles that have equal or higher multipliers
+            if let tileTypeMultiplier = tileMultiplier[tile.type] {
+                if tileTypeMultiplier >= totalMultiplier {
+                    totalMultiplier += tileTypeMultiplier - 1.0 // Add the additional multiplier value
+                }
             }
         }
         
-        //Multiply the base score by the weight of the most significant TileType in the word
-        let weightedScore = Double(score) * multiplier
+        // Multiply the base score by the cumulative multiplier
+        let weightedScore = Double(score) * totalMultiplier
         return Int(weightedScore)
     }
     

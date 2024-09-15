@@ -13,50 +13,53 @@ import Foundation
 class TileGenerator {
     
     private let letterToPointValue: [String: Int] = [
-            "A": 100, "B": 150, "C": 150, "D": 100, "E": 100,
-            "F": 150, "G": 150, "H": 150, "I": 100, "J": 200,
-            "K": 150, "L": 100, "M": 150, "N": 100, "O": 100,
-            "P": 150, "Qu": 300, "Q": 200, "R": 100, "S": 100,
-            "T": 100, "U": 100, "V": 200, "W": 150, "X": 200,
-            "Y": 150, "Z": 200
-        ]
-        
-        private let letterGenerator: LetterGenerator
-        private let tileTypeGenerator: TileTypeGenerator
-        
-        init(letterGenerator: LetterGenerator, tileTypeGenerator: TileTypeGenerator) {
-            self.letterGenerator = letterGenerator
-            self.tileTypeGenerator = tileTypeGenerator
-        }
-        
-        // Create a new Tile object based on current game state
-    func generateTile(position:Position, word: String, points: Int, level: Int, shortWordStreak: Int) -> Tile {
+        "A": 100, "B": 150, "C": 150, "D": 100, "E": 100,
+        "F": 150, "G": 150, "H": 150, "I": 100, "J": 200,
+        "K": 150, "L": 100, "M": 150, "N": 100, "O": 100,
+        "P": 150, "Qu": 300, "Q": 200, "R": 100, "S": 100,
+        "T": 100, "U": 100, "V": 200, "W": 150, "X": 200,
+        "Y": 150, "Z": 200
+    ]
+    
+    private let letterGenerator: LetterGenerator
+    private let tileTypeGenerator: TileTypeGenerator
+    private let performanceEvaluator: PerformanceEvaluator
+    
+    init(letterGenerator: LetterGenerator, tileTypeGenerator: TileTypeGenerator, performanceEvaluator: PerformanceEvaluator) {
+        self.letterGenerator = letterGenerator
+        self.tileTypeGenerator = tileTypeGenerator
+        self.performanceEvaluator = performanceEvaluator
+    }
+    
+    // Generate a single Tile based on current game state
+    func generateTile(position: Position, word: String, points: Int, level: Int, for grid: [[Tile]]) -> Tile {
         // Generate the letter for the tile
-        let letter = letterGenerator.generateLetter(isWeighted: true)
+        let letter = letterGenerator.generateLetter(for: grid)
         
         // Map the letter to its point value
         let tilePoints = letterToPointValue[letter] ?? 100 // Default to 100 if not found
         
         // Generate the type of the tile
-        let tileType = tileTypeGenerator.generateTileTypes(word: word, points: points, level: level, shortWordStreak: shortWordStreak, tilesToGenerate: 1).first ?? .regular
+        let tileType = tileTypeGenerator.generateTileTypes(word: word, points: points, level: level, tilesToGenerate: 1).first ?? .regular
         
         // Return the generated tile
         return Tile(letter: letter, type: tileType, isSelected: false, points: tilePoints, position: position, isPlaceholder: false)
     }
     
-    // Generate multiple Tile objects based on current game state
-    func generateTiles(positions: [Position], word: String, points: Int, level: Int, shortWordStreak: Int) -> [Tile] {
+    // Generate multiple Tiles based on current game state
+    func generateTiles(positions: [Position], word: String, points: Int, level: Int, for grid: [[Tile]]) -> [Tile] {
         // Generate the types of tiles
-        let tileTypes = tileTypeGenerator.generateTileTypes(word: word, points: points, level: level, shortWordStreak: shortWordStreak, tilesToGenerate: positions.count)
+        let tileTypes = tileTypeGenerator.generateTileTypes(word: word, points: points, level: level, tilesToGenerate: positions.count)
         
         print("types to generate: ", tileTypes)
         
         var generatedTiles: [Tile] = []
-        //Check there are enough positions for the tiles
+        
+        // Ensure there are enough positions for the tiles
         if positions.count == tileTypes.count {
             for i in 0..<tileTypes.count {
                 // Generate the letter for the tile
-                let letter = letterGenerator.generateLetter(isWeighted: true)
+                let letter = letterGenerator.generateLetter(for: grid)
                 
                 // Map the letter to its point value
                 let tilePoints = letterToPointValue[letter] ?? 100 // Default to 100 if not found
@@ -71,23 +74,20 @@ class TileGenerator {
                 generatedTiles.append(tile)
             }
         }
-        
-        
         return generatedTiles
     }
     
     // Generate a regular tile, mostly meant for initial game Tile Generation
-    func generateTile(at position: Position) -> Tile {
-        let letter = letterGenerator.generateLetter(isWeighted: false)
+    func generateTile(at position: Position, for grid: [[Tile]]) -> Tile {
+        let letter = letterGenerator.generateLetter(for: grid)
         let tileType = TileType.regular  // Default to a neutral/regular TileType
         let tilePoints = letterToPointValue[letter] ?? 100 // Default to 100 if not found
         return Tile(letter: letter, type: tileType, isSelected: false, points: tilePoints, position: position, isPlaceholder: false)
     }
     
-    
     func generateTemporaryTile(at position: Position) -> Tile {
         return Tile.placeholder(at: position)
     }
-        
 }
+
 

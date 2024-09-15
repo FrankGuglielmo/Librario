@@ -238,5 +238,16 @@ struct GameGridView: View {
 }
 
 #Preview {
-    GameGridView(tileManager: TileManager(tileGenerator: TileGenerator(letterGenerator: LetterGenerator(), tileTypeGenerator: TileTypeGenerator()), tileConverter: TileConverter(), wordChecker: WordChecker(wordStore: [:])))
+    let performanceEvaluator = PerformanceEvaluator()
+    
+    let letterGenerator = LetterGenerator(performanceEvaluator: performanceEvaluator)
+    let tileTypeGenerator = TileTypeGenerator(performanceEvaluator: performanceEvaluator)
+    let tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator, performanceEvaluator: performanceEvaluator)
+    
+    let tileConverter = TileConverter()
+    let wordChecker = WordChecker(wordStore: [:]) // Assuming the wordStore is empty for the preview
+    
+    let tileManager = TileManager(tileGenerator: tileGenerator, tileConverter: tileConverter, wordChecker: wordChecker, performanceEvaluator: performanceEvaluator)
+    
+    return GameGridView(tileManager: tileManager)
 }

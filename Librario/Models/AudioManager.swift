@@ -7,7 +7,6 @@
 
 import AVFoundation
 import Combine
-
 class AudioManager: ObservableObject {
     static let shared = AudioManager()
 
@@ -21,6 +20,7 @@ class AudioManager: ObservableObject {
         // Observe changes in musicEnabled
         settings.$musicEnabled
             .sink { [weak self] musicEnabled in
+                print("AudioManager: Received musicEnabled change to \(musicEnabled) at \(Date())")
                 if musicEnabled {
                     self?.musicPlayer?.play()
                 } else {
@@ -39,6 +39,7 @@ class AudioManager: ObservableObject {
         do {
             musicPlayer = try AVAudioPlayer(contentsOf: url)
             musicPlayer?.numberOfLoops = loop ? -1 : 0 // Loop indefinitely if true
+            musicPlayer?.prepareToPlay() // Prepare the player
             if Settings.shared.musicEnabled {
                 musicPlayer?.play()
             }
@@ -62,4 +63,3 @@ class AudioManager: ObservableObject {
         }
     }
 }
-

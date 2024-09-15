@@ -11,10 +11,9 @@ class GameState: ObservableObject, Codable {
     @Published var score: Int = 0
     @Published var level: Int = 1
     @Published var gameOver: Bool = false
-    @Published var shortWordStreak: Int = 0
     
     private enum CodingKeys: String, CodingKey {
-        case score, level, shortWordStreak, gameOver
+        case score, level, gameOver
     }
     
     init() {}
@@ -24,7 +23,6 @@ class GameState: ObservableObject, Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         score = try container.decode(Int.self, forKey: .score)
         level = try container.decode(Int.self, forKey: .level)
-        shortWordStreak = try container.decode(Int.self, forKey: .shortWordStreak)
         gameOver = try container.decode(Bool.self, forKey: .gameOver)
     }
 
@@ -32,7 +30,6 @@ class GameState: ObservableObject, Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(score, forKey: .score)
         try container.encode(level, forKey: .level)
-        try container.encode(shortWordStreak, forKey: .shortWordStreak)
         try container.encode(gameOver, forKey: .gameOver)
     }
 
@@ -40,7 +37,6 @@ class GameState: ObservableObject, Codable {
     func reset() {
         score = 0
         level = 1
-        shortWordStreak = 0
         gameOver = false
     }
 
