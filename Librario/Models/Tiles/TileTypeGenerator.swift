@@ -20,29 +20,34 @@ class TileTypeGenerator: Codable {
     var greenTileProbabilities: [Double] = []
     var fireTileProbabilities: [Double] = []
     
+    private let performanceEvaluator: PerformanceEvaluator
+    
+    init(performanceEvaluator: PerformanceEvaluator) {
+        self.performanceEvaluator = performanceEvaluator
+    }
+    
     // Generate a list of TileTypes based on past submission
-    func generateTileTypes(word: String, points: Int, level: Int, shortWordStreak: Int, tilesToGenerate: Int) -> [TileType] {
+    func generateTileTypes(word: String, points: Int, level: Int, tilesToGenerate: Int) -> [TileType] {
         var generatedTileTypes: [TileType] = []
         
         // Adjust initial probabilities based on word submission
-        adjustInitialProbabilities(wordLength: word.count, points: points, level: level, shortWordStreak: shortWordStreak, tilesToGenerate: tilesToGenerate)
+        adjustInitialProbabilities(wordLength: word.count, points: points, level: level, tilesToGenerate: tilesToGenerate)
         
         for i in 0..<tilesToGenerate {
             // Decide which TileType to produce based on current probabilities
             let nextTileType = decideNextTileType(greenTileProbability: greenTileProbabilities[i], fireTileProbability: fireTileProbabilities[i])
             generatedTileTypes.append(nextTileType)
         }
-        // Ensure no more than 3 consecutive green or fire tiles
         return generatedTileTypes.shuffled()
     }
     
     // Adjust probabilities for green and fire tiles based on initial game state
-    private func adjustInitialProbabilities(wordLength: Int, points: Int, level: Int, shortWordStreak: Int, tilesToGenerate: Int) {
+    private func adjustInitialProbabilities(wordLength: Int, points: Int, level: Int, tilesToGenerate: Int) {
         // Set green tile probabilities dynamically based on level and conditions
         greenTileProbabilities = calculateGreenTileProbabilities(wordLength: wordLength, points: points, level: level, tileCount: tilesToGenerate)
         
-        // Set fire tile probabilities based on short word streak and level
-        fireTileProbabilities = calculateFireTileProbabilities(level: level, shortWordStreak: shortWordStreak, tileCount: tilesToGenerate)
+        // Set fire tile probabilities based on performance and level
+        fireTileProbabilities = calculateFireTileProbabilities(level: level, tileCount: tilesToGenerate)
     }
     
     // Decide which TileType should be generated based on the given probabilities
@@ -58,11 +63,17 @@ class TileTypeGenerator: Codable {
         }
     }
     
-    // Calculate dynamic fire tile probabilities based on level and shortWordStreak
-    private func calculateFireTileProbabilities(level: Int, shortWordStreak: Int, tileCount: Int) -> [Double] {
-        let baseProbability = min(Double(level) / 100.0, 0.5)
-        let streakAdjustment = 1 + pow(Double(shortWordStreak) / 2.0, log(Double(level) + 1))
-        let totalProbability = baseProbability * streakAdjustment
+    // Calculate dynamic fire tile probabilities based on level and performance
+    private func calculateFireTileProbabilities(level: Int, tileCount: Int) -> [Double] {
+        let baseProbability = min(Double(level) / 50.0, 0.5)
+        var performanceAdjustment: Double = 1.0
+        
+        if performanceEvaluator.isHotStreak {
+            // Player is on a hot streak, increase fire tile probability to increase challenge
+            performanceAdjustment = 1.5
+        }
+        
+        let totalProbability = baseProbability * performanceAdjustment
         
         return distributeProbabilities(totalProbability: totalProbability, tileCount: tileCount)
     }
@@ -76,7 +87,7 @@ class TileTypeGenerator: Codable {
         }
         
         // Dynamic adjustment based on level
-        let levelAdjustment = 1 + pow(Double(level) / 50.0, 2.0)
+        let levelAdjustment = 1 + pow(Double(level) / 30.0, 2.0)
         let totalProbability = baseProbability * levelAdjustment
         
         return distributeProbabilities(totalProbability: totalProbability, tileCount: tileCount)
@@ -104,4 +115,5 @@ class TileTypeGenerator: Codable {
         return probabilities
     }
 }
+
 

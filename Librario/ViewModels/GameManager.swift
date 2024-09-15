@@ -12,7 +12,7 @@ class GameManager: ObservableObject, Codable {
     @Published var gameState: GameState
     @Published var levelData: LevelStatistics
     @Published var sessionData: SessionStatistics
-    @Published var tileManager: TileManager // Now Codable
+    @Published var tileManager: TileManager
 
     var levelSystem: [Int: Int] = [:]
     private let dictionaryManager: DictionaryManager
@@ -40,12 +40,13 @@ class GameManager: ObservableObject, Codable {
         if let loadedTileManager = TileManager.loadTileManager(dictionaryManager: dictionaryManager) {
             self.tileManager = loadedTileManager
         } else {
-            let letterGenerator = LetterGenerator()
-            let tileTypeGenerator = TileTypeGenerator()
-            let tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator)
+            let performanceEvaluator = PerformanceEvaluator()
+            let letterGenerator = LetterGenerator(performanceEvaluator: performanceEvaluator)
+            let tileTypeGenerator = TileTypeGenerator(performanceEvaluator: performanceEvaluator)
+            let tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator, performanceEvaluator: performanceEvaluator)
             let tileConverter = TileConverter()
             let wordChecker = WordChecker(wordStore: dictionaryManager.wordDictionary)
-            self.tileManager = TileManager(tileGenerator: tileGenerator, tileConverter: tileConverter, wordChecker: wordChecker)
+            self.tileManager = TileManager(tileGenerator: tileGenerator, tileConverter: tileConverter, wordChecker: wordChecker, performanceEvaluator: performanceEvaluator)
         }
         
         setupLevelSystem()
@@ -93,6 +94,7 @@ class GameManager: ObservableObject, Codable {
             gameState.reset()
             levelData = LevelStatistics()
             sessionData = SessionStatistics()
+            tileManager.scrambleLock = false
             tileManager.generateInitialGrid()
         }
         // Otherwise, keep the board and gameState as is
@@ -106,11 +108,10 @@ class GameManager: ObservableObject, Codable {
         }
 
         let word = tileManager.getWord()
-        gameState.shortWordStreak = word.count == 3 ? gameState.shortWordStreak + 1 : 0
         let points = tileManager.getScore()
         gameState.score += points
         levelData.trackWord(word, score: points)
-        tileManager.processWordSubmission(word: word, points: points, level: gameState.level, shortWordStreak: gameState.shortWordStreak)
+        tileManager.processWordSubmission(word: word, points: points, level: gameState.level)
 
         return true
     }

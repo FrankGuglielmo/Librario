@@ -16,6 +16,7 @@ class TileManager: ObservableObject, Codable {
     private var tileGenerator: TileGenerator
     private var tileConverter: TileConverter
     private var wordChecker: WordChecker
+    private var performanceEvaluator: PerformanceEvaluator
 
     private var tileMultiplier: [TileType:Double] = [
         TileType.fire: 1.0,
@@ -30,49 +31,61 @@ class TileManager: ObservableObject, Codable {
     
     let animationDuration: Double = 0.5
     
+    var scrambleLock: Bool = false
+    
     // Coding Keys
     private enum CodingKeys: String, CodingKey {
-        case grid, selectedTiles, tileMultiplier
+        case grid, selectedTiles, tileMultiplier, performanceEvaluator
     }
 
     // Initializer
-    init(tileGenerator: TileGenerator, tileConverter: TileConverter, wordChecker: WordChecker) {
-        self.tileGenerator = tileGenerator
-        self.tileConverter = tileConverter
-        self.wordChecker = wordChecker
-        generateInitialGrid()
-    }
+        init(tileGenerator: TileGenerator, tileConverter: TileConverter, wordChecker: WordChecker, performanceEvaluator: PerformanceEvaluator) {
+            self.tileGenerator = tileGenerator
+            self.tileConverter = tileConverter
+            self.wordChecker = wordChecker
+            self.performanceEvaluator = performanceEvaluator
+            generateInitialGrid()
+        }
 
-    // Codable Conformance
+        // Codable Conformance
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         grid = try container.decode([[Tile]].self, forKey: .grid)
         selectedTiles = try container.decode([Tile].self, forKey: .selectedTiles)
         tileMultiplier = try container.decode([TileType: Double].self, forKey: .tileMultiplier)
         
+        // Attempt to decode performanceEvaluator; if not present, initialize a new one
+        if let decodedPerformanceEvaluator = try? container.decode(PerformanceEvaluator.self, forKey: .performanceEvaluator) {
+            performanceEvaluator = decodedPerformanceEvaluator
+        } else {
+            // Default initialization for old data without performanceEvaluator
+            performanceEvaluator = PerformanceEvaluator()
+        }
+        
         // Reinitialize the non-Codable properties
-        let letterGenerator = LetterGenerator()
-        let tileTypeGenerator = TileTypeGenerator()
-        self.tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator)
+        let letterGenerator = LetterGenerator(performanceEvaluator: performanceEvaluator)
+        let tileTypeGenerator = TileTypeGenerator(performanceEvaluator: performanceEvaluator)
+        self.tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator, performanceEvaluator: performanceEvaluator)
         self.tileConverter = TileConverter()
         self.wordChecker = WordChecker(wordStore: DictionaryManager().wordDictionary)
     }
 
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(grid, forKey: .grid)
-        try container.encode(selectedTiles, forKey: .selectedTiles)
-        try container.encode(tileMultiplier, forKey: .tileMultiplier)
-    }
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(grid, forKey: .grid)
+            try container.encode(selectedTiles, forKey: .selectedTiles)
+            try container.encode(tileMultiplier, forKey: .tileMultiplier)
+            try container.encode(performanceEvaluator, forKey: .performanceEvaluator)
+        }
 
-    // Method to re-initialize non-Codable properties
-    func reinitializeNonCodableProperties(dictionaryManager: DictionaryManager) {
-        let letterGenerator = LetterGenerator()
-        let tileTypeGenerator = TileTypeGenerator()
-        self.tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator)
-        self.tileConverter = TileConverter()
-        self.wordChecker = WordChecker(wordStore: dictionaryManager.wordDictionary)
-    }
+        // Method to re-initialize non-Codable properties
+        func reinitializeNonCodableProperties(dictionaryManager: DictionaryManager) {
+            let letterGenerator = LetterGenerator(performanceEvaluator: performanceEvaluator)
+            let tileTypeGenerator = TileTypeGenerator(performanceEvaluator: performanceEvaluator)
+            self.tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator, performanceEvaluator: performanceEvaluator)
+            self.tileConverter = TileConverter()
+            self.wordChecker = WordChecker(wordStore: dictionaryManager.wordDictionary)
+        }
     
     
     // MARK: - Persistence Methods
@@ -116,7 +129,7 @@ class TileManager: ObservableObject, Codable {
     func generateInitialGrid() {
         grid = (0..<7).map { row in
             (0..<7).map { column in
-                tileGenerator.generateTile(at: Position(row: row, column: column))
+                tileGenerator.generateTile(at: Position(row: row, column: column), for: grid)
             }
         }
     }
@@ -218,7 +231,10 @@ class TileManager: ObservableObject, Codable {
     /**
      Remove the tiles that were used for word submission. If there are any tiles above the ones removed (meaning it is in the same column and a lower row number), move them down until there are no more empty gaps. Add new tiles for the top of the board to fill in.
      */
-    func processWordSubmission(word: String, points: Int, level: Int, shortWordStreak: Int) {
+    func processWordSubmission(word: String, points: Int, level: Int) {
+        
+        performanceEvaluator.updatePerformance(lastWord: word, lastWordScore: points)
+        
         // 1. Mark tiles for removal
         selectedTiles.forEach { tile in
             if let position = findTilePosition(tile) {
@@ -234,7 +250,7 @@ class TileManager: ObservableObject, Codable {
         // 3. After the existing tiles have fallen, generate new tiles
         DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
             withAnimation(.easeInOut(duration: self.animationDuration)) {
-                self.generateNewTilesForTop(word: word, points: points, level: level, shortWordStreak: shortWordStreak)
+                self.generateNewTilesForTop(word: word, points: points, level: level)
             }
         }
         
@@ -289,7 +305,7 @@ class TileManager: ObservableObject, Codable {
         }
     }
 
-    func generateNewTilesForTop(word: String, points: Int, level: Int, shortWordStreak: Int) {
+    func generateNewTilesForTop(word: String, points: Int, level: Int) {
         let rows = grid.count
         let columns = grid[0].count
         var placeholdersToReplace: [Position] = []
@@ -314,7 +330,7 @@ class TileManager: ObservableObject, Codable {
                 word: word,
                 points: points,
                 level: level,
-                shortWordStreak: shortWordStreak
+                for: grid
             )
 
             // Assign the new tiles starting above the grid
@@ -397,7 +413,7 @@ class TileManager: ObservableObject, Codable {
 
         // Generate a new tile at the top of the column
         let topPosition = Position(row: 0, column: position.column)
-        let newTile = tileGenerator.generateTile(at: topPosition)
+        let newTile = tileGenerator.generateTile(at: topPosition, for: grid)
         updateTile(at: topPosition, with: newTile)
     }
 
@@ -474,35 +490,67 @@ class TileManager: ObservableObject, Codable {
      Function to generate a new board with a penalty.
      */
     func scramble() {
+        
+        // If the user spams the scramble lock, a lock will be applied as to not overuse the scramble button
+        if scrambleLock {
+            return
+        }
+        
+        
         // Clear current grid and selected tiles
         clearSelection()
+
+        // Step 1: Count existing fire tiles
+        var fireTileCount = 0
+        for row in grid {
+            for tile in row {
+                if tile.type == .fire {
+                    fireTileCount += 1
+                }
+            }
+        }
+
+        // Step 2: Decide to add 1 to 3 fire tiles, regardless of level
+        let additionalFireTilesToAdd = Int.random(in: 1...3)
+        fireTileCount += additionalFireTilesToAdd
         
+        // Apply the scramble lock if there are three rows worth of fire tiles
+        if fireTileCount >= 21 {
+            scrambleLock = true
+        }
+        
+        
+
         // Regenerate all tiles for a fresh grid
         grid = (0..<7).map { row in
             (0..<7).map { column in
-                tileGenerator.generateTile(at: Position(row: row, column: column))
+                tileGenerator.generateTile(at: Position(row: row, column: column), for: grid)
             }
         }
-        
-        // Convert some tiles in the top rows to fire tiles
-        _ = grid.count
-        let columns = grid[0].count
-        let fireTileCount = Int.random(in: 3...5) // Number of fire tiles to generate, you can adjust this
 
-        // Generate fire tiles in the top 3 rows (rows 0 to 2)
-        for _ in 0..<fireTileCount {
+        // Step 3: Add fire tiles across the top 3 rows
+        let columns = grid[0].count
+        var firePositions: Set<Position> = [] // Track positions where fire tiles have been placed
+
+        while firePositions.count < fireTileCount && firePositions.count < 3 * columns {
             let randomRow = Int.random(in: 0..<3) // Restrict fire tiles to rows 0, 1, and 2
             let randomColumn = Int.random(in: 0..<columns)
-
-            var tile = grid[randomRow][randomColumn]
-            tile.type = .fire // Convert to fire tile
-            grid[randomRow][randomColumn] = tile
+            
+            let position = Position(row: randomRow, column: randomColumn)
+            
+            // Only add a fire tile if one hasn't been placed in that position already
+            if !firePositions.contains(position) {
+                firePositions.insert(position)
+                var tile = grid[randomRow][randomColumn]
+                tile.type = .fire // Convert to fire tile
+                grid[randomRow][randomColumn] = tile
+            }
         }
 
         // Notify that the grid has changed (optional)
         objectWillChange.send()
     }
-    
-    
+
+
 }
 

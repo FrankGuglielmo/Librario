@@ -22,6 +22,7 @@ class Settings: ObservableObject, Codable {
 
     @Published var musicEnabled: Bool {
         didSet {
+            print("Settings: musicEnabled changed to \(musicEnabled) at \(Date())")
             save()
         }
     }

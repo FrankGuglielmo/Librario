@@ -8,9 +8,6 @@
 //  Created by Frank Guglielmo on 8/17/24.
 //
 
-import Foundation
-
-
 /*
     Things that affect letter generation:
         - Level: At higher levels, provide more difficult letters to make words with.
@@ -31,169 +28,275 @@ import Foundation
  
  */
 
-class LetterGenerator {
-    
-    // Minimum threshold for any probability to avoid extremely small values
-    let minimumProbability: Double = 0.01
-    
-    // Base probabilities for each letter, including "Qu"
-    let baseProbabilities: [Double] = [
-        8.12,  // A (common)
-        1.49,  // B (less common)
-        2.71,  // C (less common)
-        4.32,  // D (moderately common)
-        12.02, // E (very common)
-        2.30,  // F (less common)
-        2.03,  // G (moderately common)
-        5.92,  // H (common)
-        7.31,  // I (common)
-        0.10,  // J (rare)
-        0.69,  // K (rare)
-        3.98,  // L (common)
-        2.61,  // M (moderately common)
-        6.95,  // N (common)
-        7.68,  // O (common)
-        1.82,  // P (less common)
-        0.12,  // Q (rare)
-        6.02,  // R (common)
-        6.28,  // S (common)
-        9.10,  // T (common)
-        2.88,  // U (moderately common)
-        1.11,  // V (less common)
-        2.09,  // W (less common)
-        0.17,  // X (rare)
-        2.11,  // Y (less common)
-        0.07   // Z (rare)
-    ]
-    
-    // These probabilities will be dynamic and change as more letters are generated
-    var currentProbabilities: [Double]
-    
-    // Letters corresponding to the probabilities (A-Z + "Qu")
-    let letters = [
-        "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
-        "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
-    ]
-    
-    // Reduction percentages for each letter (A-Z + "Qu")
-    let reductionPercentages: [Double] = [
-        30.0,  // A
-        60.0,  // B
-        55.0,  // C
-        50.0,  // D
-        25.0,  // E
-        55.0,  // F
-        50.0,  // G
-        35.0,  // H
-        30.0,  // I
-        70.0,  // J
-        65.0,  // K
-        40.0,  // L
-        50.0,  // M
-        35.0,  // N
-        30.0,  // O
-        55.0,  // P
-        70.0,  // Q
-        40.0,  // R
-        35.0,  // S
-        30.0,  // T
-        50.0,  // U
-        60.0,  // V
-        60.0,  // W
-        70.0,  // X
-        55.0,  // Y
-        70.0   // Z
-    ]
-    
-    init() {
-        self.currentProbabilities = baseProbabilities
-    }
+import Foundation
 
-    //TODO: Refactor isWeighted parameter. Need one that uses base probability and one that uses dynamic probabilities.
+class LetterGenerator: Codable {
+    
+    private var vowels = ["A", "E", "I", "O", "U"]
+    private var consonants = [
+        "B", "C", "D", "F", "G", "H", "J", "K", "L", "M",
+        "N", "P", "Q", "R", "S", "T", "V", "W", "X", "Y", "Z"
+    ]
+    
+    var vowelProbabilities: [Double] = [21.36, 31.62, 19.23, 20.21, 7.58]
+    var consonantProbabilities: [Double] = [
+        2.32,  4.23,  6.74,  3.59,  3.16,  9.24,  1.00,  1.09,  6.21,  4.07,
+        10.84, 2.84,  1.00,  9.39,  9.80, 14.20,  1.73,  3.27,  1.00,  3.29, 1.00
+    ]
+    
+    var lastGeneratedLetter: String? = nil
+    
+    // Reference to PerformanceEvaluator
+    private let performanceEvaluator: PerformanceEvaluator
+    
+    // Base vowel probability (adjustable based on performance and grid)
+    private var baseVowelProbability: Double = 50.0
+    
+    // Original probabilities to reset after adjustments
+    private let originalVowelProbabilities: [Double]
+    private let originalConsonantProbabilities: [Double]
+    private var originalBaseVowelProbability: Double = 55.9
+    
+    private var recentLetters: [String] = []
+    private var maxRecentLetters: Int = 3  // Adjust this value as needed
+    
+    init(performanceEvaluator: PerformanceEvaluator) {
+        self.performanceEvaluator = performanceEvaluator
+        self.originalVowelProbabilities = vowelProbabilities
+        self.originalConsonantProbabilities = consonantProbabilities
+    }
+    
     // Function to generate a letter based on the current probabilities
-    func generateLetter(isWeighted: Bool) -> String {
-        // Sum of all letter probabiblities, should be ~100.0
-        let totalProbability = currentProbabilities.reduce(0, +)
-        let randomValue = Double.random(in: 0..<totalProbability)
-        var cumulativeProbability: Double = 0.0
         
-        // Increment the index and current probability until it falls within letter threshhold
-        for (index, probability) in currentProbabilities.enumerated() {
-            cumulativeProbability += probability
-            if randomValue < cumulativeProbability {
-                var selectedLetter = letters[index]
-                // Special logic if letter is a Q. Returns either Q or Qu.
-                if selectedLetter == "Q" {
-                    selectedLetter = generateQorQu()
+        
+        // Function to generate a letter based on the current probabilities
+        func generateLetter(for grid: [[Tile]]) -> String {
+            // Reset probabilities to base values before adjustments
+            resetProbabilities()
+            
+            // Adjust probabilities based on performance and grid state
+            adjustProbabilities()
+            adjustForGridBalance(grid: grid)
+            
+            // Adjust probabilities based on vowel counts in the grid
+            adjustForVowelFrequency(grid: grid)
+            
+            var vowelProbability = baseVowelProbability  // Starting vowel probability
+            
+            // Influence probability based on the last generated letter
+            if let lastLetter = lastGeneratedLetter {
+                if vowels.contains(lastLetter) {
+                    vowelProbability -= 10.0  // Decrease vowel chance if the last was a vowel
+                } else {
+                    vowelProbability += 10.0  // Increase vowel chance if the last was a consonant
                 }
-                //TODO: Try and make this more efficient
-                if isWeighted {
-                    updateProbabilities(for: index)
+            }
+            
+            // Adjust the probability of recently generated letters
+            adjustForRecentLetters()
+            
+            // Ensure vowelProbability stays within bounds (20-80)
+            vowelProbability = max(20.0, min(80.0, vowelProbability))
+            
+            let letterTypeProbability = Double.random(in: 0..<100)
+            var selectedLetter: String = ""
+            
+            // Helper function to select a letter
+            func selectLetter(from letters: [String], with probabilities: [Double]) -> String? {
+                let randomProbability = Double.random(in: 0..<100)
+                var cumulativeProbability: Double = 0.0
+                for (index, probability) in probabilities.enumerated() {
+                    cumulativeProbability += probability
+                    if randomProbability < cumulativeProbability {
+                        if letters[index] == "Q" { // Calculate Q or Qu tile
+                            return generateQorQu()
+                        } else {
+                            return letters[index]
+                        }
+                    }
                 }
-                return selectedLetter
+                return nil
+            }
+            
+            // Generate either a vowel or a consonant
+            if letterTypeProbability < vowelProbability {
+                selectedLetter = selectLetter(from: vowels, with: vowelProbabilities) ?? vowels[0]
+            } else {
+                selectedLetter = selectLetter(from: consonants, with: consonantProbabilities) ?? consonants[0]
+            }
+            
+            // Prevent generating a duplicate letter immediately
+            while recentLetters.contains(selectedLetter) {
+                selectedLetter = (letterTypeProbability < vowelProbability)
+                    ? selectLetter(from: vowels, with: vowelProbabilities) ?? vowels[0]
+                    : selectLetter(from: consonants, with: consonantProbabilities) ?? consonants[0]
+            }
+            
+            // Update the last generated letter and the recent letters list
+            lastGeneratedLetter = selectedLetter
+            updateRecentLetters(with: selectedLetter)
+            
+            return selectedLetter
+        }
+        
+        // Adjust probabilities for recently generated letters
+        private func adjustForRecentLetters() {
+            for recentLetter in recentLetters {
+                if let vowelIndex = vowels.firstIndex(of: recentLetter) {
+                    vowelProbabilities[vowelIndex] *= 0.5  // Reduce probability for recent vowels
+                } else if let consonantIndex = consonants.firstIndex(of: recentLetter) {
+                    consonantProbabilities[consonantIndex] *= 0.5  // Reduce probability for recent consonants
+                }
+            }
+            
+            // Normalize probabilities after adjustment
+            normalizeProbabilities(&vowelProbabilities)
+            normalizeProbabilities(&consonantProbabilities)
+        }
+        
+        // Update the recent letters list, ensuring it doesn't exceed the maxRecentLetters size
+        private func updateRecentLetters(with letter: String) {
+            recentLetters.append(letter)
+            if recentLetters.count > maxRecentLetters {
+                recentLetters.removeFirst()
             }
         }
-        return letters[0] // Return "A" as a fallback
+
+    // Function to adjust vowel probabilities based on their frequency in the grid
+    private func adjustForVowelFrequency(grid: [[Tile]]) {
+        var vowelCounts: [String: Int] = ["A": 0, "E": 0, "I": 0, "O": 0, "U": 0]
+        
+        // Count the number of vowels in the current grid
+        for row in grid {
+            for tile in row {
+                let letter = tile.letter  // Assuming tile.letter is a String, not an Optional
+                if vowels.contains(letter) {
+                    vowelCounts[letter, default: 0] += 1
+                }
+            }
+        }
+        
+        // Total vowel count in the grid
+        let totalVowelCount = vowelCounts.values.reduce(0, +)
+        
+        // If there are no vowels on the grid, no need to adjust probabilities
+        if totalVowelCount == 0 {
+            return
+        }
+        
+        // Adjust probabilities based on vowel counts
+        let totalProbability: Double = 100.0
+        let baseProbability: Double = totalProbability / Double(vowels.count)
+        
+        for (index, vowel) in vowels.enumerated() {
+            let count = vowelCounts[vowel, default: 0]
+            
+            // Calculate the reduction factor based on how many of this vowel are already on the grid
+            let reductionFactor = 1.0 - (Double(count) / Double(totalVowelCount))  // The more of this vowel, the lower the probability
+            
+            // Adjust the vowel probability
+            vowelProbabilities[index] = max(baseProbability * reductionFactor, 1.0)  // Ensure no probability goes below 1.0
+        }
+        
+        // Normalize probabilities to make sure they sum to 100
+        normalizeProbabilities(&vowelProbabilities)
     }
 
+
+    // Helper function to normalize probabilities so they sum to 100
+    private func normalizeProbabilities(_ probabilities: inout [Double]) {
+        let total = probabilities.reduce(0, +)
+        if total > 0 {
+            probabilities = probabilities.map { $0 / total * 100 }
+        }
+    }
+
+    // Adjust probabilities based on performance using your PerformanceEvaluator
+    private func adjustProbabilities() {
+        // Adjust based on hot streak
+        if performanceEvaluator.isHotStreak {
+            // Decrease vowel probability to increase difficulty
+            baseVowelProbability -= 5.0
+            adjustVowelProbabilities(factor: 0.9)
+            adjustConsonantProbabilities(factor: 1.1)
+        }
+        
+        // Ensure baseVowelProbability stays within 30% to 60%
+        baseVowelProbability = max(30.0, min(60.0, baseVowelProbability))
+    }
+    
+    private func resetProbabilities() {
+        // Reset to original probabilities
+        vowelProbabilities = originalVowelProbabilities
+        consonantProbabilities = originalConsonantProbabilities
+        baseVowelProbability = originalBaseVowelProbability
+    }
+    
+    private func adjustVowelProbabilities(factor: Double) {
+        for i in 0..<vowelProbabilities.count {
+            vowelProbabilities[i] *= factor
+        }
+    }
+    
+    private func adjustConsonantProbabilities(factor: Double) {
+        for i in 0..<consonantProbabilities.count {
+            consonantProbabilities[i] *= factor
+        }
+    }
+    
+    // Adjustments based on the grid
+    
+    // 1. Balance the vowel-consonant ratio on the grid
+    private func adjustForGridBalance(grid: [[Tile]]) {
+        let flatGrid = grid.flatMap { $0 }
+        let vowelCount = flatGrid.filter { vowels.contains($0.letter) }.count
+        let consonantCount = flatGrid.filter { consonants.contains($0.letter) }.count
+        
+        let totalLetters = vowelCount + consonantCount
+        guard totalLetters > 0 else { return } // Avoid division by zero
+        
+        let vowelRatio = Double(vowelCount) / Double(totalLetters)
+        
+        // Target vowel ratio (e.g., 40% vowels)
+        let targetVowelRatio = 0.4
+        
+        if vowelRatio < targetVowelRatio {
+            // Increase vowel probability
+            baseVowelProbability += 2.0
+        } else if vowelRatio > targetVowelRatio {
+            // Decrease vowel probability
+            baseVowelProbability -= 2.0
+        }
+        
+        // Ensure baseVowelProbability stays within bounds
+        baseVowelProbability = max(20.0, min(50.0, baseVowelProbability))
+    }
+    
+    private func increaseProbability(for letter: String) {
+        if let vowelIndex = vowels.firstIndex(of: letter) {
+            vowelProbabilities[vowelIndex] *= 1.2
+        } else if let consonantIndex = consonants.firstIndex(of: letter) {
+            consonantProbabilities[consonantIndex] *= 1.2
+        }
+    }
     
     // Function to generate a collection of n letters
-    func generateLetters(count: Int) -> [String] {
+    func generateLetters(count: Int, grid: [[Tile]]) -> [String] {
         var generatedLetters: [String] = []
         for _ in 0..<count {
-            generatedLetters.append(generateLetter(isWeighted: true))
+            generatedLetters.append(generateLetter(for: grid))
         }
         return generatedLetters
     }
     
-    // Function to update probabilities after a letter is selected
-    func updateProbabilities(for selectedIndex: Int) {
-        let selectedProbability = currentProbabilities[selectedIndex]
-        let reductionPercentage = reductionPercentages[selectedIndex]
-        let deduction = selectedProbability * reductionPercentage / 100.0
-        
-        let smallestIndices = findSmallestProbabilities(limit: 6, excluding: selectedIndex)
-        let redistribution = deduction / Double(smallestIndices.count)
-        
-        currentProbabilities[selectedIndex] -= deduction
-        
-        for index in smallestIndices {
-            let newProbability = currentProbabilities[index] + redistribution
-            currentProbabilities[index] = max(newProbability, minimumProbability)
-        }
-        
-        normalizeProbabilities()
-    }
-    
-    // Function to find the indices of the smallest probabilities, excluding the selected index
-    private func findSmallestProbabilities(limit: Int, excluding excludedIndex: Int) -> [Int] {
-        let indexedProbabilities = currentProbabilities.enumerated().filter { $0.offset != excludedIndex }
-        let smallestIndices = indexedProbabilities.sorted(by: { $0.element < $1.element })
-                                                .prefix(limit)
-                                                .map { $0.offset }
-        
-        return smallestIndices
-    }
-    
-    // Normalize the probability distribution
-    private func normalizeProbabilities() {
-        let total = currentProbabilities.reduce(0, +)
-        for i in 0..<currentProbabilities.count {
-            currentProbabilities[i] = (currentProbabilities[i] / total) * 100.0
-        }
-    }
-    
-    // Function to reset probabilities back to base
-    func resetProbabilities() {
-        self.currentProbabilities = baseProbabilities
-    }
-    
+    // Function to generate "Q" or "Qu" (if needed)
     func generateQorQu() -> String {
         let qProbability = Double.random(in: 0..<1.0)
-        if qProbability < 1.0 / 3.0 {
+        if qProbability < (1.0 / 3.0) {
             return "Q"
         } else {
             return "Qu"
         }
     }
 }
+
