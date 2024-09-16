@@ -9,6 +9,7 @@ import Foundation
 import SwiftUI
 
 class GameManager: ObservableObject, Codable {
+    @Published var gameOver: Bool = false
     @Published var gameState: GameState
     @Published var levelData: LevelStatistics
     @Published var sessionData: SessionStatistics
@@ -89,6 +90,7 @@ class GameManager: ObservableObject, Codable {
     func startNewGame(userStatistics: UserStatistics) {
         // If there was a meaningful game that was being played before, (score > 0), reset everything
         if gameState.score != 0 {
+            gameOver = false
             handleSessionCompletion(userStatistics: userStatistics)
             userStatistics.totalGamesPlayed += 1
             gameState.reset()
@@ -103,7 +105,7 @@ class GameManager: ObservableObject, Codable {
 
     // Submit a word and handle score/word streak updates
     func submitWord() -> Bool {
-        if gameState.gameOver || !tileManager.validateWord() {
+        if self.gameOver || !tileManager.validateWord() {
             return false
         }
 
@@ -162,10 +164,17 @@ class GameManager: ObservableObject, Codable {
         userStatistics.saveUserStatistics()
     }
 
+    // Method to handle game over
+    func handleGameOver() {
+        DispatchQueue.main.async {
+            self.gameOver = true
+        }
+    }
+    
     // Method to set up the game over handler
     private func setupGameOverHandler() {
         tileManager.gameOverHandler = { [weak self] in
-            self?.gameState.handleGameOver()
+            self?.handleGameOver()
         }
     }
 }

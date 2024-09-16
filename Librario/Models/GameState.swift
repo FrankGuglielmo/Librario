@@ -10,10 +10,9 @@ import Foundation
 class GameState: ObservableObject, Codable {
     @Published var score: Int = 0
     @Published var level: Int = 1
-    @Published var gameOver: Bool = false
     
     private enum CodingKeys: String, CodingKey {
-        case score, level, gameOver
+        case score, level
     }
     
     init() {}
@@ -23,26 +22,18 @@ class GameState: ObservableObject, Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         score = try container.decode(Int.self, forKey: .score)
         level = try container.decode(Int.self, forKey: .level)
-        gameOver = try container.decode(Bool.self, forKey: .gameOver)
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(score, forKey: .score)
         try container.encode(level, forKey: .level)
-        try container.encode(gameOver, forKey: .gameOver)
     }
 
     // Reset the state for a new game
     func reset() {
         score = 0
         level = 1
-        gameOver = false
-    }
-
-    // Handle game over logic
-    func handleGameOver() {
-        gameOver = true
     }
 
     // MARK: - Persistence Methods

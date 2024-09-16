@@ -51,7 +51,7 @@ struct GameView: View {
                 
                 
                 // Show GameOverView directly based on gameState.gameOver
-                if gameManager.gameState.gameOver {
+                if gameManager.gameOver {
                     GameOverView(gameManager: gameManager, navigationPath: $navigationPath)
                         .zIndex(1) // Ensure the GameOverView appears on top
                 }

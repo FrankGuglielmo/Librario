@@ -247,6 +247,12 @@ class TileManager: ObservableObject, Codable {
             moveTilesDown()
         }
         
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2 * animationDuration) {
+            withAnimation(.easeInOut(duration: self.animationDuration)) {
+                self.checkFireTiles()
+            }
+        }
+        
         // 3. After the existing tiles have fallen, generate new tiles
         DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
             withAnimation(.easeInOut(duration: self.animationDuration)) {
@@ -259,11 +265,6 @@ class TileManager: ObservableObject, Codable {
             self.tileConverter.upgradeRandomTile(word: word, pointValue: points, grid: &self.grid)
         }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2 * animationDuration) {
-            withAnimation(.easeInOut(duration: self.animationDuration)) {
-                self.checkFireTiles()
-            }
-        }
         
         // 5. Clear the selection
         clearSelection()
@@ -359,9 +360,6 @@ class TileManager: ObservableObject, Codable {
         }
     }
 
-
-
-
     //Function the checks the board for any fire tiles. If a fire tile is still present, move it down one row and generate a tile for the top. If a fire tile cannot move down anymore, end the game.
     func checkFireTiles() {
             let rows = grid.count
@@ -375,7 +373,6 @@ class TileManager: ObservableObject, Codable {
                     if tile.type == .fire {
                         // If the fire tile is at the bottom row, trigger game over
                         if row == rows - 1 {
-                            print("Fire tile reached the bottom. Triggering game over.")
                             gameOverHandler?() // Notify GameState about game over
                             return
                         } else {
@@ -400,6 +397,27 @@ class TileManager: ObservableObject, Codable {
             return
         }
 
+        // Step 1: Check the breakpoint for the tile type
+        let breakpoints: [TileType: BreakPoint] = [
+            .regular: BreakPoint.regular,
+            .green: BreakPoint.green,
+            .gold: BreakPoint.gold,
+            .diamond: BreakPoint.diamond
+        ]
+
+        // Ensure the tile below can be consumed based on the breakpoint
+        guard let belowTileBreakPoint = breakpoints[belowTile.type] else { return }
+
+        // Step 2: If the fire tile's burnCounter is less than the below tile's BreakPoint, increment burnCounter
+        if fireTile.burnCounter < belowTileBreakPoint.rawValue {
+            fireTile.burnCounter += 1
+            updateTile(at: position, with: fireTile) // Update the fire tile to reflect the incremented burnCounter
+            return
+        }
+
+        // Step 3: If the fire tile meets the breakpoint, reset burnCounter and allow it to move
+        fireTile.burnCounter = 0
+
         // Move all tiles above the fire tile down by one row
         for row in stride(from: position.row - 1, through: 0, by: -1) {
             let currentTile = grid[row][position.column]
@@ -416,6 +434,7 @@ class TileManager: ObservableObject, Codable {
         let newTile = tileGenerator.generateTile(at: topPosition, for: grid)
         updateTile(at: topPosition, with: newTile)
     }
+
 
 
     private func shouldConvertTile(word: String, points: Int) -> Bool {
@@ -511,7 +530,7 @@ class TileManager: ObservableObject, Codable {
         }
 
         // Step 2: Decide to add 1 to 3 fire tiles, regardless of level
-        let additionalFireTilesToAdd = Int.random(in: 1...3)
+        let additionalFireTilesToAdd = Int.random(in: 2...4)
         fireTileCount += additionalFireTilesToAdd
         
         // Apply the scramble lock if there are three rows worth of fire tiles

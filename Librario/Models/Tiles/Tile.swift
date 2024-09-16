@@ -22,12 +22,14 @@ struct Tile: Identifiable, Codable, Hashable {
     
     var points: Int
     
-    var isMarkedForRemoval:Bool = false
+    var isMarkedForRemoval: Bool = false
     
     // Position of the tile in the grid
     var position: Position
     
     var isPlaceholder: Bool
+    
+    var burnCounter: Int = 0 // The amount of times a tile
     
     // Computed property to get the image name based on the tile's state
     var imageName: String {
@@ -76,4 +78,11 @@ enum TileType: String, Codable {
     case gold = "gold"
     case diamond = "diamond"
     case fire = "red"
+}
+
+enum BreakPoint: Int, Codable {
+    case regular = 0
+    case green = 1
+    case gold = 2
+    case diamond = 3
 }

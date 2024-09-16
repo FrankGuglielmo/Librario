@@ -84,6 +84,7 @@ class UserStatistics: Codable {
 
                 // Ensure we don't assign NaN values
                 if !newWeightedAverage.isNaN {
+                    print("Updating average word length..")
                     averageWordLength = newWeightedAverage
                 } else {
                     print("Warning: Computed NaN for average word length. Keeping previous average.")
