@@ -11,7 +11,7 @@ struct GameStatusView: View {
     @ObservedObject var gameManager: GameManager
     @Binding var navigationPath: NavigationPath
     
-    // Function to calculate progress (you can customize this logic)
+    // Function to calculate progress
     private var progress: CGFloat {
         let gameState = gameManager.gameState
         guard let nextLevelThreshold = gameManager.levelSystem[gameState.level] else { return 0 }
@@ -49,6 +49,7 @@ struct GameStatusView: View {
             HStack(spacing: 0) {
                 // Custom back button using NavigationPath
                 Button(action: {
+                    AudioManager.shared.playSoundEffect(named: "switch_view_sound")
                     navigationPath.removeLast() // Navigate back to HomeView
                     print("Back to home")
                 }) {
@@ -97,8 +98,3 @@ struct GameStatusView: View {
         .frame(maxWidth: .infinity, maxHeight: 140, alignment: .top) // Ensure the entire view fills width and aligns properly
     }
 }
-
-#Preview {
-    GameStatusView(gameManager: GameManager(dictionaryManager: DictionaryManager()), navigationPath: .constant(NavigationPath()))
-}
-

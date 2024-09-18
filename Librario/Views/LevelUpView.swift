@@ -69,17 +69,17 @@ struct LevelUpView: View {
     }
 }
 
-#Preview {
-    let mockGameManager = GameManager(dictionaryManager: DictionaryManager())
-    let mockNavigationPath = NavigationPath()
-
-    // Mock level statistics
-    mockGameManager.levelData.wordsSubmitted = 3
-    mockGameManager.levelData.longestWord = "BOOKWORM"
-    mockGameManager.levelData.longestWordPoints = 750
-    mockGameManager.levelData.highestScoringWord = "ZEBRA"
-    mockGameManager.levelData.highestScoringWordPoints = 800
-    
-
-    return LevelUpView(gameManager: mockGameManager, navigationPath: .constant(mockNavigationPath))
-}
+//#Preview {
+//    let mockGameManager = GameManager(dictionaryManager: DictionaryManager())
+//    let mockNavigationPath = NavigationPath()
+//
+//    // Mock level statistics
+//    mockGameManager.levelData.wordsSubmitted = 3
+//    mockGameManager.levelData.longestWord = "BOOKWORM"
+//    mockGameManager.levelData.longestWordPoints = 750
+//    mockGameManager.levelData.highestScoringWord = "ZEBRA"
+//    mockGameManager.levelData.highestScoringWordPoints = 800
+//    
+//
+//    return LevelUpView(gameManager: mockGameManager, navigationPath: .constant(mockNavigationPath))
+//}

@@ -65,7 +65,7 @@ class TileTypeGenerator: Codable {
     
     // Calculate dynamic fire tile probabilities based on level and performance
     private func calculateFireTileProbabilities(level: Int, tileCount: Int) -> [Double] {
-        let baseProbability = min(Double(level) / 50.0, 0.5)
+        let baseProbability = min(Double(level) / 30.0, 0.5)
         var performanceAdjustment: Double = 1.0
         
         if performanceEvaluator.isHotStreak {

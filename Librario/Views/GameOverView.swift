@@ -41,6 +41,7 @@ struct GameOverView: View {
             Button(action: {
                 // Exit the game and return to the home screen by clearing the navigation path
                 if !navigationPath.isEmpty {
+                    AudioManager.shared.playSoundEffect(named: "switch_view_sound")
                     navigationPath.removeLast() // Pop the current view from the navigation path
                     gameManager.startNewGame(userStatistics: userData.userStatistics) // This resets the game over flag and
                 }

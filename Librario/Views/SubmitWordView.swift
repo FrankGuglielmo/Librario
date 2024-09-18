@@ -14,12 +14,9 @@ struct SubmitWordView: View {
     @ObservedObject var gameManager: GameManager
     
     var body: some View {
-        // Conditionally show and make clickable the submit word bubble
         Button(action: {
             // Handle word submission
-            if gameManager.submitWord() {
-                print("Good Word!")
-            }
+            gameManager.submitWord()
         }) {
             ZStack {
                 RoundedRectangle(cornerRadius: 10)
@@ -28,38 +25,36 @@ struct SubmitWordView: View {
                     .opacity(!tileManager.selectedTiles.isEmpty ? 1 : 0) // Visible when there are selected tiles
                 
                 VStack(spacing: 8) {
-                    // Display the selected tiles or the combined word if validated
                     HStack {
                         if tileManager.validateWord() {
                             // Combine letters into a single word, handling "Qu" properly
                             Text(formatSelectedTilesForWord(tiles: tileManager.selectedTiles))
-                                .font(.title)
+                                .font(dynamicFontSize(for: tileManager.selectedTiles.count))
                                 .foregroundColor(.black)
-                                .padding(.horizontal, 4)
+                                .padding(.horizontal, dynamicPadding(for: tileManager.selectedTiles.count))
                         } else {
                             // Show individual letters as separate tiles
                             ForEach(tileManager.selectedTiles, id: \.id) { tile in
                                 if tile.letter.uppercased() == "QU" {
                                     // Handle the "Qu" tile separately as "Q" and "U"
                                     Text("Q")
-                                        .font(.title)
+                                        .font(dynamicFontSize(for: tileManager.selectedTiles.count))
                                         .foregroundColor(.black)
-                                        .padding(.horizontal, 2)
+                                        .padding(.horizontal, dynamicPadding(for: tileManager.selectedTiles.count))
                                     Text("U")
-                                        .font(.title)
+                                        .font(dynamicFontSize(for: tileManager.selectedTiles.count))
                                         .foregroundColor(.black)
-                                        .padding(.horizontal, 2)
+                                        .padding(.horizontal, dynamicPadding(for: tileManager.selectedTiles.count))
                                 } else {
                                     Text(tile.letter.uppercased())
-                                        .font(.title)
+                                        .font(dynamicFontSize(for: tileManager.selectedTiles.count))
                                         .foregroundColor(.black)
-                                        .padding(.horizontal, 4)
+                                        .padding(.horizontal, dynamicPadding(for: tileManager.selectedTiles.count))
                                 }
                             }
                         }
                     }
                     
-                    // Conditionally display the score and "TAP TO SUBMIT" if the word is valid
                     if tileManager.validateWord() {
                         HStack {
                             Text("+")
@@ -82,6 +77,30 @@ struct SubmitWordView: View {
         .buttonStyle(PlainButtonStyle()) // Ensure the button doesn't have default styling
     }
     
+    // Dynamically adjust font size based on the number of selected tiles
+    func dynamicFontSize(for tileCount: Int) -> Font {
+        switch tileCount {
+        case 0...5:
+            return .title
+        case 6...10:
+            return .title3
+        default:
+            return .body // Smaller font size for more than 15 tiles
+        }
+    }
+
+    // Dynamically adjust padding based on the number of selected tiles
+    func dynamicPadding(for tileCount: Int) -> CGFloat {
+        switch tileCount {
+        case 0...5:
+            return 4
+        case 6...10:
+            return 2
+        default:
+            return 0 // No padding for more than 15 tiles
+        }
+    }
+    
     // Helper function to format the selected tiles into a combined word with correct handling of "Qu"
     func formatSelectedTilesForWord(tiles: [Tile]) -> String {
         tiles.map { tile in
@@ -96,18 +115,3 @@ struct SubmitWordView: View {
 
 
 
-#Preview {
-    // Mock data for preview
-    let mockDictionaryManager = DictionaryManager()
-    let mockGameManager = GameManager(dictionaryManager: mockDictionaryManager)
-    
-    // Set up some sample tiles based on the provided Tile structure
-    let sampleTiles = [
-        Tile(letter: "B", type: .regular, points: 1, position: Position(row: 0, column: 0), isPlaceholder: false),
-        Tile(letter: "A", type: .green, points: 2, position: Position(row: 0, column: 1), isPlaceholder: false),
-        Tile(letter: "D", type: .gold, points: 3, position: Position(row: 0, column: 2), isPlaceholder: false)
-    ]
-    mockGameManager.tileManager.selectedTiles = sampleTiles
-    
-    return SubmitWordView(tileManager: mockGameManager.tileManager, gameManager: mockGameManager)
-}

@@ -17,7 +17,6 @@ struct TileView: View {
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(width: tileSize, height: tileSize)
-            .animation(.spring(), value: tile.isSelected)
     }
 }
 

@@ -17,6 +17,9 @@ class GameManager: ObservableObject, Codable {
 
     var levelSystem: [Int: Int] = [:]
     private let dictionaryManager: DictionaryManager
+    
+    // Closure to trigger sprite changes in the GameView
+    var spriteChangeHandler: ((String, TimeInterval) -> Void)?
 
     enum CodingKeys: String, CodingKey {
         case gameState, levelData, sessionData, levelSystem, tileManager
@@ -104,19 +107,28 @@ class GameManager: ObservableObject, Codable {
     }
 
     // Submit a word and handle score/word streak updates
-    func submitWord() -> Bool {
+    func submitWord() {
         if self.gameOver || !tileManager.validateWord() {
-            return false
+            return
         }
+
+        // Array of sound effects to choose from
+        let soundEffects = ["bite_sound", "word_submit_swoosh"]
+
+        // Randomly select a sound effect
+        if let selectedSound = soundEffects.randomElement() {
+            AudioManager.shared.playSoundEffect(named: selectedSound)
+        }
+        
+        changeSprite(to: "happy_sprite", for: 1.0)
 
         let word = tileManager.getWord()
         let points = tileManager.getScore()
         gameState.score += points
         levelData.trackWord(word, score: points)
         tileManager.processWordSubmission(word: word, points: points, level: gameState.level)
-
-        return true
     }
+
 
     // Check if the player should progress to the next level
     func checkLevelProgression() -> Bool{
@@ -167,6 +179,7 @@ class GameManager: ObservableObject, Codable {
     // Method to handle game over
     func handleGameOver() {
         DispatchQueue.main.async {
+            AudioManager.shared.playSoundEffect(named: "game_over_sound")
             self.gameOver = true
         }
     }
@@ -176,5 +189,31 @@ class GameManager: ObservableObject, Codable {
         tileManager.gameOverHandler = { [weak self] in
             self?.handleGameOver()
         }
+    }
+    // Function to check for fire tiles on the board
+    func hasFireTile() -> Bool {
+        // Assuming tileManager.tiles is a 2D array of tiles representing the grid
+        for row in tileManager.grid {
+            for tile in row {
+                if tile.type == .fire { // Assuming fire tiles have a `TileType` of .fire
+                    return true
+                }
+            }
+        }
+        return false
+    }
+    
+    // Function to handle fire tile detection
+    func handleFireTile() {
+        if hasFireTile() {
+            changeSprite(to: "nervous_sprite") // Change to nervous sprite
+        } else {
+            changeSprite(to: "normal_sprite") // Revert to normal if no fire tiles
+        }
+    }
+    
+    func changeSprite(to sprite: String, for duration: TimeInterval = 1.0) {
+        // Call the spriteChangeHandler closure to update the sprite
+        spriteChangeHandler?(sprite, duration)
     }
 }

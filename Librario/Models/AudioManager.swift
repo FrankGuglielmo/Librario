@@ -7,6 +7,7 @@
 
 import AVFoundation
 import Combine
+
 class AudioManager: ObservableObject {
     static let shared = AudioManager()
 
@@ -15,6 +16,7 @@ class AudioManager: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     init() {
+        configureAudioSession()
         let settings = Settings.shared
 
         // Observe changes in musicEnabled
@@ -28,6 +30,16 @@ class AudioManager: ObservableObject {
                 }
             }
             .store(in: &cancellables)
+    }
+
+    private func configureAudioSession() {
+        do {
+            // Set the audio session category to allow mixing with other audio
+            try AVAudioSession.sharedInstance().setCategory(.ambient, options: [.mixWithOthers])
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            print("Failed to set audio session category: \(error.localizedDescription)")
+        }
     }
 
     func playMusic(named filename: String, loop: Bool = true) {
@@ -63,3 +75,4 @@ class AudioManager: ObservableObject {
         }
     }
 }
+

@@ -116,6 +116,7 @@ struct TipView: View {
                 .padding()
                 
                 Button(action: {
+                    AudioManager.shared.playSoundEffect(named: "switch_view_sound")
                     navigationPath.removeLast()
                 }, label: {
                     HStack {
@@ -137,6 +138,6 @@ struct TipView: View {
 }
 
 
-#Preview {
-    TipView(navigationPath: .constant(NavigationPath()))
-}
+//#Preview {
+//    TipView(navigationPath: .constant(NavigationPath()))
+//}

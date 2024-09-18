@@ -29,6 +29,8 @@ class TileManager: ObservableObject, Codable {
     
     var gameOverHandler: (() -> Void)? // Closure to notify GameState when the game is over
     
+    var fireTileChangeHandler: ((Bool) -> Void)?
+    
     let animationDuration: Double = 0.5
     
     var scrambleLock: Bool = false
@@ -157,13 +159,26 @@ class TileManager: ObservableObject, Codable {
         guard var tile = getTile(at: position) else { return }
 
         // Ensure the tile is selectable (it must be adjacent to the last selected tile if the stack is not empty)
-        if let lastSelectedTile = selectedTiles.last, !isAdjacent(lastSelectedTile, to: tile) {
+        if let lastSelectedTile = selectedTiles.last, !isAdjacent(lastSelectedTile, to: tile) || selectedTiles.count == 12 {
+            
+            AudioManager.shared.playSoundEffect(named: "incorrect_selection")
             return // Cannot select a non-adjacent tile
         }
         
         tile.isSelected = true  // Change to selected state
         updateTile(at: position, with: tile)  // Update the grid with the new state
         selectedTiles.append(tile)  // Push the selected tile onto the stack
+        
+        
+        // if tile is special, play special tile_click
+        if validateWord() {
+            AudioManager.shared.playSoundEffect(named: "valid_word_tile_click")
+        } else if tile.type == TileType.regular && !selectedTiles.contains(where: { $0.type != .regular }) {
+            AudioManager.shared.playSoundEffect(named: "regular_tile_click")
+        } else {
+            AudioManager.shared.playSoundEffect(named: "special_tile_click")
+        }
+        
     }
 
     /**
@@ -199,11 +214,11 @@ class TileManager: ObservableObject, Codable {
     func toggleTileSelection(at position: Position) {
         if let tile = getTile(at: position) {
             if tile.isSelected {
+                AudioManager.shared.playSoundEffect(named: "regular_tile_click")
                 deselectTile(at: position)
             } else {
                 selectTile(at: position)
             }
-            AudioManager.shared.playSoundEffect(named: "tile_click2")
         }
     }
 
@@ -219,6 +234,10 @@ class TileManager: ObservableObject, Codable {
 
     // MARK: - Word Submission Handling
 
+    // Check if the tile is the last selected tile
+    func isLastSelectedTile(tile: Tile) -> Bool {
+        return selectedTiles.last == tile
+    }
     
     func validateWord() -> Bool {
         if wordChecker.isWord(tiles: selectedTiles) {
@@ -342,6 +361,7 @@ class TileManager: ObservableObject, Codable {
                 grid[placeholdersToReplace[i].row][placeholdersToReplace[i].column] = newTile
             }
 
+            AudioManager.shared.playSoundEffect(named: "tile_drop")
             // Animate new tiles falling down to their correct positions
             for i in 0..<numberOfNewTiles {
                 let targetPosition = placeholdersToReplace[i]
@@ -362,28 +382,32 @@ class TileManager: ObservableObject, Codable {
 
     //Function the checks the board for any fire tiles. If a fire tile is still present, move it down one row and generate a tile for the top. If a fire tile cannot move down anymore, end the game.
     func checkFireTiles() {
-            let rows = grid.count
-            let columns = grid[0].count
+        let rows = grid.count
+        let columns = grid[0].count
+        var hasFireTile = false
 
-            for column in 0..<columns {
-                // Find the bottom-most fire tile
-                for row in stride(from: rows - 1, through: 0, by: -1) {
-                    let tile = grid[row][column]
-                    
-                    if tile.type == .fire {
-                        // If the fire tile is at the bottom row, trigger game over
-                        if row == rows - 1 {
-                            gameOverHandler?() // Notify GameState about game over
-                            return
-                        } else {
-                            // Otherwise, move the fire tile down and consume the tile below
-                            moveFireTileDown(from: Position(row: row, column: column))
-                            break // Only move one fire tile per column
-                        }
+        for column in 0..<columns {
+            // Find the bottom-most fire tile
+            for row in stride(from: rows - 1, through: 0, by: -1) {
+                let tile = grid[row][column]
+                if tile.type == .fire {
+                    hasFireTile = true
+                    // If the fire tile is at the bottom row, trigger game over
+                    if row == rows - 1 {
+                        gameOverHandler?() // Notify GameState about game over
+                        return
+                    } else {
+                        // Otherwise, move the fire tile down
+                        moveFireTileDown(from: Position(row: row, column: column))
+                        break // Only move one fire tile per column
                     }
                 }
             }
         }
+        
+        // Notify the handler about the fire tile state
+        fireTileChangeHandler?(hasFireTile)
+    }
 
     func moveFireTileDown(from position: Position) {
         let belowPosition = Position(row: position.row + 1, column: position.column)
@@ -417,6 +441,7 @@ class TileManager: ObservableObject, Codable {
 
         // Step 3: If the fire tile meets the breakpoint, reset burnCounter and allow it to move
         fireTile.burnCounter = 0
+        AudioManager.shared.playSoundEffect(named: "word_submit_swoosh3")
 
         // Move all tiles above the fire tile down by one row
         for row in stride(from: position.row - 1, through: 0, by: -1) {
@@ -515,7 +540,7 @@ class TileManager: ObservableObject, Codable {
             return
         }
         
-        
+        AudioManager.shared.playSoundEffect(named: "tile_drop")
         // Clear current grid and selected tiles
         clearSelection()
 
@@ -566,6 +591,7 @@ class TileManager: ObservableObject, Codable {
             }
         }
 
+        fireTileChangeHandler?(true) // There will always be a fire tile after scrambling
         // Notify that the grid has changed (optional)
         objectWillChange.send()
     }

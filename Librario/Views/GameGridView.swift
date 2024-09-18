@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct GameGridView: View {
+    @ObservedObject var gameManager: GameManager
     @ObservedObject var tileManager: TileManager
-    @EnvironmentObject var gameState: GameState
     @State private var selectedDuringDrag: Set<Position> = []
     @Namespace private var tileNamespace
 
@@ -27,6 +27,7 @@ struct GameGridView: View {
                     TileView(tile: tile, tileSize: tileSize) {
                         tileManager.toggleTileSelection(at: tile.position)
                     }
+    
                     .position(
                         x: xPosition(for: tile, tileSize: tileSize),
                         y: yPosition(for: tile, tileSize: tileSize)
@@ -237,17 +238,19 @@ struct GameGridView: View {
     }
 }
 
-#Preview {
-    let performanceEvaluator = PerformanceEvaluator()
-    
-    let letterGenerator = LetterGenerator(performanceEvaluator: performanceEvaluator)
-    let tileTypeGenerator = TileTypeGenerator(performanceEvaluator: performanceEvaluator)
-    let tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator, performanceEvaluator: performanceEvaluator)
-    
-    let tileConverter = TileConverter()
-    let wordChecker = WordChecker(wordStore: [:]) // Assuming the wordStore is empty for the preview
-    
-    let tileManager = TileManager(tileGenerator: tileGenerator, tileConverter: tileConverter, wordChecker: wordChecker, performanceEvaluator: performanceEvaluator)
-    
-    return GameGridView(tileManager: tileManager)
-}
+//#Preview {
+//    let performanceEvaluator = PerformanceEvaluator()
+//    
+//    let letterGenerator = LetterGenerator(performanceEvaluator: performanceEvaluator)
+//    let tileTypeGenerator = TileTypeGenerator(performanceEvaluator: performanceEvaluator)
+//    let tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator, performanceEvaluator: performanceEvaluator)
+//    
+//    let tileConverter = TileConverter()
+//    let wordChecker = WordChecker(wordStore: [:]) // Assuming the wordStore is empty for the preview
+//    
+//    let tileManager = TileManager(tileGenerator: tileGenerator, tileConverter: tileConverter, wordChecker: wordChecker, performanceEvaluator: performanceEvaluator)
+//    
+//    let gameManager = GameManager(dictionaryManager: DictionaryManager())
+//    
+//    return GameGridView(gameManager: gameManager, tileManager: tileManager)
+//}

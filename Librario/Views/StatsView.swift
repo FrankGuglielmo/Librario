@@ -54,6 +54,7 @@ struct StatsView: View {
                 
                 // Back Button
                 Button(action: {
+                    AudioManager.shared.playSoundEffect(named: "switch_view_sound")
                     navigationPath.removeLast() // Navigate back to the previous view
                 }, label: {
                     HStack {

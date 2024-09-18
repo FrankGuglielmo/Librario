@@ -26,8 +26,9 @@ struct HomeView: View {
                 VStack {
                     // Header
                     VStack {
+                    
                         Text("Librario")
-                            .font(.largeTitle)
+                            .font(Font.custom("NerkoOne-Regular", size: 70, relativeTo: .title))
                             .fontWeight(.bold)
                             .foregroundStyle(Color.white)
                         HStack {
@@ -43,6 +44,7 @@ struct HomeView: View {
                                 showActionSheet = true
                             } else {
                                 // Start a new game directly
+                                AudioManager.shared.playSoundEffect(named: "switch_view_sound")
                                 gameManager.startNewGame(userStatistics: userData.userStatistics)
                                 pathStore.path.append(ViewType.game)
                             }
@@ -66,10 +68,12 @@ struct HomeView: View {
                                 buttons: [
                                     .default(Text("Resume Game")) {
                                         // Resume the current game
+                                        AudioManager.shared.playSoundEffect(named: "switch_view_sound")
                                         pathStore.path.append(ViewType.game)
                                     },
                                     .destructive(Text("Start New Game")) {
                                         // Start a new game
+                                        AudioManager.shared.playSoundEffect(named: "switch_view_sound")
                                         gameManager.startNewGame(userStatistics: userData.userStatistics)
                                         pathStore.path.append(ViewType.game)
                                     },
@@ -79,6 +83,7 @@ struct HomeView: View {
                         }
 
                         Button(action: {
+                            AudioManager.shared.playSoundEffect(named: "switch_view_sound")
                             pathStore.path.append(ViewType.settings)
                         }, label: {
                             ZStack {
@@ -92,6 +97,7 @@ struct HomeView: View {
                         })
 
                         Button(action: {
+                            AudioManager.shared.playSoundEffect(named: "switch_view_sound")
                             pathStore.path.append(ViewType.tips)
                         }, label: {
                             ZStack {
@@ -104,6 +110,7 @@ struct HomeView: View {
                         })
                         
                         Button(action: {
+                            AudioManager.shared.playSoundEffect(named: "switch_view_sound")
                             gameManager.updateUserStatistics(userData.userStatistics)
                             pathStore.path.append(ViewType.stats)
                         }, label: {
@@ -155,38 +162,17 @@ enum ViewType: Hashable, Codable {
 
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
-        let mockDictionaryManager = DictionaryManager()
-        let mockGameManager = GameManager(dictionaryManager: mockDictionaryManager)
+        // Mock GameManager instance with default or sample data
+        let mockGameManager = GameManager(dictionaryManager: DictionaryManager())
+        mockGameManager.gameState = GameState() // Sample state with score 0
+
+        // Mock UserData instance with default or sample data
         let mockUserData = UserData()
-        
-        HomeView()
-            .previewDevice("iPhone 15 Pro") // Preview for iPhone 14 Pro
-            .previewDisplayName("iPhone 15 Pro")
-            .environmentObject(mockGameManager)
-            .environmentObject(mockUserData)
-        
-        HomeView()
-            .previewDevice("iPhone 15 Pro Max") // Preview for iPhone 15 Pro
-            .previewDisplayName("iPhone 15 Pro Max")
-            .environmentObject(mockGameManager)
-            .environmentObject(mockUserData)
-        
-        HomeView()
-            .previewDevice("iPad (10th generation)") // Preview for iPad Pro 11"
-            .previewDisplayName("iPad 11-inch")
-            .environmentObject(mockGameManager)
-            .environmentObject(mockUserData)
-        
-        HomeView()
-            .previewDevice("iPhone SE (3rd generation)") // Preview for smaller iPhone SE
-            .previewDisplayName("iPhone SE 3rd Gen")
-            .environmentObject(mockGameManager)
-            .environmentObject(mockUserData)
-        
-        HomeView()
-            .previewDevice("iPad mini (6th generation)") // Preview for iPad mini
-            .previewDisplayName("iPad mini 6th Gen")
-            .environmentObject(mockGameManager)
-            .environmentObject(mockUserData)
-        }
+        mockUserData.userStatistics = UserStatistics() // Sample statistics
+
+        return HomeView()
+            .environmentObject(mockGameManager) // Inject mock GameManager
+            .environmentObject(mockUserData) // Inject mock UserData
+            .previewDisplayName("HomeView Preview")
     }
+}
