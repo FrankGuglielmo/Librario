@@ -7,19 +7,24 @@
 
 import SwiftUI
 
+import SwiftUI
+
 struct HomeView: View {
+    @State private var showActionSheet = false
     @State private var pathStore = PathStore() // Create PathStore instance
     @EnvironmentObject var gameManager: GameManager
     @EnvironmentObject var userData: UserData
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
-    @State private var showActionSheet = false
 
     var body: some View {
-        NavigationStack(path: $pathStore.path) { // Use pathStore's path
+        NavigationStack(path: $pathStore.path) { // Simple navigation stack
             GeometryReader { geometry in
                 let isCompact = horizontalSizeClass == .compact
-                let titleFontSize: CGFloat = isCompact ? geometry.size.width * 0.12 : geometry.size.width * 0.08
-                let imageWidth: CGFloat = isCompact ? geometry.size.width * 0.8 : geometry.size.width * 0.5
+                let titleFontSize: CGFloat = isCompact ? geometry.size.width * 0.2 : geometry.size.width * 0.18
+                let gameText: CGFloat = geometry.size.width * 0.07
+                let imageWidth: CGFloat = isCompact ? geometry.size.width * 0.8 : geometry.size.width * 0.7
+                
+                let spriteWidth: CGFloat = isCompact ? geometry.size.width * 0.5 : geometry.size.width * 0.25
 
                 ZStack {
                     // Background color filling the entire safe area
@@ -41,7 +46,7 @@ struct HomeView: View {
                                 Image("happy_sprite")
                                     .resizable()
                                     .scaledToFit()
-                                    .frame(width: geometry.size.width * 0.2) // Adjust sprite size based on screen
+                                    .frame(width: spriteWidth) // Adjust sprite size based on screen
                             }
                         }
 
@@ -58,15 +63,15 @@ struct HomeView: View {
                                 }
                             }, label: {
                                 ZStack {
-                                    Image(gameManager.gameState.score > 0 ? "Resume_book" : "Title_Book_3")
+                                    Image("Title_Book_3") // Default image for new game
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: imageWidth)
                                     
                                     Text("Classic Game")
-                                        .font(.title)
+                                        .font(Font.custom("NerkoOne-Regular", size: gameText, relativeTo: .title))
                                         .fontWeight(.bold)
-                                        .foregroundColor(.white)
+                                        .foregroundStyle(Color.white)
                                 }
                             })
                             .actionSheet(isPresented: $showActionSheet) {
@@ -100,9 +105,9 @@ struct HomeView: View {
                                         .frame(width: imageWidth)
                                     
                                     Text("Settings")
-                                        .font(.title)
+                                        .font(Font.custom("NerkoOne-Regular", size: gameText, relativeTo: .title))
                                         .fontWeight(.bold)
-                                        .foregroundColor(.white)
+                                        .foregroundStyle(Color.white)
                                 }
                             })
                             .padding(.trailing, 5)
@@ -119,11 +124,12 @@ struct HomeView: View {
                                         .frame(width: imageWidth)
                                     
                                     Text("How To Play")
-                                        .font(.title)
+                                        .font(Font.custom("NerkoOne-Regular", size: gameText, relativeTo: .title))
                                         .fontWeight(.bold)
-                                        .foregroundColor(.white)
+                                        .foregroundStyle(Color.white)
                                 }
                             })
+                            
 
                             // Stats Button
                             Button(action: {
@@ -138,11 +144,15 @@ struct HomeView: View {
                                         .frame(width: imageWidth)
                                     
                                     Text("Stats")
-                                        .font(.title)
+                                        .font(Font.custom("NerkoOne-Regular", size: gameText, relativeTo: .title))
                                         .fontWeight(.bold)
-                                        .foregroundColor(.white)
+                                        .foregroundStyle(Color.white)
                                 }
                             })
+                            .padding(.trailing, 5)
+                            if !isCompact {
+                                Spacer()
+                            }
                         }
                         .padding()
                     }
@@ -174,5 +184,6 @@ enum ViewType: Hashable, Codable {
     case stats
     case tips
 }
+
 
 
