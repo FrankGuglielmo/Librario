@@ -13,7 +13,6 @@ struct MyApp: App {
     @StateObject private var dictionaryManager: DictionaryManager
     @StateObject private var userData: UserData
     @StateObject private var gameManager: GameManager
-//    @StateObject private var settings = Settings.load()
     @Environment(\.scenePhase) var scenePhase
 
     init() {

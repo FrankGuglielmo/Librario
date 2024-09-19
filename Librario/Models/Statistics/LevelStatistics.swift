@@ -91,6 +91,13 @@ struct LevelStatistics: Codable {
     // Load LevelData from file
     static func loadLevelData() -> LevelStatistics {
         let fileURL = getDocumentsDirectory().appendingPathComponent("levelData.json")
+        
+        let fileManager = FileManager.default
+        guard fileManager.fileExists(atPath: fileURL.path) else {
+            print("Level data file not found. Creating new LevelStatistics.")
+            return LevelStatistics() // Return a default instance
+        }
+        
         do {
             let data = try Data(contentsOf: fileURL)
             return try JSONDecoder().decode(LevelStatistics.self, from: data)
@@ -99,6 +106,7 @@ struct LevelStatistics: Codable {
             return LevelStatistics() // Return a default instance if loading fails
         }
     }
+
 
     // Helper function to get the documents directory
     static func getDocumentsDirectory() -> URL {

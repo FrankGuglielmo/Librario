@@ -51,6 +51,14 @@ class GameState: ObservableObject, Codable {
 
     static func loadGameState() -> GameState? {
         let fileURL = getDocumentsDirectory().appendingPathComponent("gameState.json")
+        
+        let fileManager = FileManager.default
+        guard fileManager.fileExists(atPath: fileURL.path) else {
+            // The file doesn't exist, this is expected for first run
+            print("GameState file not found. Creating a new GameState.")
+            return nil
+        }
+        
         do {
             let data = try Data(contentsOf: fileURL)
             let gameState = try JSONDecoder().decode(GameState.self, from: data)
@@ -60,6 +68,7 @@ class GameState: ObservableObject, Codable {
             return nil
         }
     }
+
 
     // Helper function to get the documents directory
     static func getDocumentsDirectory() -> URL {

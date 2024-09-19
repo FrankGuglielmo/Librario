@@ -29,33 +29,27 @@ class GameManager: ObservableObject, Codable {
         self.dictionaryManager = dictionaryManager
         
         // Load GameState from disk if available, otherwise initialize a new GameState
-        if let loadedGameState = GameState.loadGameState() {
-            self.gameState = loadedGameState
-        } else {
-            self.gameState = GameState()
-        }
+        self.gameState = GameState.loadGameState() ?? GameState()
         
         // Initialize level and session data
-        
         self.levelData = LevelStatistics.loadLevelData()
         self.sessionData = SessionStatistics.loadSessionData()
         
         // Load TileManager from disk if available, otherwise initialize a new TileManager
-        if let loadedTileManager = TileManager.loadTileManager(dictionaryManager: dictionaryManager) {
-            self.tileManager = loadedTileManager
-        } else {
+        self.tileManager = TileManager.loadTileManager(dictionaryManager: dictionaryManager) ?? {
             let performanceEvaluator = PerformanceEvaluator()
             let letterGenerator = LetterGenerator(performanceEvaluator: performanceEvaluator)
             let tileTypeGenerator = TileTypeGenerator(performanceEvaluator: performanceEvaluator)
             let tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator, performanceEvaluator: performanceEvaluator)
             let tileConverter = TileConverter()
             let wordChecker = WordChecker(wordStore: dictionaryManager.wordDictionary)
-            self.tileManager = TileManager(tileGenerator: tileGenerator, tileConverter: tileConverter, wordChecker: wordChecker, performanceEvaluator: performanceEvaluator)
-        }
-        
+            return TileManager(tileGenerator: tileGenerator, tileConverter: tileConverter, wordChecker: wordChecker, performanceEvaluator: performanceEvaluator)
+        }()
+
         setupLevelSystem()
         setupGameOverHandler()
     }
+
 
 
     required init(from decoder: Decoder) throws {

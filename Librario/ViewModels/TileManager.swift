@@ -104,18 +104,25 @@ class TileManager: ObservableObject, Codable {
     }
     
     static func loadTileManager(dictionaryManager: DictionaryManager) -> TileManager? {
-            let fileURL = getDocumentsDirectory().appendingPathComponent("tileManager.json")
-            do {
-                let data = try Data(contentsOf: fileURL)
-                let tileManager = try JSONDecoder().decode(TileManager.self, from: data)
-                tileManager.reinitializeNonCodableProperties(dictionaryManager: dictionaryManager)
-                print("TileManager loaded successfully.")
-                return tileManager
-            } catch {
-                print("Failed to load TileManager: \(error)")
-                return nil
-            }
+        let fileURL = getDocumentsDirectory().appendingPathComponent("tileManager.json")
+        
+        let fileManager = FileManager.default
+        guard fileManager.fileExists(atPath: fileURL.path) else {
+            print("TileManager file not found. Creating a new TileManager.")
+            return nil
         }
+        
+        do {
+            let data = try Data(contentsOf: fileURL)
+            let tileManager = try JSONDecoder().decode(TileManager.self, from: data)
+            tileManager.reinitializeNonCodableProperties(dictionaryManager: dictionaryManager)
+            return tileManager
+        } catch {
+            print("Failed to load TileManager: \(error)")
+            return nil
+        }
+    }
+
     
     static func getDocumentsDirectory() -> URL {
         return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -131,7 +138,7 @@ class TileManager: ObservableObject, Codable {
     func generateInitialGrid() {
         grid = (0..<7).map { row in
             (0..<7).map { column in
-                tileGenerator.generateTile(at: Position(row: row, column: column), for: grid)
+                tileGenerator.generateTile(at: Position(row: row, column: column))
             }
         }
     }
@@ -159,7 +166,7 @@ class TileManager: ObservableObject, Codable {
         guard var tile = getTile(at: position) else { return }
 
         // Ensure the tile is selectable (it must be adjacent to the last selected tile if the stack is not empty)
-        if let lastSelectedTile = selectedTiles.last, !isAdjacent(lastSelectedTile, to: tile) || selectedTiles.count == 12 {
+        if let lastSelectedTile = selectedTiles.last, !isAdjacent(lastSelectedTile, to: tile) || selectedTiles.count == 16 {
             
             AudioManager.shared.playSoundEffect(named: "incorrect_selection")
             return // Cannot select a non-adjacent tile

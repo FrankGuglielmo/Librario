@@ -12,80 +12,104 @@ struct GameView: View {
     @Binding var navigationPath: NavigationPath
     @State private var currentSprite = "normal_sprite"
     @State private var bubbleText = ""
-    
+    @State private var showReminderBubble = false
+    @State private var showLevelUp = false // State to control LevelUpView visibility
+
     let praisePhrases = ["Nice word!", "Fantastic!", "Awesome!", "Well done!", "Impressive!"]
 
-        var body: some View {
-            return ZStack {
-                // Background color filling the entire safe area
-                Image("red_curtain")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(minWidth: 0)
-                    .edgesIgnoringSafeArea(.all)
+    var body: some View {
+        return ZStack {
+            // Background color filling the entire safe area
+            Image("red_curtain")
+                .resizable()
+                .scaledToFill()
+                .frame(minWidth: 0)
+                .edgesIgnoringSafeArea(.all)
 
-                GeometryReader { geometry in
-                    VStack {
-                        HStack {
-                            ZStack {
+            GeometryReader { geometry in
+                VStack {
+                    HStack {
+                        ZStack {
+                            // Sprite button that triggers the scramble function
+                            Button(action: {
+                                gameManager.tileManager.scramble()
+                                showReminderBubble = false // Hide reminder bubble after scrambling
+                            }) {
                                 Image(currentSprite)
                                     .resizable()
                                     .frame(width: 142, height: 150)
-
-                                if currentSprite == "happy_sprite" && Int.random(in: 1...100) <= 20 { // 20% chance for the bubble to appear
-                                    TextBubbleView(text: bubbleText)
-                                        .offset(x: 75, y: -50) // Position the bubble above the sprite
-                                        .transition(.opacity)
-                                        .animation(.easeInOut(duration: 0.5), value: currentSprite)
-                                }
                             }
 
-                            SubmitWordView(tileManager: gameManager.tileManager, gameManager: gameManager)
+                            // Show the praise bubble or reminder bubble
+                            if currentSprite == "happy_sprite" && !bubbleText.isEmpty {
+                                TextBubbleView(text: bubbleText)
+                                    .offset(x: 75, y: -50) // Position the bubble above the sprite
+                                    .transition(.opacity)
+                                    .animation(.easeInOut(duration: 0.5), value: currentSprite)
+                            } else if showReminderBubble {
+                                TextBubbleView(text: "Need a scramble?")
+                                    .offset(x: 75, y: -50) // Position the bubble above the sprite
+                                    .transition(.opacity)
+                                    .animation(.easeInOut(duration: 0.5), value: showReminderBubble)
+                            }
                         }
-                        .frame(maxWidth: .infinity, maxHeight: 300)
-                        .padding()
-                        .fixedSize(horizontal: false, vertical: true)
 
-                        GameGridView(gameManager: gameManager, tileManager: gameManager.tileManager)
-
-                        GameStatusView(gameManager: gameManager, navigationPath: $navigationPath)
-                        
+                        SubmitWordView(tileManager: gameManager.tileManager, gameManager: gameManager)
                     }
-                    .frame(maxHeight: .infinity)
-                }
+                    .frame(maxWidth: .infinity, maxHeight: 300)
+                    .padding()
+                    .fixedSize(horizontal: false, vertical: true)
 
-                if gameManager.checkLevelProgression() {
-                    LevelUpView(gameManager: gameManager, navigationPath: $navigationPath)
-                        .zIndex(1)
+                    GameGridView(gameManager: gameManager, tileManager: gameManager.tileManager)
+
+                    GameStatusView(gameManager: gameManager, navigationPath: $navigationPath)
                 }
-                
-                // Show GameOverView directly based on gameState.gameOver
-                if gameManager.gameOver {
-                    GameOverView(gameManager: gameManager, navigationPath: $navigationPath)
-                        .zIndex(1) // Ensure the GameOverView appears on top
-                }
+                .frame(maxHeight: .infinity)
             }
-            .onAppear {
-                // Set up the sprite change handler
-                gameManager.spriteChangeHandler = { sprite, duration in
-                    changeSprite(to: sprite, for: duration)
-                }
 
-                // Listen for fire tile state changes from the TileManager
-                gameManager.tileManager.fireTileChangeHandler = { hasFireTile in
-                    if hasFireTile {
-                        // Keep nervous sprite active as long as there is a fire tile
-                        changeSprite(to: "nervous_sprite")
-                    } else {
-                        // Revert to normal sprite if no fire tiles are present
-                        changeSprite(to: "normal_sprite")
-                    }
-                }
-
-                // Initial fire tile check when view appears
-                gameManager.tileManager.checkFireTiles()
+            // Show LevelUpView based on showLevelUp state
+            if showLevelUp {
+                LevelUpView(gameManager: gameManager, navigationPath: $navigationPath, onDismiss: {
+                    showLevelUp = false
+                })
+                .zIndex(1)
+            }
+            
+            // Show GameOverView directly based on gameState.gameOver
+            if gameManager.gameOver {
+                GameOverView(gameManager: gameManager, navigationPath: $navigationPath)
+                    .zIndex(1) // Ensure the GameOverView appears on top
             }
         }
+        .onAppear {
+            // Set up the sprite change handler
+            gameManager.spriteChangeHandler = { sprite, duration in
+                changeSprite(to: sprite, for: duration)
+            }
+
+            // Listen for fire tile state changes from the TileManager
+            gameManager.tileManager.fireTileChangeHandler = { hasFireTile in
+                if hasFireTile {
+                    // Keep nervous sprite active as long as there is a fire tile
+                    changeSprite(to: "nervous_sprite")
+                } else {
+                    // Revert to normal sprite if no fire tiles are present
+                    changeSprite(to: "normal_sprite")
+                }
+            }
+
+            // Initial fire tile check when view appears
+            gameManager.tileManager.checkFireTiles()
+
+            // Start the reminder timer
+            startReminderTimer()
+        }
+        .onChange(of: gameManager.gameState.score, {
+            if gameManager.checkLevelProgression() {
+                showLevelUp = true // Show LevelUpView when level progression is reached
+            }
+        })
+    }
 
     // Function to change the sprite in the UI
     private func changeSprite(to sprite: String) {
@@ -111,35 +135,25 @@ struct GameView: View {
         }
     }
 
-    
-    // Determines the top padding based on the device type
-    private func topPaddingForDevice() -> CGFloat {
-        switch UIDevice.current.userInterfaceIdiom {
-        case .phone:
-            return 60 // Less padding for iPhone
-        case .pad:
-            return 0 // More padding for iPad
-        default:
-            return 0 // Default padding for other devices or future devices
+    // Start a timer to show a reminder bubble periodically
+    private func startReminderTimer() {
+        Timer.scheduledTimer(withTimeInterval: 90, repeats: true) { _ in
+            if currentSprite == "normal_sprite" && gameManager.tileManager.selectedTiles.isEmpty && bubbleText == "" {
+                withAnimation {
+                    currentSprite = "happy_sprite"
+                    showReminderBubble = true
+                }
+                
+                // Hide the bubble after a few seconds
+                DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                    withAnimation {
+                        currentSprite = "normal_sprite"
+                        showReminderBubble = false
+                    }
+                }
+            }
         }
     }
 }
-
-//#Preview {
-//    let mockDictionaryManager = DictionaryManager()
-//    let mockGameManager = GameManager(dictionaryManager: mockDictionaryManager)
-//    
-//    // Set up some sample tiles based on the provided Tile structure
-//    let sampleTiles = [
-//        Tile(letter: "A", type: .regular, points: 1, position: Position(row: 0, column: 0), isPlaceholder: false),
-//        Tile(letter: "B", type: .green, points: 2, position: Position(row: 0, column: 1), isPlaceholder: false),
-//        Tile(letter: "C", type: .gold, points: 3, position: Position(row: 0, column: 2), isPlaceholder: false)
-//    ]
-//    mockGameManager.tileManager.selectedTiles = sampleTiles // Add some sample selected tiles
-//    
-//    return GameView(navigationPath: .constant(NavigationPath()))
-//        .environmentObject(mockGameManager) // Inject GameManager into the environment
-//}
-
 
 

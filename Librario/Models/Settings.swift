@@ -20,48 +20,45 @@ class Settings: ObservableObject, Codable {
         }
     }()
 
-    @Published var musicEnabled: Bool {
+    @Published var musicVolume: Float { // New volume control for music
         didSet {
-            print("Settings: musicEnabled changed to \(musicEnabled) at \(Date())")
             save()
         }
     }
 
-    @Published var soundEffectsEnabled: Bool {
+    @Published var soundEffectsVolume: Float { // New volume control for sound effects
         didSet {
             save()
         }
     }
 
     // Default settings
-    static let defaultSettings = Settings(musicEnabled: true, soundEffectsEnabled: true)
+    static let defaultSettings = Settings(musicVolume: 1.0, soundEffectsVolume: 1.0)
 
     // Coding Keys for encoding/decoding
     private enum CodingKeys: String, CodingKey {
-        case musicEnabled
-        case soundEffectsEnabled
+        case musicVolume
+        case soundEffectsVolume
     }
 
     // Initializer
-    init(musicEnabled: Bool, soundEffectsEnabled: Bool) {
-        self.musicEnabled = musicEnabled
-        self.soundEffectsEnabled = soundEffectsEnabled
+    init(musicVolume: Float, soundEffectsVolume: Float) {
+        self.musicVolume = musicVolume
+        self.soundEffectsVolume = soundEffectsVolume
     }
 
     // Decodable conformance
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        // Manually decode the properties
-        musicEnabled = try container.decode(Bool.self, forKey: .musicEnabled)
-        soundEffectsEnabled = try container.decode(Bool.self, forKey: .soundEffectsEnabled)
+        musicVolume = try container.decode(Float.self, forKey: .musicVolume)
+        soundEffectsVolume = try container.decode(Float.self, forKey: .soundEffectsVolume)
     }
 
     // Encodable conformance
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        // Manually encode the properties
-        try container.encode(musicEnabled, forKey: .musicEnabled)
-        try container.encode(soundEffectsEnabled, forKey: .soundEffectsEnabled)
+        try container.encode(musicVolume, forKey: .musicVolume)
+        try container.encode(soundEffectsVolume, forKey: .soundEffectsVolume)
     }
 
     // Method to save the settings to UserDefaults
@@ -71,4 +68,3 @@ class Settings: ObservableObject, Codable {
         }
     }
 }
-

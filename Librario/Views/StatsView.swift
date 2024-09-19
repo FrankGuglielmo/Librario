@@ -17,80 +17,126 @@ import SwiftUI
 struct StatsView: View {
     @EnvironmentObject var userData: UserData
     @Binding var navigationPath: NavigationPath
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     var body: some View {
-        ZStack {
-            // Background color filling the entire safe area
-            Image("red_curtain")
-                .resizable()
-                .scaledToFill()
-                .frame(minWidth: 0)
-                .edgesIgnoringSafeArea(.all)
+        GeometryReader { geometry in
+            let isCompact = horizontalSizeClass == .compact
+            let popupWidth = isCompact ? geometry.size.width * 0.9 : geometry.size.width * 0.8
+            let popupHeight = isCompact ? geometry.size.height * 0.9 : geometry.size.height * 0.8
 
-            VStack(spacing: 20) {
-                Text("Player Statistics")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .padding()
+            ZStack {
+                // Background image filling the entire safe area
+                Image("red_curtain")
+                    .resizable()
+                    .scaledToFill()
+                    .edgesIgnoringSafeArea(.all)
+                    .frame(width: geometry.size.width, height: geometry.size.height)
 
-                VStack(alignment: .leading, spacing: 15) {
-                    // Longest Word
-                    statView(title: "Longest Word", value: userData.userStatistics.longestWord.isEmpty ? "N/A" : userData.userStatistics.longestWord, icon: "textformat")
-                    
-                    // Highest Scoring Word
-                    statView(title: "Highest Scoring Word", value: userData.userStatistics.highestScoringWord.isEmpty ? "N/A" : userData.userStatistics.highestScoringWord, icon: "star.fill")
-                    
-                    // Total Words Submitted
-                    statView(title: "Total Words Submitted", value: "\(userData.userStatistics.totalWordsSubmitted)", icon: "checkmark.circle.fill")
-                    
-                    // Total Games Played
-                    statView(title: "Total Games Played", value: "\(userData.userStatistics.totalGamesPlayed)", icon: "gamecontroller.fill")
-                    
-                    // Lifetime Average Word Length
-                    statView(title: "Avg Word Length", value: String(format: "%.2f", userData.userStatistics.averageWordLength), icon: "text.alignleft")
-                }
-                .padding()
-                
-                
-                // Back Button
-                Button(action: {
-                    AudioManager.shared.playSoundEffect(named: "switch_view_sound")
-                    navigationPath.removeLast() // Navigate back to the previous view
-                }, label: {
-                    HStack {
-                        Image(systemName: "arrow.left")
-                            .font(.title)
-                        Text("Back")
-                            .font(.headline)
+                // Stats popup container centered within the GeometryReader
+                ZStack {
+                    // Background Popup Image
+                    Image("StatPopup")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: popupWidth, height: popupHeight)
+
+                    // Content without ScrollView
+                    VStack(spacing: popupWidth * 0.04) {
+
+                        VStack(alignment: .leading, spacing: popupWidth * 0.025) {
+                            // Longest Word
+                            statView(
+                                title: "Longest Word",
+                                value: userData.userStatistics.longestWord.isEmpty ? "N/A" : userData.userStatistics.longestWord.uppercased(),
+                                iconName: "textformat",
+                                iconColor: .blue,
+                                popupWidth: popupWidth
+                            )
+
+                            // Highest Scoring Word
+                            statView(
+                                title: "Highest Scoring Word",
+                                value: userData.userStatistics.highestScoringWord.isEmpty ? "N/A" : userData.userStatistics.highestScoringWord.uppercased(),
+                                iconName: "star.fill",
+                                iconColor: .yellow,
+                                popupWidth: popupWidth
+                            )
+
+                            // Total Words Submitted
+                            statView(
+                                title: "Total Words Submitted",
+                                value: "\(userData.userStatistics.totalWordsSubmitted)",
+                                iconName: "checkmark.circle.fill",
+                                iconColor: .green,
+                                popupWidth: popupWidth
+                            )
+
+                            // Total Games Played
+                            statView(
+                                title: "Total Games Played",
+                                value: "\(userData.userStatistics.totalGamesPlayed)",
+                                iconName: "gamecontroller.fill",
+                                iconColor: .purple,
+                                popupWidth: popupWidth
+                            )
+
+                            // Lifetime Average Word Length
+                            statView(
+                                title: "Avg Word Length",
+                                value: String(format: "%.2f", userData.userStatistics.averageWordLength),
+                                iconName: "text.alignleft",
+                                iconColor: .orange,
+                                popupWidth: popupWidth
+                            )
+                        }
+                        .padding(.horizontal, popupWidth * 0.05)
+                        .padding(.vertical, popupHeight * 0.05)
+
+                        // Back button using the BackButton image
+                        Button(action: {
+                            AudioManager.shared.playSoundEffect(named: "switch_view_sound")
+                            navigationPath.removeLast()
+                        }) {
+                            Image("BackButton")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: popupWidth * 0.5)
+                                .padding(.top, popupHeight * 0.01)
+                        }
+                        .padding(.bottom, popupHeight * 0.02)
                     }
-                    .foregroundColor(.secondary)
-                })
-                .padding()
+                    .frame(width: popupWidth * 0.85, height: popupHeight * 0.85)
+                }
+                // Position the stats popup container at the center of the GeometryReader
+                .frame(width: popupWidth, height: popupHeight)
+                .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
             }
-            .padding()
-            .background(Color(.systemBackground).cornerRadius(15))
-            .shadow(radius: 10)
+            .frame(width: geometry.size.width, height: geometry.size.height)
         }
     }
-    
+
     // A reusable function to create a stat view with icons
-    private func statView(title: String, value: String, icon: String) -> some View {
-        HStack {
-            Image(systemName: icon)
+    private func statView(title: String, value: String, iconName: String, iconColor: Color, popupWidth: CGFloat) -> some View {
+        HStack(alignment: .center, spacing: popupWidth * 0.025) {
+            Image(systemName: iconName)
                 .resizable()
-                .frame(width: 50, height: 50)
-                .foregroundStyle(Color.blue)
-            
-            VStack(alignment: .leading) {
+                .foregroundColor(iconColor)
+                .frame(width: popupWidth * 0.12, height: popupWidth * 0.12)
+
+            VStack(alignment: .leading, spacing: popupWidth * 0.005) {
                 Text("\(title):")
-                    .font(.headline)
+                    .font(.system(size: popupWidth * 0.045, weight: .semibold))
+                    .foregroundColor(.white)
                 Text(value)
-                    .font(.body)
-                    .foregroundColor(.secondary)
+                    .font(.system(size: popupWidth * 0.050))
+                    .foregroundColor(.white)
             }
         }
+        .padding(.vertical, popupWidth * 0.015)
     }
 }
+
 
 #Preview {
     let mockUserStatistics = UserStatistics()

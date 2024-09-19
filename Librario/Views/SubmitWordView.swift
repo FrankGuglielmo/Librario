@@ -29,9 +29,9 @@ struct SubmitWordView: View {
                         if tileManager.validateWord() {
                             // Combine letters into a single word, handling "Qu" properly
                             Text(formatSelectedTilesForWord(tiles: tileManager.selectedTiles))
-                                .font(dynamicFontSize(for: tileManager.selectedTiles.count))
-                                .foregroundColor(.black)
-                                .padding(.horizontal, dynamicPadding(for: tileManager.selectedTiles.count))
+                                .font(.title)
+                                .foregroundStyle(.black)
+                                
                         } else {
                             // Show individual letters as separate tiles
                             ForEach(tileManager.selectedTiles, id: \.id) { tile in
@@ -39,16 +39,16 @@ struct SubmitWordView: View {
                                     // Handle the "Qu" tile separately as "Q" and "U"
                                     Text("Q")
                                         .font(dynamicFontSize(for: tileManager.selectedTiles.count))
-                                        .foregroundColor(.black)
+                                        .foregroundStyle(.black)
                                         .padding(.horizontal, dynamicPadding(for: tileManager.selectedTiles.count))
                                     Text("U")
                                         .font(dynamicFontSize(for: tileManager.selectedTiles.count))
-                                        .foregroundColor(.black)
+                                        .foregroundStyle(.black)
                                         .padding(.horizontal, dynamicPadding(for: tileManager.selectedTiles.count))
                                 } else {
                                     Text(tile.letter.uppercased())
                                         .font(dynamicFontSize(for: tileManager.selectedTiles.count))
-                                        .foregroundColor(.black)
+                                        .foregroundStyle(.black)
                                         .padding(.horizontal, dynamicPadding(for: tileManager.selectedTiles.count))
                                 }
                             }
@@ -59,16 +59,16 @@ struct SubmitWordView: View {
                         HStack {
                             Text("+")
                                 .font(.largeTitle)
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                             Text("\(tileManager.getScore())")
                                 .font(.largeTitle)
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                                 .fontWeight(.bold)
                         }
                         
                         Text("TAP TO SUBMIT")
                             .font(.caption)
-                            .foregroundColor(.green)
+                            .foregroundStyle(.green)
                     }
                 }
             }

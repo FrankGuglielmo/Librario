@@ -8,58 +8,104 @@
 import SwiftUI
 
 struct GameOverView: View {
-    @EnvironmentObject var userData: UserData
     @ObservedObject var gameManager: GameManager
+    @EnvironmentObject var userData: UserData
     @Binding var navigationPath: NavigationPath
+    
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     var body: some View {
-        VStack {
-            Text("Game Over!")
-                .foregroundStyle(Color.black)
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .padding()
+        GeometryReader { geometry in
+            let isCompact = horizontalSizeClass == .compact
+            let popupWidth = isCompact ? geometry.size.width * 0.8 : geometry.size.width * 0.5
+            let popupHeight = isCompact ? geometry.size.height * 0.7 : geometry.size.height * 0.5
 
-            Text("Your score: \(gameManager.gameState.score)")
-                .foregroundStyle(Color.black)
-                .font(.title)
-                .padding()
+                // Game Over popup container centered within the GeometryReader
+                ZStack {
+                    // Background Popup Image for Game Over
+                    Image("GameOverPopup")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: popupWidth, height: popupHeight)
 
-            Button(action: {
-                // Restart the game by resetting the gameState
-                gameManager.startNewGame(userStatistics: userData.userStatistics) // This resets the game over flag and restarts the game
-            }) {
-                Text("Restart Game")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(10)
-            }
-            .padding()
+                    VStack {
+                        Spacer()
 
-            Button(action: {
-                // Exit the game and return to the home screen by clearing the navigation path
-                if !navigationPath.isEmpty {
-                    AudioManager.shared.playSoundEffect(named: "switch_view_sound")
-                    navigationPath.removeLast() // Pop the current view from the navigation path
-                    gameManager.startNewGame(userStatistics: userData.userStatistics) // This resets the game over flag and
+                        // Score display
+                        VStack(spacing: 5) {
+                            Text("Your score:")
+                                .font(.title)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                            Text("\(gameManager.gameState.score)")
+                                .font(.title3)
+                                .foregroundColor(.blue)
+                        }
+
+                        Spacer()
+
+                        // Best Word display
+                        VStack(spacing: 5) {
+                            Text("Best Word:")
+                                .font(.title)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                            Text(gameManager.sessionData.highestScoringWord.isEmpty ? "N/A" : gameManager.sessionData.highestScoringWord.uppercased())
+                                .font(.title3)
+                                .foregroundColor(.blue)
+                        }
+
+                        Spacer()
+
+                        // Longest Word display
+                        VStack(spacing: 5) {
+                            Text("Longest Word:")
+                                .font(.title)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                            Text(gameManager.sessionData.longestWord.isEmpty ? "N/A" : gameManager.sessionData.longestWord.uppercased())
+                                .font(.title3)
+                                .foregroundColor(.blue)
+                        }
+
+                        Spacer()
+
+                        // Custom Restart Game button image
+                        Button(action: {
+                            // Reset game logic
+                            gameManager.startNewGame(userStatistics: userData.userStatistics)
+                            print("Game restarted")
+                        }) {
+                            Image("RestartButton") // Replace with your custom image name
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: popupWidth * 0.5) // Adjust size to fit your needs
+                        }
+
+                        Spacer()
+
+                        // Custom Exit button image
+                        Button(action: {
+                            if !navigationPath.isEmpty {
+                                AudioManager.shared.playSoundEffect(named: "switch_view_sound")
+                                navigationPath.removeLast() // Simulate exit by removing the last item in the navigation path
+                                print("Exit to main menu")
+                            }
+                        }) {
+                            Image("ExitButton") // Replace with your custom image name
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: popupWidth * 0.5) // Adjust size to fit your needs
+                        }
+
+                        Spacer()
+                    }
+                    .frame(width: popupWidth * 0.85, height: popupHeight * 0.85)
                 }
-                
-            }) {
-                Text("Exit")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(Color.red)
-                    .cornerRadius(10)
-            }
+                // Position the Game Over popup container at the center of the GeometryReader
+                .frame(width: popupWidth, height: popupHeight)
+                .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
         }
-        .frame(width: 300, height: 400)
-        .background(Color.white)
-        .cornerRadius(20)
-        .shadow(radius: 20)
-        .transition(.scale)
     }
 }
 

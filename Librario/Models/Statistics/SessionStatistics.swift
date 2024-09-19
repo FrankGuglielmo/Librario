@@ -172,6 +172,13 @@ struct SessionStatistics: Codable {
     // Load SessionData from file
     static func loadSessionData() -> SessionStatistics {
         let fileURL = getDocumentsDirectory().appendingPathComponent("sessionData.json")
+        
+        let fileManager = FileManager.default
+        guard fileManager.fileExists(atPath: fileURL.path) else {
+            print("Session data file not found. Creating new SessionStatistics.")
+            return SessionStatistics() // Return a default instance
+        }
+        
         do {
             let data = try Data(contentsOf: fileURL)
             return try JSONDecoder().decode(SessionStatistics.self, from: data)
@@ -180,6 +187,7 @@ struct SessionStatistics: Codable {
             return SessionStatistics() // Return a default instance if loading fails
         }
     }
+
 
     // Helper function to get the documents directory
     static func getDocumentsDirectory() -> URL {

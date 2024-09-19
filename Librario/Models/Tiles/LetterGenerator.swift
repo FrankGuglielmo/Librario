@@ -66,8 +66,78 @@ class LetterGenerator: Codable {
         self.originalConsonantProbabilities = consonantProbabilities
     }
     
+    func generateLetter() -> String {
+        // Reset probabilities to base values before adjustments
+        resetProbabilities()
+
+        // Adjust probabilities based on performance (can keep this if needed)
+        adjustProbabilities()
+
+        var vowelProbability = baseVowelProbability  // Starting vowel probability
+
+        // Influence probability based on the last generated letter
+        if let lastLetter = lastGeneratedLetter {
+            if vowels.contains(lastLetter) {
+                vowelProbability -= 10.0  // Decrease vowel chance if the last was a vowel
+            } else {
+                vowelProbability += 10.0  // Increase vowel chance if the last was a consonant
+            }
+        }
+
+        // Adjust the probability of recently generated letters
+        adjustForRecentLetters()
+
+        // Ensure vowelProbability stays within bounds (20-80)
+        vowelProbability = max(20.0, min(80.0, vowelProbability))
+
+        let letterTypeProbability = Double.random(in: 0..<100)
+        var selectedLetter: String = ""
+
+        // Helper function to select a letter
+        func selectLetter(from letters: [String], with probabilities: [Double]) -> String? {
+            let randomProbability = Double.random(in: 0..<100)
+            var cumulativeProbability: Double = 0.0
+            for (index, probability) in probabilities.enumerated() {
+                cumulativeProbability += probability
+                if randomProbability < cumulativeProbability {
+                    if letters[index] == "Q" { // Generate "Q" or "Qu"
+                        return generateQorQu()
+                    } else {
+                        return letters[index]
+                    }
+                }
+            }
+            return nil
+        }
+
+        // Generate either a vowel or a consonant
+        if letterTypeProbability < vowelProbability {
+            selectedLetter = selectLetter(from: vowels, with: vowelProbabilities) ?? vowels[0]
+        } else {
+            selectedLetter = selectLetter(from: consonants, with: consonantProbabilities) ?? consonants[0]
+        }
+
+        // Prevent generating a duplicate letter immediately
+        while recentLetters.contains(selectedLetter) {
+            selectedLetter = (letterTypeProbability < vowelProbability)
+                ? selectLetter(from: vowels, with: vowelProbabilities) ?? vowels[0]
+                : selectLetter(from: consonants, with: consonantProbabilities) ?? consonants[0]
+        }
+
+        // Update the last generated letter and the recent letters list
+        lastGeneratedLetter = selectedLetter
+        updateRecentLetters(with: selectedLetter)
+
+        return selectedLetter
+    }
+
     // Function to generate a letter based on the current probabilities
     func generateLetter(for grid: [[Tile]]) -> String {
+        
+        guard !grid.isEmpty, !grid[0].isEmpty else {
+            print("Error: Grid is empty or invalid.")
+            return "" // Return an empty string or handle the error accordingly
+        }
         // Reset probabilities to base values before adjustments
         resetProbabilities()
         

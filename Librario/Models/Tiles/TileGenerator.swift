@@ -85,6 +85,13 @@ class TileGenerator {
         return Tile(letter: letter, type: tileType, isSelected: false, points: tilePoints, position: position, isPlaceholder: false)
     }
     
+    func generateTile(at position: Position) -> Tile {
+        let letter = letterGenerator.generateLetter()
+        let tileType = TileType.regular  // Default to a neutral/regular TileType
+        let tilePoints = letterToPointValue[letter] ?? 100 // Default to 100 if not found
+        return Tile(letter: letter, type: tileType, isSelected: false, points: tilePoints, position: position, isPlaceholder: false)
+    }
+    
     func generateTemporaryTile(at position: Position) -> Tile {
         return Tile.placeholder(at: position)
     }
