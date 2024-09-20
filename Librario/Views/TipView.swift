@@ -42,7 +42,7 @@ struct TipView: View {
                                 TipRow(tip: tip, popupWidth: popupWidth)
                             }
                         }
-                        .padding(.horizontal, popupWidth * 0.05)
+                        .padding(.horizontal, popupWidth * 0.08)
                         .padding(.top, popupHeight * 0.05)
 
                         // Back button using the BackButton image

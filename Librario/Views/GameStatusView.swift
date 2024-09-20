@@ -22,9 +22,27 @@ struct GameStatusView: View {
         return CGFloat(gameState.score - currentLevelThreshold) / CGFloat(nextLevelThreshold - currentLevelThreshold)
     }
 
+    // Helper function to check if the device has biometric capabilities (Touch ID / Face ID)
+    func isDeviceiPhoneSE() -> Bool {
+        let screenBounds = UIScreen.main.bounds
+        let screenScale = UIScreen.main.scale
+        let screenSize = CGSize(width: screenBounds.size.width * screenScale, height: screenBounds.size.height * screenScale)
+ 
+        let iPhoneSE1ScreenSize = CGSize(width: 640, height: 1136)
+        let iPhoneSE2ScreenSize = CGSize(width: 750, height: 1334)
+
+        // Compare the screen size to SE models
+        if screenSize == iPhoneSE1ScreenSize || screenSize == iPhoneSE2ScreenSize {
+            return true
+        }
+        
+        return false
+    }
+
     var body: some View {
-        if horizontalSizeClass == .compact {
-            // Layout for smaller devices (compact size class)
+        // Use the regular layout for larger devices or biometric devices like iPhones/iPads with Touch ID or Face ID
+        if horizontalSizeClass == .compact && !isDeviceiPhoneSE() {
+            // Layout for smaller devices (compact size class without Touch ID/Face ID)
             VStack(spacing: 0) {
                 // Progress bar above the buttons
                 progressBarView()
@@ -43,7 +61,7 @@ struct GameStatusView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: 140, alignment: .top)
         } else {
-            // Layout for larger devices (regular size class)
+            // Layout for larger devices (regular size class or biometric devices)
             HStack(spacing: 0) {
                 // Menu Button
                 menuButton()
@@ -96,7 +114,6 @@ struct GameStatusView: View {
         Button(action: {
             AudioManager.shared.playSoundEffect(named: "switch_view_sound")
             navigationPath.removeLast() // Navigate back to HomeView
-            print("Back to home")
         }) {
             VStack {
                 Image(systemName: "arrow.left")
@@ -115,7 +132,6 @@ struct GameStatusView: View {
     private func submitButton() -> some View {
         Button(action: {
             gameManager.submitWord()
-            print("Good word!")
         }) {
             ZStack {
                 Rectangle()
@@ -143,6 +159,7 @@ struct GameStatusView: View {
         .background(Color.brown)
     }
 }
+
 
 struct GameStatusView_Previews: PreviewProvider {
     static var previews: some View {

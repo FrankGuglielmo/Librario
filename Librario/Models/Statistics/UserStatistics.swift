@@ -15,12 +15,14 @@ class UserStatistics: Codable {
     var totalWordsSubmitted: Int = 0 // Total number of words across all sessions
     var totalGamesPlayed: Int = 0 // Total number of games played
     var averageWordLength: Double = 0.0 // Running average for lifetime word length
+    var highestLevel: Int = 1 // Highest level the player has reached
+    var timePlayed: TimeInterval = 0.0 // In seconds
 
     // Track the last processed session for difference calculations
     private var lastProcessedSession: SessionStatistics? = nil
     
     private enum CodingKeys: String, CodingKey {
-        case longestWord, highestScoringWord, totalWordsSubmitted, totalGamesPlayed, averageWordLength, lastProcessedSession
+        case longestWord, highestScoringWord, totalWordsSubmitted, totalGamesPlayed, averageWordLength, highestLevel, timePlayed, lastProcessedSession
     }
 
     // Default initializer
@@ -34,6 +36,8 @@ class UserStatistics: Codable {
         totalWordsSubmitted = try container.decode(Int.self, forKey: .totalWordsSubmitted)
         totalGamesPlayed = try container.decode(Int.self, forKey: .totalGamesPlayed)
         averageWordLength = try container.decode(Double.self, forKey: .averageWordLength)
+        highestLevel = try container.decode(Int.self, forKey: .highestLevel)
+        timePlayed = try container.decode(TimeInterval.self, forKey: .timePlayed)
         lastProcessedSession = try container.decode(SessionStatistics.self, forKey: .lastProcessedSession)
     }
 
@@ -45,6 +49,8 @@ class UserStatistics: Codable {
         try container.encode(totalWordsSubmitted, forKey: .totalWordsSubmitted)
         try container.encode(totalGamesPlayed, forKey: .totalGamesPlayed)
         try container.encode(averageWordLength, forKey: .averageWordLength)
+        try container.encode(highestLevel, forKey: .highestLevel)
+        try container.encode(timePlayed, forKey: .timePlayed)
         try container.encode(lastProcessedSession, forKey: .lastProcessedSession)
     }
 
@@ -84,7 +90,6 @@ class UserStatistics: Codable {
 
                 // Ensure we don't assign NaN values
                 if !newWeightedAverage.isNaN {
-                    print("Updating average word length..")
                     averageWordLength = newWeightedAverage
                 } else {
                     print("Warning: Computed NaN for average word length. Keeping previous average.")
@@ -93,10 +98,15 @@ class UserStatistics: Codable {
 
             // Update total words submitted
             totalWordsSubmitted += difference.totalWordsSubmitted
-
             // Update longest and highest scoring words
             updateLongestWord(newWord: difference.longestWord)
             updateHighestScoringWord(newWord: difference.highestScoringWord)
+            
+            // Update timePlayed
+            let newTime = difference.timePlayed
+            if newTime > 0 {
+                timePlayed += newTime
+            }
         }
 
         // Mark this session as processed up to the new point
@@ -124,13 +134,15 @@ class UserStatistics: Codable {
         // Update best words if possible
         updateLongestWord(newWord: session.longestWord)
         updateHighestScoringWord(newWord: session.highestScoringWord)
-
         // Update total words and games played
         totalWordsSubmitted += session.totalWordsSubmitted
+        
+        // Update timePlayed
+        timePlayed += session.timePlayed
     }
 
 
-    private func calculateSessionDifference(newSession: SessionStatistics, lastSession: SessionStatistics) -> SessionStatistics {
+private func calculateSessionDifference(newSession: SessionStatistics, lastSession: SessionStatistics) -> SessionStatistics {
         var difference = SessionStatistics()
         
         // Calculate the difference in total words submitted
@@ -138,12 +150,7 @@ class UserStatistics: Codable {
         
         // Safely calculate average word length for the difference, if words have been submitted
         if difference.totalWordsSubmitted > 0 {
-            _ = difference.totalWordsSubmitted
-            let newSessionAverage = newSession.averageWordLength
-            _ = lastSession.averageWordLength
-            
-            // Use the average word length of the new session, since sessions track running averages
-            difference.averageWordLength = newSessionAverage
+            difference.averageWordLength = newSession.averageWordLength
         } else {
             difference.averageWordLength = 0.0 // No new words submitted
         }
@@ -158,6 +165,9 @@ class UserStatistics: Codable {
             difference.highestScoringWord = newSession.highestScoringWord
         }
         
+        // Calculate time difference
+        difference.timePlayed = newSession.timePlayed - lastSession.timePlayed
+        
         return difference
     }
 
@@ -171,6 +181,12 @@ class UserStatistics: Codable {
     private func updateHighestScoringWord(newWord: String) {
         if newWord.count > highestScoringWord.count {
             highestScoringWord = newWord
+        }
+    }
+    
+    func updateHighestlevel(level: Int) {
+        if level > highestLevel {
+            highestLevel = level
         }
     }
 

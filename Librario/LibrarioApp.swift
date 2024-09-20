@@ -34,6 +34,7 @@ struct MyApp: App {
         .onChange(of: scenePhase) { oldPhase, newPhase in
             if newPhase == .background || newPhase == .inactive {
                 print("App going into background")
+                gameManager.levelData.endGameplay()
                 gameManager.saveGame()
                 userData.saveUserData()
             }

@@ -21,8 +21,13 @@ struct LevelStatistics: Codable {
     var totalCharacterCount: Int = 0 // Total number of characters across submitted words
     var averageWordLength: Double = 0.0 // Store the average word length
     
+    var timePlayed: TimeInterval = 0.0 // Time in seconds
+        
+    // Transient Properties (not encoded)
+    private var levelStartTime: Date? = nil
+    
     private enum CodingKeys: String, CodingKey {
-        case id, longestWord, longestWordPoints, highestScoringWord, highestScoringWordPoints, wordsSubmitted, totalCharacterCount, averageWordLength
+        case id, longestWord, longestWordPoints, highestScoringWord, highestScoringWordPoints, wordsSubmitted, totalCharacterCount, averageWordLength, timePlayed
     }
 
     // Initialize the struct (using default values is optional since you already have defaults)
@@ -41,6 +46,7 @@ struct LevelStatistics: Codable {
         wordsSubmitted = try container.decode(Int.self, forKey: .wordsSubmitted)
         totalCharacterCount = try container.decode(Int.self, forKey: .totalCharacterCount)
         averageWordLength = try container.decode(Double.self, forKey: .averageWordLength)
+        timePlayed = try container.decode(TimeInterval.self, forKey: .timePlayed)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -53,6 +59,23 @@ struct LevelStatistics: Codable {
         try container.encode(wordsSubmitted, forKey: .wordsSubmitted)
         try container.encode(totalCharacterCount, forKey: .totalCharacterCount)
         try container.encode(averageWordLength, forKey: .averageWordLength)
+        try container.encode(timePlayed, forKey: .timePlayed)
+    }
+    
+    // Start timing the level
+    mutating func startLevel() {
+        levelStartTime = Date()
+    }
+    
+    // Stop timing the level and update timePlayed
+    mutating func endGameplay() {
+        if let startTime = levelStartTime {
+            let elapsed = Date().timeIntervalSince(startTime)
+            timePlayed += elapsed
+            levelStartTime = nil
+        } else {
+            print("Level was not started.")
+        }
     }
 
     // Function to track a new word submission

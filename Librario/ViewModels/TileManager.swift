@@ -9,8 +9,7 @@ import Foundation
 import SwiftUI
 
 class TileManager: ObservableObject, Codable {
-    @Published var grid: [[Tile]] = []
-    // Stack to keep track of the order in which tiles were selected
+    @Published var grid: [[Tile]] = [] // current grid being managed
     @Published var selectedTiles: [Tile] = []
     
     private var tileGenerator: TileGenerator
@@ -26,13 +25,9 @@ class TileManager: ObservableObject, Codable {
         TileType.diamond: 3.0
     ]
 
-    
     var gameOverHandler: (() -> Void)? // Closure to notify GameState when the game is over
-    
-    var fireTileChangeHandler: ((Bool) -> Void)?
-    
+    var fireTileChangeHandler: ((Bool) -> Void)? // Closure to notify a change in fire tile availability on the board
     let animationDuration: Double = 0.5
-    
     var scrambleLock: Bool = false
     
     // Coding Keys
@@ -40,16 +35,28 @@ class TileManager: ObservableObject, Codable {
         case grid, selectedTiles, tileMultiplier, performanceEvaluator
     }
 
-    // Initializer
-        init(tileGenerator: TileGenerator, tileConverter: TileConverter, wordChecker: WordChecker, performanceEvaluator: PerformanceEvaluator) {
-            self.tileGenerator = tileGenerator
-            self.tileConverter = tileConverter
-            self.wordChecker = wordChecker
-            self.performanceEvaluator = performanceEvaluator
-            generateInitialGrid()
-        }
+    /**
+     * Initializes the `TileManager` with its dependencies and generates the initial grid.
+     *
+     * @param tileGenerator        The `TileGenerator` instance used to generate tiles.
+     * @param tileConverter        The `TileConverter` instance used to convert tiles.
+     * @param wordChecker          The `WordChecker` instance used to validate words.
+     * @param performanceEvaluator The `PerformanceEvaluator` instance used to evaluate performance.
+     */
+    init(tileGenerator: TileGenerator, tileConverter: TileConverter, wordChecker: WordChecker, performanceEvaluator: PerformanceEvaluator) {
+        self.tileGenerator = tileGenerator
+        self.tileConverter = tileConverter
+        self.wordChecker = wordChecker
+        self.performanceEvaluator = performanceEvaluator
+        generateInitialGrid()
+    }
 
-        // Codable Conformance
+    /**
+     * Decodes a new `TileManager` instance from the given decoder.
+     *
+     * @param decoder The decoder to read data from.
+     * @throws DecodingError If decoding fails.
+     */
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         grid = try container.decode([[Tile]].self, forKey: .grid)
@@ -63,7 +70,6 @@ class TileManager: ObservableObject, Codable {
             // Default initialization for old data without performanceEvaluator
             performanceEvaluator = PerformanceEvaluator()
         }
-        
         // Reinitialize the non-Codable properties
         let letterGenerator = LetterGenerator(performanceEvaluator: performanceEvaluator)
         let tileTypeGenerator = TileTypeGenerator(performanceEvaluator: performanceEvaluator)
@@ -71,27 +77,38 @@ class TileManager: ObservableObject, Codable {
         self.tileConverter = TileConverter()
         self.wordChecker = WordChecker(wordStore: DictionaryManager().wordDictionary)
     }
+    /**
+     * Encodes this `TileManager` instance into the given encoder.
+     *
+     * @param encoder The encoder to write data to.
+     * @throws EncodingError If encoding fails.
+     */
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(grid, forKey: .grid)
+        try container.encode(selectedTiles, forKey: .selectedTiles)
+        try container.encode(tileMultiplier, forKey: .tileMultiplier)
+        try container.encode(performanceEvaluator, forKey: .performanceEvaluator)
+    }
 
-        func encode(to encoder: Encoder) throws {
-            var container = encoder.container(keyedBy: CodingKeys.self)
-            try container.encode(grid, forKey: .grid)
-            try container.encode(selectedTiles, forKey: .selectedTiles)
-            try container.encode(tileMultiplier, forKey: .tileMultiplier)
-            try container.encode(performanceEvaluator, forKey: .performanceEvaluator)
-        }
-
-        // Method to re-initialize non-Codable properties
-        func reinitializeNonCodableProperties(dictionaryManager: DictionaryManager) {
-            let letterGenerator = LetterGenerator(performanceEvaluator: performanceEvaluator)
-            let tileTypeGenerator = TileTypeGenerator(performanceEvaluator: performanceEvaluator)
-            self.tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator, performanceEvaluator: performanceEvaluator)
-            self.tileConverter = TileConverter()
-            self.wordChecker = WordChecker(wordStore: dictionaryManager.wordDictionary)
-        }
+    /**
+     * Re-initializes non-Codable properties after decoding.
+     *
+     * @param dictionaryManager The `DictionaryManager` used to reinitialize `WordChecker`.
+     */
+    func reinitializeNonCodableProperties(dictionaryManager: DictionaryManager) {
+        let letterGenerator = LetterGenerator(performanceEvaluator: performanceEvaluator)
+        let tileTypeGenerator = TileTypeGenerator(performanceEvaluator: performanceEvaluator)
+        self.tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator, performanceEvaluator: performanceEvaluator)
+        self.tileConverter = TileConverter()
+        self.wordChecker = WordChecker(wordStore: dictionaryManager.wordDictionary)
+    }
     
     
     // MARK: - Persistence Methods
-    
+    /**
+     * Saves the current state of the `TileManager` to disk.
+     */
     func saveTileManager() {
         let fileURL = TileManager.getDocumentsDirectory().appendingPathComponent("tileManager.json")
         do {
@@ -103,6 +120,12 @@ class TileManager: ObservableObject, Codable {
         }
     }
     
+    /**
+     * Loads a saved `TileManager` state from disk.
+     *
+     * @param dictionaryManager The `DictionaryManager` used to reinitialize `WordChecker`.
+     * @return A `TileManager` instance if loading is successful; otherwise, `nil`.
+     */
     static func loadTileManager(dictionaryManager: DictionaryManager) -> TileManager? {
         let fileURL = getDocumentsDirectory().appendingPathComponent("tileManager.json")
         
@@ -111,7 +134,6 @@ class TileManager: ObservableObject, Codable {
             print("TileManager file not found. Creating a new TileManager.")
             return nil
         }
-        
         do {
             let data = try Data(contentsOf: fileURL)
             let tileManager = try JSONDecoder().decode(TileManager.self, from: data)
@@ -123,15 +145,16 @@ class TileManager: ObservableObject, Codable {
         }
     }
 
-    
+    /**
+     * Returns the URL of the documents directory.
+     *
+     * @return The URL of the user's documents directory.
+     */
     static func getDocumentsDirectory() -> URL {
         return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
     }
     
-    
-
     // MARK: - Grid and Tile Management
-
     /**
      Creates the initial grid of tiles.
      */
@@ -142,9 +165,12 @@ class TileManager: ObservableObject, Codable {
             }
         }
     }
-
+    
     /**
-     Updates the tile position with a new tile.
+     * Updates a tile at a specific position with a new tile.
+     *
+     * @param position The position of the tile to update.
+     * @param newTile  The new `Tile` to place at the specified position.
      */
     func updateTile(at position: Position, with newTile: Tile) {
         guard position.row >= 0 && position.row < grid.count &&
@@ -160,22 +186,22 @@ class TileManager: ObservableObject, Codable {
     // MARK: - Tile Selection and Validation
 
     /**
-     Change the tile to it's selected version
+     * Selects a tile at the given position, marking it as selected if valid.
+     *
+     * @param position The position of the tile to select.
      */
     func selectTile(at position: Position) {
         guard var tile = getTile(at: position) else { return }
 
         // Ensure the tile is selectable (it must be adjacent to the last selected tile if the stack is not empty)
         if let lastSelectedTile = selectedTiles.last, !isAdjacent(lastSelectedTile, to: tile) || selectedTiles.count == 16 {
-            
             AudioManager.shared.playSoundEffect(named: "incorrect_selection")
-            return // Cannot select a non-adjacent tile
+            return
         }
         
         tile.isSelected = true  // Change to selected state
         updateTile(at: position, with: tile)  // Update the grid with the new state
         selectedTiles.append(tile)  // Push the selected tile onto the stack
-        
         
         // if tile is special, play special tile_click
         if validateWord() {
@@ -185,24 +211,22 @@ class TileManager: ObservableObject, Codable {
         } else {
             AudioManager.shared.playSoundEffect(named: "special_tile_click")
         }
-        
     }
 
     /**
-     Change the tile to it's unselected version. If there are subsequent tiles on the selection stack from the tile to be deselected, deselect those tiles and keep the selected version of the tile to be deseleceted. Update the selectedTiles with the new stack.
+     * Deselects a tile at the given position and any tiles selected after it.
+     *
+     * @param position The position of the tile to deselect.
      */
     func deselectTile(at position: Position) {
-        
         guard let tile = getTile(at: position) else { return }
         // Check if the tile is in the stack and remove it and all tiles above it
         if let index = selectedTiles.firstIndex(where: { $0.id == tile.id }) {
-            
             // If this is the last tile in the stack, deselect it
             if selectedTiles.count == index + 1 {
                 deselectTileWithoutUpdate(tile: tile)
                 selectedTiles.removeLast()  // Remove the tile itself from the stack
             }
-            
             // If there are tiles above this one in the stack, pop them off
             while selectedTiles.count > index + 1 { // Keep the tile selected, so only pop the ones above it
                 let topTile = selectedTiles.removeLast()  // Pop off the stack
@@ -217,7 +241,11 @@ class TileManager: ObservableObject, Codable {
         updateTile(at: tile.position, with: tileToDeselect)
     }
 
-
+    /**
+     * Toggles the selection state of a tile at the given position.
+     *
+     * @param position The position of the tile to toggle.
+     */
     func toggleTileSelection(at position: Position) {
         if let tile = getTile(at: position) {
             if tile.isSelected {
@@ -230,7 +258,7 @@ class TileManager: ObservableObject, Codable {
     }
 
     /**
-     Update the grid, pop the selection stack, and clear the selectedTiles
+     * Clears the current selection, deselecting all selected tiles.
      */
     func clearSelection() {
             for tile in selectedTiles {
@@ -241,11 +269,21 @@ class TileManager: ObservableObject, Codable {
 
     // MARK: - Word Submission Handling
 
-    // Check if the tile is the last selected tile
+    /**
+     * Checks if the given tile is the last selected tile.
+     *
+     * @param tile The `Tile` to check.
+     * @return `true` if the tile is the last selected; otherwise, `false`.
+     */
     func isLastSelectedTile(tile: Tile) -> Bool {
         return selectedTiles.last == tile
     }
     
+    /**
+     * Validates whether the currently selected tiles form a valid word.
+     *
+     * @return `true` if the selected tiles form a valid word; otherwise, `false`.
+     */
     func validateWord() -> Bool {
         if wordChecker.isWord(tiles: selectedTiles) {
             return true
@@ -255,48 +293,46 @@ class TileManager: ObservableObject, Codable {
     }
 
     /**
-     Remove the tiles that were used for word submission. If there are any tiles above the ones removed (meaning it is in the same column and a lower row number), move them down until there are no more empty gaps. Add new tiles for the top of the board to fill in.
+     * Processes the submission of a word, updating the grid and state accordingly.
+     *
+     * @param word   The word being submitted.
+     * @param points The points awarded for the word.
+     * @param level  The current game level.
      */
     func processWordSubmission(word: String, points: Int, level: Int) {
-        
         performanceEvaluator.updatePerformance(lastWord: word, lastWordScore: points)
-        
-        // 1. Mark tiles for removal
+        // Mark tiles for removal
         selectedTiles.forEach { tile in
             if let position = findTilePosition(tile) {
                 grid[position.row][position.column].isMarkedForRemoval = true
             }
         }
-        
-        // 2. Move tiles down to fill gaps
+        // Move tiles down to fill gaps
         withAnimation(.easeOut(duration: animationDuration / 2)) {
             moveTilesDown()
         }
-        
         DispatchQueue.main.asyncAfter(deadline: .now() + 2 * animationDuration) {
             withAnimation(.easeInOut(duration: self.animationDuration)) {
                 self.checkFireTiles()
             }
         }
-        
-        // 3. After the existing tiles have fallen, generate new tiles
+        // After the existing tiles have fallen, generate new tiles
         DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
             withAnimation(.easeInOut(duration: self.animationDuration)) {
                 self.generateNewTilesForTop(word: word, points: points, level: level)
             }
         }
-        
-        // 4. Upgrade random tile if necessary (after new tiles are in place)
+        // Upgrade random tile if necessary (after new tiles are in place)
         DispatchQueue.main.asyncAfter(deadline: .now() + 2 * animationDuration) {
             self.tileConverter.upgradeRandomTile(word: word, pointValue: points, grid: &self.grid)
         }
-        
-        
-        // 5. Clear the selection
+        // Clear the selection
         clearSelection()
     }
 
-
+    /**
+     * Moves tiles down to fill gaps after tile removal.
+     */
     func moveTilesDown() {
         let rows = grid.count
         let columns = grid[0].count
@@ -310,20 +346,16 @@ class TileManager: ObservableObject, Codable {
                     newColumn.append(tile)
                 }
             }
-
             // Determine how many empty spaces are at the top
             let missingTiles = rows - newColumn.count
-
             // Update positions of existing tiles
             for i in 0..<newColumn.count {
                 newColumn[i].position = Position(row: i + missingTiles, column: column)
             }
-
             // Replace the column in the grid
             for i in 0..<newColumn.count {
                 grid[i + missingTiles][column] = newColumn[i]
             }
-
             // Fill empty spaces at the top with placeholders
             for i in 0..<missingTiles {
                 let position = Position(row: i, column: column)
@@ -331,12 +363,18 @@ class TileManager: ObservableObject, Codable {
             }
         }
     }
-
+    
+    /**
+     * Generates new tiles to fill the top of the grid after tiles have moved down.
+     *
+     * @param word   The word that was submitted.
+     * @param points The points awarded for the word.
+     * @param level  The current game level.
+     */
     func generateNewTilesForTop(word: String, points: Int, level: Int) {
         let rows = grid.count
         let columns = grid[0].count
         var placeholdersToReplace: [Position] = []
-
         // Collect positions of placeholders across all columns
         for column in 0..<columns {
             for row in 0..<rows {
@@ -349,7 +387,6 @@ class TileManager: ObservableObject, Codable {
         }
 
         let numberOfNewTiles = placeholdersToReplace.count
-
         if numberOfNewTiles > 0 {
             // Generate the new tiles using the provided generateTiles function
             let newTiles = tileGenerator.generateTiles(
@@ -359,7 +396,6 @@ class TileManager: ObservableObject, Codable {
                 level: level,
                 for: grid
             )
-
             // Assign the new tiles starting above the grid
             for i in 0..<newTiles.count {
                 let positionAboveGrid = Position(row: -numberOfNewTiles + i, column: placeholdersToReplace[i].column)
@@ -367,7 +403,6 @@ class TileManager: ObservableObject, Codable {
                 newTile.position = positionAboveGrid // Start above the grid
                 grid[placeholdersToReplace[i].row][placeholdersToReplace[i].column] = newTile
             }
-
             AudioManager.shared.playSoundEffect(named: "tile_drop")
             // Animate new tiles falling down to their correct positions
             for i in 0..<numberOfNewTiles {
@@ -387,7 +422,9 @@ class TileManager: ObservableObject, Codable {
         }
     }
 
-    //Function the checks the board for any fire tiles. If a fire tile is still present, move it down one row and generate a tile for the top. If a fire tile cannot move down anymore, end the game.
+    /**
+     * Checks for fire tiles on the board and processes their movement or triggers game over.
+     */
     func checkFireTiles() {
         let rows = grid.count
         let columns = grid[0].count
@@ -411,42 +448,41 @@ class TileManager: ObservableObject, Codable {
                 }
             }
         }
-        
         // Notify the handler about the fire tile state
         fireTileChangeHandler?(hasFireTile)
     }
 
+    /**
+     * Moves a fire tile down one position, consuming tiles as necessary.
+     *
+     * @param position The current position of the fire tile.
+     */
     func moveFireTileDown(from position: Position) {
         let belowPosition = Position(row: position.row + 1, column: position.column)
-
         // Get the fire tile and the tile below it
         guard var fireTile = getTile(at: position),
               let belowTile = getTile(at: belowPosition) else { return }
-
         // Ensure the tile below is not a fire tile
         if belowTile.type == .fire {
             return
         }
-
-        // Step 1: Check the breakpoint for the tile type
+        // Check the breakpoint for the tile type
         let breakpoints: [TileType: BreakPoint] = [
             .regular: BreakPoint.regular,
             .green: BreakPoint.green,
             .gold: BreakPoint.gold,
             .diamond: BreakPoint.diamond
         ]
-
         // Ensure the tile below can be consumed based on the breakpoint
         guard let belowTileBreakPoint = breakpoints[belowTile.type] else { return }
-
-        // Step 2: If the fire tile's burnCounter is less than the below tile's BreakPoint, increment burnCounter
+        // If the fire tile's burnCounter is less than the below tile's BreakPoint, increment burnCounter
         if fireTile.burnCounter < belowTileBreakPoint.rawValue {
             fireTile.burnCounter += 1
             updateTile(at: position, with: fireTile) // Update the fire tile to reflect the incremented burnCounter
             return
         }
 
-        // Step 3: If the fire tile meets the breakpoint, reset burnCounter and allow it to move
+        // If the fire tile meets the breakpoint, reset burnCounter and allow it to move
         fireTile.burnCounter = 0
         AudioManager.shared.playSoundEffect(named: "word_submit_swoosh3")
 
@@ -456,11 +492,9 @@ class TileManager: ObservableObject, Codable {
             grid[row + 1][position.column] = currentTile
             grid[row + 1][position.column].position = Position(row: row + 1, column: position.column)
         }
-
         // Move the fire tile down to the consumed tile's position
         fireTile.position = belowPosition
         updateTile(at: belowPosition, with: fireTile)
-
         // Generate a new tile at the top of the column
         let topPosition = Position(row: 0, column: position.column)
         let newTile = tileGenerator.generateTile(at: topPosition, for: grid)
@@ -473,9 +507,11 @@ class TileManager: ObservableObject, Codable {
         return word.count >= 4 || points >= 1000 // Example conversion criteria
     }
 
-
     // MARK: - Tile Utility Methods
 
+    /**
+     Helper method to determine if two tiles are next to each other
+     */
     private func isAdjacent(_ tile1: Tile, to tile2: Tile) -> Bool {
             let rowDiff = abs(tile1.position.row - tile2.position.row)
             let colDiff = abs(tile1.position.column - tile2.position.column)
@@ -484,7 +520,6 @@ class TileManager: ObservableObject, Codable {
             if colDiff > 1 {
                 return false
             }
-
             if colDiff == 0 {
                 // Same column, tiles are neighbors if they are directly above/below each other
                 return rowDiff == 1
@@ -498,12 +533,9 @@ class TileManager: ObservableObject, Codable {
                     return rowDiff == 0 || rowDiff == 1 && (tile2.position.row - tile1.position.row == 1)
                 }
             }
-
             return false
         }
-
-
-
+    
     private func findTilePosition(_ tile: Tile) -> Position? {
         for row in 0..<grid.count {
             for column in 0..<grid[row].count {
@@ -515,6 +547,12 @@ class TileManager: ObservableObject, Codable {
         return nil
     }
 
+    /**
+     * Retrieves the tile at a specific position, if it exists.
+     *
+     * @param position The position of the tile to retrieve.
+     * @return The `Tile` at the specified position, or `nil` if out of bounds.
+     */
     func getTile(at position: Position) -> Tile? {
         guard position.row >= 0 && position.row < grid.count &&
                 position.column >= 0 && position.column < grid[0].count else {
@@ -524,24 +562,27 @@ class TileManager: ObservableObject, Codable {
     }
     
     /**
-     Given the selected tiles, evaluate the score of the word.
+     * Calculates the score for the currently selected tiles.
+     *
+     * @return The total score for the selected tiles.
      */
     func getScore() -> Int {
         return wordChecker.calculateScore(for: selectedTiles, tileMultiplier: tileMultiplier)
     }
     
     /**
-     Get the current word that's selected
+     * Retrieves the current word formed by the selected tiles.
+     *
+     * @return A `String` representing the current word.
      */
     func getWord() -> String {
         return selectedTiles.map {$0.letter}.joined()
     }
     
     /**
-     Function to generate a new board with a penalty.
+     * Scrambles the board, introducing a penalty by adding fire tiles.
      */
     func scramble() {
-        
         // If the user spams the scramble lock, a lock will be applied as to not overuse the scramble button
         if scrambleLock {
             return

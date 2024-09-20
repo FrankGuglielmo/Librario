@@ -18,16 +18,15 @@ struct SessionStatistics: Codable {
     var highestScoringWord: String = ""
     var totalWordsSubmitted: Int = 0 // Total number of words across all levels
     var averageWordLength: Double = 0.0 // Running average for the session
+    var timePlayed: TimeInterval = 0.0
     
     // Track the last processed level for difference calculations
     private var lastProcessedLevel: LevelStatistics? = nil
 
     private enum CodingKeys: String, CodingKey {
-        case id, longestWord, highestScoringWord, totalWordsSubmitted, averageWordLength, lastProcessedLevel
+        case id, longestWord, highestScoringWord, totalWordsSubmitted, averageWordLength, timePlayed, lastProcessedLevel
     }
     
-    
-
     // Initialize the struct
     init() {
         self.id = UUID()
@@ -41,6 +40,7 @@ struct SessionStatistics: Codable {
         highestScoringWord = try container.decode(String.self, forKey: .highestScoringWord)
         totalWordsSubmitted = try container.decode(Int.self, forKey: .totalWordsSubmitted)
         averageWordLength = try container.decode(Double.self, forKey: .averageWordLength)
+        timePlayed = try container.decode(TimeInterval.self, forKey: .timePlayed)
         lastProcessedLevel = try container.decode(LevelStatistics.self, forKey: .lastProcessedLevel)
     }
 
@@ -52,11 +52,10 @@ struct SessionStatistics: Codable {
         try container.encode(highestScoringWord, forKey: .highestScoringWord)
         try container.encode(totalWordsSubmitted, forKey: .totalWordsSubmitted)
         try container.encode(averageWordLength, forKey: .averageWordLength)
+        try container.encode(timePlayed, forKey: .timePlayed)
         try container.encode(lastProcessedLevel, forKey: .lastProcessedLevel)
     }
     
-
-
     // Update session statistics based on new level statistics
     mutating func updateFromLevel(_ newLevel: LevelStatistics) {
         // If this is the first time processing, use all the new data
@@ -92,13 +91,21 @@ struct SessionStatistics: Codable {
                                     Double(totalPreviousWords + levelWords)
             }
 
+            // Update timePlayed
+            let newTime = newLevel.timePlayed
+            let lastTime = lastLevel.timePlayed
+            let differenceTime = newTime - lastTime
+            if differenceTime > 0 {
+                timePlayed += differenceTime
+            }
+
             // Mark this level as processed up to the new point
             lastProcessedLevel = newLevel
         }
     }
 
     private mutating func applyLevelStatistics(_ level: LevelStatistics) {
-        //Ensure there is levelData to submit
+        // Ensure there is levelData to submit
         guard level.averageWordLength > 0 && level.wordsSubmitted > 0 else {
             print("No new data from Level to submit")
             return
@@ -111,7 +118,9 @@ struct SessionStatistics: Codable {
         totalWordsSubmitted += level.wordsSubmitted
         updateLongestWord(newWord: level.longestWord)
         updateHighestScoringWord(newWord: level.highestScoringWord)
-
+        
+        // Update timePlayed
+        timePlayed += level.timePlayed
     }
 
     // Calculate the difference between the new level and the last processed level
@@ -139,7 +148,10 @@ struct SessionStatistics: Codable {
             difference.highestScoringWord = newLevel.highestScoringWord
             difference.highestScoringWordPoints = newLevel.highestScoringWordPoints
         }
-
+        
+        // Calculate time difference
+        difference.timePlayed = newLevel.timePlayed - lastLevel.timePlayed
+        
         return difference
     }
 

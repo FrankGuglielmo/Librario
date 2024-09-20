@@ -6,10 +6,12 @@
       "scale" : "1x"
     },
     {
+      "filename" : "StatPopup@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
+      "filename" : "StatPopup@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

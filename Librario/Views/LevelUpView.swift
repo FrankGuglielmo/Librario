@@ -19,7 +19,7 @@ struct LevelUpView: View {
             let isCompact = horizontalSizeClass == .compact
             let popupWidth = isCompact ? geometry.size.width * 0.8 : geometry.size.width * 0.5
             let popupHeight = isCompact ? geometry.size.height * 0.7 : geometry.size.height * 0.6
-            let dynamicFontSize: CGFloat = isCompact ? popupWidth * 0.07 : popupWidth * 0.06
+            let dynamicFontSize: CGFloat = isCompact ? popupWidth * 0.08 : popupWidth * 0.06
 
                 // LevelUp popup container centered within the GeometryReader
                 ZStack {
@@ -35,7 +35,7 @@ struct LevelUpView: View {
                         // Longest Word Display
                         VStack(spacing: 5) {
                             Text("Longest Word:")
-                                .font(.system(size: dynamicFontSize, weight: .bold))
+                                .font(.system(size: dynamicFontSize * 0.9, weight: .bold))
                                 .foregroundColor(.white)
                             Text(gameManager.levelData.longestWord.isEmpty ? "N/A" : gameManager.levelData.longestWord.uppercased())
                                 .font(.system(size: dynamicFontSize * 0.9))
@@ -50,7 +50,7 @@ struct LevelUpView: View {
                         // Highest Scoring Word Display
                         VStack(spacing: 5) {
                             Text("Highest Scoring Word:")
-                                .font(.system(size: dynamicFontSize, weight: .bold))
+                                .font(.system(size: dynamicFontSize * 0.8, weight: .bold))
                                 .foregroundColor(.white)
                             Text(gameManager.levelData.highestScoringWord.isEmpty ? "N/A" : gameManager.levelData.highestScoringWord.uppercased())
                                 .font(.system(size: dynamicFontSize * 0.9))
@@ -64,18 +64,17 @@ struct LevelUpView: View {
 
                         // Words Submitted Display
                         Text("Words Submitted: \(gameManager.levelData.wordsSubmitted)")
-                            .font(.system(size: dynamicFontSize))
-                            .foregroundColor(.white)
+                            .font(.system(size: dynamicFontSize * 0.8))
+                            .foregroundStyle(.white)
                             .fontWeight(.bold)
-
+                        
                         Spacer()
-
+                        
                         // Custom Continue button image
                         Button(action: {
                             gameManager.handleLevelCompletion()
                             gameManager.resetLevelStatistics()
                             onDismiss() // Call the dismiss action to hide the view
-                            print("Continue to next level")
                         }) {
                             Image("ContinueButton") // Replace with your custom continue button image
                                 .resizable()
@@ -94,3 +93,21 @@ struct LevelUpView: View {
     }
 }
 
+struct LevelUpView_Previews: PreviewProvider {
+    static var previews: some View {
+        LevelUpView(
+            gameManager: mockGameManager(),
+            navigationPath: .constant(NavigationPath()),
+            onDismiss: {}
+        )
+        .previewLayout(.sizeThatFits)
+        .environment(\.horizontalSizeClass, .compact) // You can toggle between compact and regular here
+    }
+
+    // Mock GameManager for preview purposes
+    static func mockGameManager() -> GameManager {
+        let gameManager = GameManager(dictionaryManager: DictionaryManager()) // Adjust with your initializer
+        gameManager.levelData = LevelStatistics()
+        return gameManager
+    }
+}

@@ -19,6 +19,7 @@ struct GameOverView: View {
             let isCompact = horizontalSizeClass == .compact
             let popupWidth = isCompact ? geometry.size.width * 0.8 : geometry.size.width * 0.5
             let popupHeight = isCompact ? geometry.size.height * 0.7 : geometry.size.height * 0.5
+            let dynamicFontSize: CGFloat = isCompact ? popupWidth * 0.1 : popupWidth * 0.06
 
                 // Game Over popup container centered within the GeometryReader
                 ZStack {
@@ -34,24 +35,22 @@ struct GameOverView: View {
                         // Score display
                         VStack(spacing: 5) {
                             Text("Your score:")
-                                .font(.title)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
+                                .font(.system(size: dynamicFontSize * 0.9, weight: .bold))
+                                .foregroundStyle(.white)
                             Text("\(gameManager.gameState.score)")
-                                .font(.title3)
+                                .font(.system(size: dynamicFontSize * 0.9))
                                 .foregroundColor(.blue)
-                        }
+                        } .padding(.top)
 
                         Spacer()
 
                         // Best Word display
                         VStack(spacing: 5) {
                             Text("Best Word:")
-                                .font(.title)
-                                .fontWeight(.bold)
+                                .font(.system(size: dynamicFontSize * 0.9, weight: .bold))
                                 .foregroundColor(.white)
                             Text(gameManager.sessionData.highestScoringWord.isEmpty ? "N/A" : gameManager.sessionData.highestScoringWord.uppercased())
-                                .font(.title3)
+                                .font(.system(size: dynamicFontSize * 0.9))
                                 .foregroundColor(.blue)
                         }
 
@@ -60,11 +59,10 @@ struct GameOverView: View {
                         // Longest Word display
                         VStack(spacing: 5) {
                             Text("Longest Word:")
-                                .font(.title)
-                                .fontWeight(.bold)
+                                .font(.system(size: dynamicFontSize * 0.9, weight: .bold))
                                 .foregroundColor(.white)
                             Text(gameManager.sessionData.longestWord.isEmpty ? "N/A" : gameManager.sessionData.longestWord.uppercased())
-                                .font(.title3)
+                                .font(.system(size: dynamicFontSize * 0.9))
                                 .foregroundColor(.blue)
                         }
 
@@ -81,8 +79,6 @@ struct GameOverView: View {
                                 .scaledToFit()
                                 .frame(width: popupWidth * 0.5) // Adjust size to fit your needs
                         }
-
-                        Spacer()
 
                         // Custom Exit button image
                         Button(action: {
@@ -109,4 +105,29 @@ struct GameOverView: View {
     }
 }
 
+struct GameOverView_Previews: PreviewProvider {
+    static var previews: some View {
+        GameOverView(
+            gameManager: mockGameManager(),
+            navigationPath: .constant(NavigationPath())
+        )
+        .previewLayout(.sizeThatFits)
+        .environmentObject(mockUserData())
+        .environment(\.horizontalSizeClass, .compact) // Simulate compact/regular size classes
+    }
 
+    // Mock GameManager for preview purposes
+    static func mockGameManager() -> GameManager {
+        let gameManager = GameManager(dictionaryManager: DictionaryManager()) // Adjust with your initializer
+        gameManager.gameState.score = 1500
+        gameManager.sessionData = SessionStatistics()
+        return gameManager
+    }
+
+    // Mock UserData for preview purposes
+    static func mockUserData() -> UserData {
+        let userData = UserData()
+        userData.userStatistics = UserStatistics()
+        return userData
+    }
+}

@@ -51,8 +51,6 @@ class TileGenerator {
         // Generate the types of tiles
         let tileTypes = tileTypeGenerator.generateTileTypes(word: word, points: points, level: level, tilesToGenerate: positions.count)
         
-        print("types to generate: ", tileTypes)
-        
         var generatedTiles: [Tile] = []
         
         // Ensure there are enough positions for the tiles

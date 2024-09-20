@@ -23,7 +23,7 @@ struct StatsView: View {
         GeometryReader { geometry in
             let isCompact = horizontalSizeClass == .compact
             let popupWidth = isCompact ? geometry.size.width * 0.9 : geometry.size.width * 0.8
-            let popupHeight = isCompact ? geometry.size.height * 0.9 : geometry.size.height * 0.8
+            let popupHeight = isCompact ? geometry.size.height * 0.9 : geometry.size.height * 0.9
 
             ZStack {
                 // Background image filling the entire safe area
@@ -41,7 +41,6 @@ struct StatsView: View {
                         .scaledToFit()
                         .frame(width: popupWidth, height: popupHeight)
 
-                    // Content without ScrollView
                     VStack(spacing: popupWidth * 0.04) {
 
                         VStack(alignment: .leading, spacing: popupWidth * 0.025) {
@@ -80,6 +79,8 @@ struct StatsView: View {
                                 iconColor: .purple,
                                 popupWidth: popupWidth
                             )
+                            
+                            statView(title: "Total Time Played", value: userData.userStatistics.timePlayed.formattedCompact, iconName: "clock", iconColor: .gray, popupWidth: popupWidth)
 
                             // Lifetime Average Word Length
                             statView(
@@ -91,7 +92,7 @@ struct StatsView: View {
                             )
                         }
                         .padding(.horizontal, popupWidth * 0.05)
-                        .padding(.vertical, popupHeight * 0.05)
+                        .padding(.vertical, popupHeight * 0.02)
 
                         // Back button using the BackButton image
                         Button(action: {
@@ -102,9 +103,8 @@ struct StatsView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: popupWidth * 0.5)
-                                .padding(.top, popupHeight * 0.01)
+                                
                         }
-                        .padding(.bottom, popupHeight * 0.02)
                     }
                     .frame(width: popupWidth * 0.85, height: popupHeight * 0.85)
                 }

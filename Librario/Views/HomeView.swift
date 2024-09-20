@@ -63,10 +63,17 @@ struct HomeView: View {
                                 }
                             }, label: {
                                 ZStack {
-                                    Image("Title_Book_3") // Default image for new game
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: imageWidth)
+                                    if gameManager.gameState.score > 0 {
+                                        Image("Resume_book")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: imageWidth)
+                                    } else {
+                                        Image("Title_Book_3")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: imageWidth)
+                                    }
                                     
                                     Text("Classic Game")
                                         .font(Font.custom("NerkoOne-Regular", size: gameText, relativeTo: .title))
@@ -184,6 +191,4 @@ enum ViewType: Hashable, Codable {
     case stats
     case tips
 }
-
-
 

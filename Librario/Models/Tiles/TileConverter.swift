@@ -55,7 +55,6 @@ class TileConverter: Codable {
     func upgradeRandomTile(word:String, pointValue:Int, grid: inout [[Tile]]){
         // Determine the upgrade type based on the word and point value
         let upgradeType = decideUpgradeType(word: word, pointValue: pointValue)
-        print("word: ", word, ", points: ", pointValue)
         
         // If the upgrade type is regular, no upgrade is needed
         if upgradeType == .regular {
