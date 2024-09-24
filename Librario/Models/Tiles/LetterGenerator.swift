@@ -146,8 +146,8 @@ class LetterGenerator: Codable {
         adjustForGridBalance(grid: grid)
         
         // Step 1: Count vowels in the grid and calculate maximum allowed vowels
-        let totalTileCount = grid.count * grid[0].count
-        let maxAllowedVowels = totalTileCount / 2
+        let totalTileCount: Double = Double(grid.count * grid[0].count)
+        let maxAllowedVowels = Int(totalTileCount * 0.40)
         var currentVowelCount = 0
         
         for row in grid {
