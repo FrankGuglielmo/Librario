@@ -6,10 +6,11 @@
 //
 
 import Foundation
+import Observation
 
-class GameState: ObservableObject, Codable {
-    @Published var score: Int = 0
-    @Published var level: Int = 1
+@Observable class GameState: Codable {
+    var score: Int = 0
+    var level: Int = 1
     
     private enum CodingKeys: String, CodingKey {
         case score, level

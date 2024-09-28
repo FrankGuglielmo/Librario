@@ -7,29 +7,28 @@
 
 import SwiftUI
 import SwiftData
+import Observation
 
 @main
 struct MyApp: App {
-    @StateObject private var dictionaryManager: DictionaryManager
-    @StateObject private var userData: UserData
-    @StateObject private var gameManager: GameManager
+    let dictionaryManager: DictionaryManager
+    let userData: UserData
+    let gameManager: GameManager
     @Environment(\.scenePhase) var scenePhase
 
     init() {
         let dictionaryManager = DictionaryManager()
         let userData = UserData.loadUserData()
         let gameManager = GameManager(dictionaryManager: dictionaryManager)
-        _dictionaryManager = StateObject(wrappedValue: dictionaryManager)
-        _gameManager = StateObject(wrappedValue: gameManager)
-        _userData = StateObject(wrappedValue: userData)
+        self.dictionaryManager = dictionaryManager
+        self.gameManager = gameManager
+        self.userData = userData
         AudioManager.shared.playMusic(named: "gameLoop1", loop: true)
     }
 
     var body: some Scene {
         WindowGroup {
-            HomeView()
-                .environmentObject(gameManager)
-                .environmentObject(userData)
+            HomeView(gameManager: gameManager, userData: userData)
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             if newPhase == .background || newPhase == .inactive {

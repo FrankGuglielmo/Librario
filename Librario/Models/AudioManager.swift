@@ -5,33 +5,38 @@
 //  Created by Frank Guglielmo on 9/8/24.
 //
 
+import Observation
 import AVFoundation
-import Combine
 
-class AudioManager: ObservableObject {
+@Observable class AudioManager {
+    var subscriptions = ObservationRegistrar() // Required by ObservationTracking
+
     static let shared = AudioManager()
 
     private var musicPlayer: AVAudioPlayer?
     private var soundEffectPlayer: AVAudioPlayer?
-    private var cancellables = Set<AnyCancellable>()
 
     init() {
         configureAudioSession()
+        observeSettings()
+    }
+
+    private func observeSettings() {
         let settings = Settings.shared
 
-        // Observe changes in musicVolume
-        settings.$musicVolume
-            .sink { [weak self] musicVolume in
-                self?.updateMusicPlayback(volume: musicVolume)
-            }
-            .store(in: &cancellables)
+        // Observe changes to musicVolume and soundEffectsVolume
+        withObservationTracking {
+            _ = settings.musicVolume
+            _ = settings.soundEffectsVolume
+        } onChange: { [weak self] in
+            self?.settingsDidChange()
+        }
+    }
 
-        // Observe changes in soundEffectsVolume
-        settings.$soundEffectsVolume
-            .sink { [weak self] soundEffectsVolume in
-                self?.updateSoundEffectsPlayback(volume: soundEffectsVolume)
-            }
-            .store(in: &cancellables)
+    func settingsDidChange() {
+        let settings = Settings.shared
+        updateMusicPlayback(volume: settings.musicVolume)
+        updateSoundEffectsPlayback(volume: settings.soundEffectsVolume)
     }
 
     private func configureAudioSession() {

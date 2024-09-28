@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct GameStatusView: View {
-    @ObservedObject var gameManager: GameManager
+    @Bindable var gameManager: GameManager
     @Binding var navigationPath: NavigationPath
 
     // Environment variable to check the horizontal size class

@@ -11,6 +11,7 @@ import SwiftUI
 class TileManager: ObservableObject, Codable {
     @Published var grid: [[Tile]] = [] // current grid being managed
     @Published var selectedTiles: [Tile] = []
+    @Published var lastSelectedTile: Tile?
     
     private var tileGenerator: TileGenerator
     private var tileConverter: TileConverter
@@ -202,6 +203,7 @@ class TileManager: ObservableObject, Codable {
         tile.isSelected = true  // Change to selected state
         updateTile(at: position, with: tile)  // Update the grid with the new state
         selectedTiles.append(tile)  // Push the selected tile onto the stack
+        lastSelectedTile = tile
         
         // if tile is special, play special tile_click
         if validateWord() {
@@ -233,6 +235,7 @@ class TileManager: ObservableObject, Codable {
                 deselectTileWithoutUpdate(tile: topTile)  // Deselect without triggering stack removal again
             }
         }
+        lastSelectedTile = selectedTiles.last
     }
 
     private func deselectTileWithoutUpdate(tile: Tile) {

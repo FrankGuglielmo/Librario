@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-import SwiftUI
-
 struct CustomSlider: View {
     @Binding var value: Float
     let range: ClosedRange<Double>
