@@ -6,29 +6,33 @@
 //
 
 import Foundation
-import Combine
+import Observation
 
-class Settings: ObservableObject, Codable {
+@Observable class Settings: Codable {
     // Singleton instance
     static let shared: Settings = {
         if let savedData = UserDefaults.standard.data(forKey: "userSettings"),
            let decodedSettings = try? JSONDecoder().decode(Settings.self, from: savedData) {
-            return decodedSettings
+                return decodedSettings
         } else {
             // If no settings are found, return the default settings
             return defaultSettings
         }
     }()
 
-    @Published var musicVolume: Float { // New volume control for music
+    var musicVolume: Float {
         didSet {
             save()
+            //Notify AudioManager
+            AudioManager.shared.settingsDidChange()
         }
     }
 
-    @Published var soundEffectsVolume: Float { // New volume control for sound effects
+    var soundEffectsVolume: Float {
         didSet {
             save()
+            //Notify AudioManager
+            AudioManager.shared.settingsDidChange()
         }
     }
 
@@ -68,3 +72,4 @@ class Settings: ObservableObject, Codable {
         }
     }
 }
+

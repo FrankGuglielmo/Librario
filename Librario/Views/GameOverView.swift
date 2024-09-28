@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct GameOverView: View {
-    @ObservedObject var gameManager: GameManager
-    @EnvironmentObject var userData: UserData
+    @Bindable var gameManager: GameManager
+    @Bindable var userData: UserData
     @Binding var navigationPath: NavigationPath
     
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
@@ -105,29 +105,29 @@ struct GameOverView: View {
     }
 }
 
-struct GameOverView_Previews: PreviewProvider {
-    static var previews: some View {
-        GameOverView(
-            gameManager: mockGameManager(),
-            navigationPath: .constant(NavigationPath())
-        )
-        .previewLayout(.sizeThatFits)
-        .environmentObject(mockUserData())
-        .environment(\.horizontalSizeClass, .compact) // Simulate compact/regular size classes
-    }
-
-    // Mock GameManager for preview purposes
-    static func mockGameManager() -> GameManager {
-        let gameManager = GameManager(dictionaryManager: DictionaryManager()) // Adjust with your initializer
-        gameManager.gameState.score = 1500
-        gameManager.sessionData = SessionStatistics()
-        return gameManager
-    }
-
-    // Mock UserData for preview purposes
-    static func mockUserData() -> UserData {
-        let userData = UserData()
-        userData.userStatistics = UserStatistics()
-        return userData
-    }
-}
+//struct GameOverView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        GameOverView(
+//            gameManager: mockGameManager(),
+//            navigationPath: .constant(NavigationPath())
+//        )
+//        .previewLayout(.sizeThatFits)
+//        .environmentObject(mockUserData())
+//        .environment(\.horizontalSizeClass, .compact) // Simulate compact/regular size classes
+//    }
+//
+//    // Mock GameManager for preview purposes
+//    static func mockGameManager() -> GameManager {
+//        let gameManager = GameManager(dictionaryManager: DictionaryManager()) // Adjust with your initializer
+//        gameManager.gameState.score = 1500
+//        gameManager.sessionData = SessionStatistics()
+//        return gameManager
+//    }
+//
+//    // Mock UserData for preview purposes
+//    static func mockUserData() -> UserData {
+//        let userData = UserData()
+//        userData.userStatistics = UserStatistics()
+//        return userData
+//    }
+//}

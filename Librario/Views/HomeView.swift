@@ -12,8 +12,8 @@ import SwiftUI
 struct HomeView: View {
     @State private var showActionSheet = false
     @State private var pathStore = PathStore() // Create PathStore instance
-    @EnvironmentObject var gameManager: GameManager
-    @EnvironmentObject var userData: UserData
+    @Bindable var gameManager: GameManager
+    @Bindable var userData: UserData
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     var body: some View {
@@ -168,13 +168,13 @@ struct HomeView: View {
             .navigationDestination(for: ViewType.self) { viewType in
                 switch viewType {
                 case .game:
-                    GameView(navigationPath: $pathStore.path)
+                    GameView(gameManager: gameManager, userData: userData, navigationPath: $pathStore.path)
                         .navigationBarBackButtonHidden(true) // Disable back button
                 case .settings:
                     SettingsView(navigationPath: $pathStore.path)
                         .navigationBarBackButtonHidden(true)
                 case .stats:
-                    StatsView(navigationPath: $pathStore.path)
+                    StatsView(userData: userData, navigationPath: $pathStore.path)
                         .navigationBarBackButtonHidden(true)
                 case .tips:
                     TipView(navigationPath: $pathStore.path)

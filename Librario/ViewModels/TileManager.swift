@@ -641,7 +641,6 @@ class TileManager: ObservableObject, Codable {
 
         fireTileChangeHandler?(true) // There will always be a fire tile after scrambling
         // Notify that the grid has changed (optional)
-        objectWillChange.send()
     }
 
 

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct LevelUpView: View {
-    @ObservedObject var gameManager: GameManager
+    @Bindable var gameManager: GameManager
     @Binding var navigationPath: NavigationPath
     var onDismiss: () -> Void // Callback for when the user presses continue
     

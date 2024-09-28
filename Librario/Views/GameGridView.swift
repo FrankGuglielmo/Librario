@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct GameGridView: View {
-    @ObservedObject var gameManager: GameManager
+    @Bindable var gameManager: GameManager
     @ObservedObject var tileManager: TileManager
     @State private var selectedDuringDrag: Set<Position> = []
     @Namespace private var tileNamespace

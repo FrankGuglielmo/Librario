@@ -7,13 +7,14 @@
 
 import Foundation
 import SwiftUI
+import Observation
 
-class GameManager: ObservableObject, Codable {
-    @Published var gameOver: Bool = false
-    @Published var gameState: GameState
-    @Published var levelData: LevelStatistics
-    @Published var sessionData: SessionStatistics
-    @Published var tileManager: TileManager
+@Observable class GameManager: Codable {
+    var gameOver: Bool = false
+    var gameState: GameState
+    var levelData: LevelStatistics
+    var sessionData: SessionStatistics
+    var tileManager: TileManager
     
     // Timer-related properties
     private var levelTimer: Timer?

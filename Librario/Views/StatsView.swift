@@ -15,7 +15,7 @@
 import SwiftUI
 
 struct StatsView: View {
-    @EnvironmentObject var userData: UserData
+    @Bindable var userData: UserData
     @Binding var navigationPath: NavigationPath
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
@@ -138,15 +138,15 @@ struct StatsView: View {
 }
 
 
-#Preview {
-    let mockUserStatistics = UserStatistics()
-    mockUserStatistics.longestWord = "Elephant"
-    mockUserStatistics.highestScoringWord = "Zebra"
-    mockUserStatistics.totalWordsSubmitted = 1234
-    mockUserStatistics.totalGamesPlayed = 56
-    
-    let userData = UserData(userStatistics: mockUserStatistics)
-    
-    return StatsView(navigationPath: .constant(NavigationPath()))
-        .environmentObject(userData)
-}
+//#Preview {
+//    let mockUserStatistics = UserStatistics()
+//    mockUserStatistics.longestWord = "Elephant"
+//    mockUserStatistics.highestScoringWord = "Zebra"
+//    mockUserStatistics.totalWordsSubmitted = 1234
+//    mockUserStatistics.totalGamesPlayed = 56
+//    
+//    let userData = UserData(userStatistics: mockUserStatistics)
+//    
+//    return StatsView(navigationPath: .constant(NavigationPath()))
+//        .environmentObject(userData)
+//}

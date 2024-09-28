@@ -6,12 +6,13 @@
 //
 
 import Foundation
+import Observation
 
-class UserData: ObservableObject, Codable {
+@Observable class UserData: Codable {
 
     // User data components
-    @Published var userStatistics: UserStatistics
-    @Published var settings: Settings
+    var userStatistics: UserStatistics
+    var settings: Settings
 
     // Key for UserDefaults
     private let userDataKey = "userData"

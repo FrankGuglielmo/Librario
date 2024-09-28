@@ -11,7 +11,7 @@ import Foundation
 
 struct SubmitWordView: View {
     @ObservedObject var tileManager: TileManager
-    @ObservedObject var gameManager: GameManager
+    @Bindable var gameManager: GameManager
     
     var body: some View {
         Button(action: {

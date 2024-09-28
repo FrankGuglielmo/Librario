@@ -5,11 +5,9 @@
 //  Created by Frank Guglielmo on 9/6/24.
 //
 
-
 import SwiftUI
 
-@Observable
-class PathStore: ObservableObject {
+@Observable class PathStore {
     
     // Store the NavigationPath
     var path: NavigationPath {

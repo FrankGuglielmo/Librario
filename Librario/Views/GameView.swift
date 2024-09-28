@@ -8,7 +8,8 @@
 import SwiftUI
 
 struct GameView: View {
-    @EnvironmentObject var gameManager: GameManager
+    @Bindable var gameManager: GameManager
+    @Bindable var userData: UserData
     @Binding var navigationPath: NavigationPath
     @State private var currentSprite = "normal_sprite"
     @State private var bubbleText = ""
@@ -95,7 +96,7 @@ struct GameView: View {
             
             // Show GameOverView directly based on gameState.gameOver
             if gameManager.gameOver {
-                GameOverView(gameManager: gameManager, navigationPath: $navigationPath)
+                GameOverView(gameManager: gameManager, userData: userData, navigationPath: $navigationPath)
                     .zIndex(1)
                     .onAppear {
                         gameManager.levelData.endGameplay()
@@ -186,13 +187,13 @@ struct GameView: View {
 }
 
 
-struct GameView_Previews: PreviewProvider {
-    @State static var navigationPath = NavigationPath()
-
-    static var previews: some View {
-        GameView(navigationPath: $navigationPath)
-            .environmentObject(GameManager(dictionaryManager: DictionaryManager())) // Replace with your actual GameManager setup
-            .environmentObject(UserData())    // Replace with your actual UserData setup
-            .previewDevice("iPhone 14 Pro")
-    }
-}
+//struct GameView_Previews: PreviewProvider {
+//    @State static var navigationPath = NavigationPath()
+//
+//    static var previews: some View {
+//        GameView(navigationPath: $navigationPath)
+//            .environmentObject(GameManager(dictionaryManager: DictionaryManager())) // Replace with your actual GameManager setup
+//            .environmentObject(UserData())    // Replace with your actual UserData setup
+//            .previewDevice("iPhone 14 Pro")
+//    }
+//}

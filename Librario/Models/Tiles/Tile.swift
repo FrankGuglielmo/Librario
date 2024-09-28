@@ -55,13 +55,13 @@ struct Tile: Identifiable, Codable, Hashable {
     }
     
     // Conform to Hashable
-        static func == (lhs: Tile, rhs: Tile) -> Bool {
-            return lhs.id == rhs.id
-        }
+    static func == (lhs: Tile, rhs: Tile) -> Bool {
+        return lhs.id == rhs.id
+    }
 
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(id)
-        }
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
     
 }
 
