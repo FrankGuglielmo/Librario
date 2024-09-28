@@ -24,9 +24,10 @@ struct GameGridView: View {
             ZStack {
                 // Display tiles
                 ForEach(tileManager.grid.flatMap { $0 }) { tile in
-                    TileView(tile: tile, tileSize: tileSize, onTap: {
+                    TileView(tile: tile, tileSize: tileSize) {
                         tileManager.toggleTileSelection(at: tile.position)
-                    })
+                    }
+    
                     .position(
                         x: xPosition(for: tile, tileSize: tileSize),
                         y: yPosition(for: tile, tileSize: tileSize)
@@ -37,27 +38,6 @@ struct GameGridView: View {
                 // Draw arrows between selected tiles
                 if tileManager.selectedTiles.count > 1 {
                     drawArrows(tileSize: tileSize)
-                }
-
-                // Overlay a transparent rectangle over the last selected tile to capture double-tap
-                if tileManager.validateWord() {
-                    // Ensure the word is valid before adding the gesture
-                    if let lastSelectedTile = tileManager.selectedTiles.last {
-                        Rectangle()
-                            .fill(Color.clear)
-                            .frame(width: tileSize, height: tileSize)
-                            .position(
-                                x: xPosition(for: lastSelectedTile, tileSize: tileSize),
-                                y: yPosition(for: lastSelectedTile, tileSize: tileSize)
-                            )
-                            .contentShape(Rectangle())
-                            .gesture(
-                                TapGesture(count: 2)
-                                    .onEnded {
-                                        gameManager.submitWord()
-                                    }
-                            )
-                    }
                 }
             }
             .frame(width: gridWidth, height: gridHeight)
@@ -255,17 +235,6 @@ struct GameGridView: View {
         }
 
         return "up_arrow" // Default case
-    }
-}
-
-extension View {
-    @ViewBuilder
-    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
-        if condition {
-            transform(self)
-        } else {
-            self
-        }
     }
 }
 
