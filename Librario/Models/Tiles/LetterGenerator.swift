@@ -147,7 +147,7 @@ class LetterGenerator: Codable {
         
         // Step 1: Count vowels in the grid and calculate maximum allowed vowels
         let totalTileCount: Double = Double(grid.count * grid[0].count)
-        let maxAllowedVowels = Int(totalTileCount * 0.40)
+        let maxAllowedVowels = Int(totalTileCount * 0.45) // Up to 45% of the board can be vowels
         var currentVowelCount = 0
         
         for row in grid {
