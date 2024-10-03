@@ -10,6 +10,9 @@ import Observation
 
 @Observable class UserData: Codable {
 
+    // New property for the user's unique identifier
+    var userID: String
+
     // User data components
     var userStatistics: UserStatistics
     var settings: Settings
@@ -19,51 +22,69 @@ import Observation
 
     // Coding keys for encoding/decoding
     private enum CodingKeys: String, CodingKey {
-        case userStatistics, settings
+        case userID, userStatistics, settings
     }
 
-    // Initializer with default values
-    init(userStatistics: UserStatistics = UserStatistics(), settings: Settings = Settings.defaultSettings) {
+    // Initializer with default values (generates a new UUID if one doesn't exist)
+    init(userID: String = UUID().uuidString,
+         userStatistics: UserStatistics = UserStatistics(),
+         settings: Settings = Settings.defaultSettings) {
+        self.userID = userID
         self.userStatistics = userStatistics
         self.settings = settings
     }
 
-    // Codable conformance for decoding
+    // Codable conformance for decoding (loads userID from saved data if present)
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        userID = try container.decode(String.self, forKey: .userID)
         userStatistics = try container.decode(UserStatistics.self, forKey: .userStatistics)
         settings = try container.decode(Settings.self, forKey: .settings)
     }
 
-    // Codable conformance for encoding
+    // Codable conformance for encoding (saves userID along with other data)
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(userID, forKey: .userID)
         try container.encode(userStatistics, forKey: .userStatistics)
         try container.encode(settings, forKey: .settings)
     }
 
-    // Save UserData to UserDefaults
+    // Save UserData to UserDefaults (this includes saving the userID)
     func saveUserData() {
         do {
             let data = try JSONEncoder().encode(self)
             UserDefaults.standard.set(data, forKey: userDataKey)
-            print("User data saved to UserDefaults.")
+            print("User data (including userID) saved to UserDefaults.")
         } catch {
             print("Failed to save user data to UserDefaults: \(error)")
         }
     }
 
-    // Load UserData from UserDefaults
+    // Load UserData from UserDefaults (reuses existing userID if present, otherwise generates a new one)
     static func loadUserData() -> UserData {
         guard let data = UserDefaults.standard.data(forKey: "userData") else {
-            // Return a default instance if loading fails or data doesn't exist
+            // Return a new instance with a generated userID if data doesn't exist
             return UserData()
         }
         do {
-            return try JSONDecoder().decode(UserData.self, from: data)
+            let userData = try JSONDecoder().decode(UserData.self, from: data)
+            return userData
         } catch {
             print("Failed to load user data from UserDefaults: \(error)")
-            return UserData() // Return a default instance if loading fails
+            // Return a new instance with a generated userID if decoding fails
+            return UserData()
         }
     }
+
+    // Convenience function to ensure userID is always initialized and saved
+    static func ensureUserID() -> String {
+        let userData = loadUserData()
+        if userData.userID.isEmpty {
+            userData.userID = UUID().uuidString
+            userData.saveUserData()
+        }
+        return userData.userID
+    }
 }
+

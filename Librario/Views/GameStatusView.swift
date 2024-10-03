@@ -116,15 +116,16 @@ struct GameStatusView: View {
             navigationPath.removeLast() // Navigate back to HomeView
         }) {
             VStack {
-                Image(systemName: "arrow.left")
+                Image(systemName: "arrowshape.left")
                     .font(.title)
-                    .foregroundColor(.green)
+                    .foregroundStyle(Color.darkGrey)
                 Text("Menu")
-                    .foregroundStyle(.green)
+                    .font(Font.custom("NerkoOne-Regular", size: 20))
+                    .foregroundStyle(Color.darkGrey)
             }
         }
         .frame(width: 70, height: 70) // Fixed size button
-        .background(Color.brown)
+        .background(Color.lightTan)
         .contentShape(Rectangle()) // Ensure entire button area is tappable
     }
 
@@ -135,13 +136,14 @@ struct GameStatusView: View {
         }) {
             ZStack {
                 Rectangle()
-                    .strokeBorder(.green, lineWidth: 5)
-                    .background(Rectangle().fill(.brown))
-                    .foregroundStyle(.brown)
+                    .strokeBorder(Color.darkGrey, lineWidth: 1)
+                    .background(Rectangle().fill(Color.lightTan))
+                    .foregroundStyle(Color.lightTan)
 
                 Text("Submit")
+                    .font(Font.custom("NerkoOne-Regular", size: 36))
                     .font(.title)
-                    .foregroundStyle(.green)
+                    .foregroundStyle(Color.darkGrey)
             }
         }
         .frame(maxWidth: .infinity) // Make this button stretch to fill available space
@@ -151,12 +153,16 @@ struct GameStatusView: View {
     private func levelView() -> some View {
         VStack(alignment: .center) {
             Text("LVL")
-                .foregroundColor(.green)
+                .font(Font.custom("NerkoOne-Regular", size: 22))
+                .fontWeight(.bold)
+                .foregroundStyle(Color.darkGrey)
             Text("\(gameManager.gameState.level)")
-                .foregroundColor(.green)
+                .font(Font.custom("NerkoOne-Regular", size: 22))
+                .fontWeight(.bold)
+                .foregroundStyle(Color.darkGrey)
         }
         .frame(width: 70, height: 70) // Fixed size for the level indicator
-        .background(Color.brown)
+        .background(Color.lightTan)
     }
 }
 
@@ -187,3 +193,7 @@ struct GameStatusView_Previews: PreviewProvider {
     }
 }
 
+extension Color {
+    static let darkGrey = Color(red: 47/255, green: 47/255, blue: 47/255)
+    static let lightTan = Color(red: 214/255, green: 189/255, blue: 152/255)
+}

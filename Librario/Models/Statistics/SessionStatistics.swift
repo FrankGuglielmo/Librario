@@ -15,16 +15,19 @@ struct SessionStatistics: Codable {
     
     // Stats to track across the entire session
     var longestWord: String = ""
+    var longestWordPoints: Int = 0 // Score for the longest word
     var highestScoringWord: String = ""
+    var highestScoringWordPoints: Int = 0 // Score for the highest scoring word
     var totalWordsSubmitted: Int = 0 // Total number of words across all levels
     var averageWordLength: Double = 0.0 // Running average for the session
-    var timePlayed: TimeInterval = 0.0
+    var highestScore: Int = 0 // Highest score achieved in the session
+    var timePlayed: TimeInterval = 0.0 // Time played in seconds
     
     // Track the last processed level for difference calculations
     private var lastProcessedLevel: LevelStatistics? = nil
 
     private enum CodingKeys: String, CodingKey {
-        case id, longestWord, highestScoringWord, totalWordsSubmitted, averageWordLength, timePlayed, lastProcessedLevel
+        case id, longestWord, longestWordPoints, highestScoringWord, highestScoringWordPoints, totalWordsSubmitted, averageWordLength, highestScore, timePlayed, lastProcessedLevel
     }
     
     // Initialize the struct
@@ -37,11 +40,14 @@ struct SessionStatistics: Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
         longestWord = try container.decode(String.self, forKey: .longestWord)
+        longestWordPoints = try container.decode(Int.self, forKey: .longestWordPoints)
         highestScoringWord = try container.decode(String.self, forKey: .highestScoringWord)
+        highestScoringWordPoints = try container.decode(Int.self, forKey: .highestScoringWordPoints)
         totalWordsSubmitted = try container.decode(Int.self, forKey: .totalWordsSubmitted)
         averageWordLength = try container.decode(Double.self, forKey: .averageWordLength)
+        highestScore = try container.decode(Int.self, forKey: .highestScore)
         timePlayed = try container.decode(TimeInterval.self, forKey: .timePlayed)
-        lastProcessedLevel = try container.decode(LevelStatistics.self, forKey: .lastProcessedLevel)
+        lastProcessedLevel = try container.decodeIfPresent(LevelStatistics.self, forKey: .lastProcessedLevel)
     }
 
     // Codable conformance for custom encoding
@@ -49,9 +55,12 @@ struct SessionStatistics: Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(longestWord, forKey: .longestWord)
+        try container.encode(longestWordPoints, forKey: .longestWordPoints)
         try container.encode(highestScoringWord, forKey: .highestScoringWord)
+        try container.encode(highestScoringWordPoints, forKey: .highestScoringWordPoints)
         try container.encode(totalWordsSubmitted, forKey: .totalWordsSubmitted)
         try container.encode(averageWordLength, forKey: .averageWordLength)
+        try container.encode(highestScore, forKey: .highestScore)
         try container.encode(timePlayed, forKey: .timePlayed)
         try container.encode(lastProcessedLevel, forKey: .lastProcessedLevel)
     }
@@ -79,8 +88,8 @@ struct SessionStatistics: Codable {
         // Only apply the difference if there's new data
         if difference.wordsSubmitted != 0 {
             totalWordsSubmitted += difference.wordsSubmitted
-            updateLongestWord(newWord: difference.longestWord)
-            updateHighestScoringWord(newWord: difference.highestScoringWord)
+            updateLongestWord(newWord: difference.longestWord, score: difference.longestWordPoints)
+            updateHighestScoringWord(newWord: difference.highestScoringWord, score: difference.highestScoringWordPoints)
 
             // Update the running average word length
             let levelWords = difference.wordsSubmitted
@@ -91,6 +100,9 @@ struct SessionStatistics: Codable {
                                     Double(totalPreviousWords + levelWords)
             }
 
+            // Update highest score if the new level has a higher score
+            highestScore = max(highestScore, newLevel.highestScore)
+            
             // Update timePlayed
             let newTime = newLevel.timePlayed
             let lastTime = lastLevel.timePlayed
@@ -105,19 +117,23 @@ struct SessionStatistics: Codable {
     }
 
     private mutating func applyLevelStatistics(_ level: LevelStatistics) {
-        // Ensure there is levelData to submit
+        // Ensure there is level data to submit
         guard level.averageWordLength > 0 && level.wordsSubmitted > 0 else {
             print("No new data from Level to submit")
             return
         }
+        
         // Calculate new averageWordLength
         let weightedSum = ((averageWordLength * Double(totalWordsSubmitted)) + (level.averageWordLength * Double(level.wordsSubmitted)))
         let totalWords = totalWordsSubmitted + level.wordsSubmitted
         averageWordLength = weightedSum / Double(totalWords)
         
         totalWordsSubmitted += level.wordsSubmitted
-        updateLongestWord(newWord: level.longestWord)
-        updateHighestScoringWord(newWord: level.highestScoringWord)
+        updateLongestWord(newWord: level.longestWord, score: level.longestWordPoints)
+        updateHighestScoringWord(newWord: level.highestScoringWord, score: level.highestScoringWordPoints)
+        
+        // Update highest score
+        highestScore = max(highestScore, level.highestScore)
         
         // Update timePlayed
         timePlayed += level.timePlayed
@@ -141,6 +157,7 @@ struct SessionStatistics: Codable {
         // Update the longest word if it's changed
         if newLevel.longestWord.count > lastLevel.longestWord.count {
             difference.longestWord = newLevel.longestWord
+            difference.longestWordPoints = newLevel.longestWordPoints
         }
 
         // Update the highest scoring word if it's changed
@@ -156,15 +173,17 @@ struct SessionStatistics: Codable {
     }
 
     
-    private mutating func updateLongestWord(newWord: String) {
+    private mutating func updateLongestWord(newWord: String, score: Int) {
         if newWord.count > longestWord.count {
             longestWord = newWord
+            longestWordPoints = score
         }
     }
 
-    private mutating func updateHighestScoringWord(newWord: String) {
-        if newWord.count > highestScoringWord.count {
+    private mutating func updateHighestScoringWord(newWord: String, score: Int) {
+        if score > highestScoringWordPoints {
             highestScoringWord = newWord
+            highestScoringWordPoints = score
         }
     }
     
@@ -206,4 +225,3 @@ struct SessionStatistics: Codable {
         return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
     }
 }
-

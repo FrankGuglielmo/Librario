@@ -12,14 +12,15 @@ import Foundation
 struct LevelStatistics: Codable {
     var id: UUID = UUID()
     
-    // Stats to track:
+    // Stats to track for each level
     var longestWord: String = ""
-    var longestWordPoints: Int = 0
+    var longestWordPoints: Int = 0 // Points for the longest word
     var highestScoringWord: String = ""
-    var highestScoringWordPoints: Int = 0
+    var highestScoringWordPoints: Int = 0 // Points for the highest-scoring word
     var wordsSubmitted: Int = 0 // Number of words made this level
     var totalCharacterCount: Int = 0 // Total number of characters across submitted words
     var averageWordLength: Double = 0.0 // Store the average word length
+    var highestScore: Int = 0 // Highest total score achieved in this level
     
     var timePlayed: TimeInterval = 0.0 // Time in seconds
         
@@ -27,15 +28,15 @@ struct LevelStatistics: Codable {
     private var levelStartTime: Date? = nil
     
     private enum CodingKeys: String, CodingKey {
-        case id, longestWord, longestWordPoints, highestScoringWord, highestScoringWordPoints, wordsSubmitted, totalCharacterCount, averageWordLength, timePlayed
+        case id, longestWord, longestWordPoints, highestScoringWord, highestScoringWordPoints, wordsSubmitted, totalCharacterCount, averageWordLength, highestScore, timePlayed
     }
 
-    // Initialize the struct (using default values is optional since you already have defaults)
+    // Initialize the struct (using default values)
     init() {
         self.id = UUID()
     }
 
-    // Codable conformance is automatically derived in this case, but you can override if needed
+    // Codable conformance for decoding
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id) // Decode UUID
@@ -46,9 +47,11 @@ struct LevelStatistics: Codable {
         wordsSubmitted = try container.decode(Int.self, forKey: .wordsSubmitted)
         totalCharacterCount = try container.decode(Int.self, forKey: .totalCharacterCount)
         averageWordLength = try container.decode(Double.self, forKey: .averageWordLength)
+        highestScore = try container.decode(Int.self, forKey: .highestScore)
         timePlayed = try container.decode(TimeInterval.self, forKey: .timePlayed)
     }
 
+    // Codable conformance for encoding
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
@@ -59,6 +62,7 @@ struct LevelStatistics: Codable {
         try container.encode(wordsSubmitted, forKey: .wordsSubmitted)
         try container.encode(totalCharacterCount, forKey: .totalCharacterCount)
         try container.encode(averageWordLength, forKey: .averageWordLength)
+        try container.encode(highestScore, forKey: .highestScore)
         try container.encode(timePlayed, forKey: .timePlayed)
     }
     
@@ -97,6 +101,9 @@ struct LevelStatistics: Codable {
             highestScoringWord = word
             highestScoringWordPoints = score
         }
+
+        // Update the highest score
+        highestScore += score
     }
 
     // Save LevelData to file
@@ -129,7 +136,6 @@ struct LevelStatistics: Codable {
             return LevelStatistics() // Return a default instance if loading fails
         }
     }
-
 
     // Helper function to get the documents directory
     static func getDocumentsDirectory() -> URL {

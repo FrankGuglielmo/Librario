@@ -8,21 +8,25 @@
 import Foundation
 
 class UserStatistics: Codable {
-    
+
     // Stats to track lifetime user statistics
     var longestWord: String = ""
+    var longestWordPoints: Int = 0 // Score of the longest word
     var highestScoringWord: String = ""
+    var highestScoringWordPoints: Int = 0 // Score of the highest scoring word
     var totalWordsSubmitted: Int = 0 // Total number of words across all sessions
     var totalGamesPlayed: Int = 0 // Total number of games played
     var averageWordLength: Double = 0.0 // Running average for lifetime word length
     var highestLevel: Int = 1 // Highest level the player has reached
+    var highestScore: Int = 0 // Highest score achieved in a single game
     var timePlayed: TimeInterval = 0.0 // In seconds
 
     // Track the last processed session for difference calculations
     private var lastProcessedSession: SessionStatistics? = nil
-    
+
+    // Codable keys
     private enum CodingKeys: String, CodingKey {
-        case longestWord, highestScoringWord, totalWordsSubmitted, totalGamesPlayed, averageWordLength, highestLevel, timePlayed, lastProcessedSession
+        case longestWord, longestWordPoints, highestScoringWord, highestScoringWordPoints, totalWordsSubmitted, totalGamesPlayed, averageWordLength, highestLevel, highestScore, timePlayed, lastProcessedSession
     }
 
     // Default initializer
@@ -32,181 +36,155 @@ class UserStatistics: Codable {
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         longestWord = try container.decode(String.self, forKey: .longestWord)
+        longestWordPoints = try container.decode(Int.self, forKey: .longestWordPoints)
         highestScoringWord = try container.decode(String.self, forKey: .highestScoringWord)
+        highestScoringWordPoints = try container.decode(Int.self, forKey: .highestScoringWordPoints)
         totalWordsSubmitted = try container.decode(Int.self, forKey: .totalWordsSubmitted)
         totalGamesPlayed = try container.decode(Int.self, forKey: .totalGamesPlayed)
         averageWordLength = try container.decode(Double.self, forKey: .averageWordLength)
         highestLevel = try container.decode(Int.self, forKey: .highestLevel)
+        highestScore = try container.decode(Int.self, forKey: .highestScore)
         timePlayed = try container.decode(TimeInterval.self, forKey: .timePlayed)
-        lastProcessedSession = try container.decode(SessionStatistics.self, forKey: .lastProcessedSession)
+        lastProcessedSession = try container.decodeIfPresent(SessionStatistics.self, forKey: .lastProcessedSession)
     }
 
     // Codable conformance for encoding
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(longestWord, forKey: .longestWord)
+        try container.encode(longestWordPoints, forKey: .longestWordPoints)
         try container.encode(highestScoringWord, forKey: .highestScoringWord)
+        try container.encode(highestScoringWordPoints, forKey: .highestScoringWordPoints)
         try container.encode(totalWordsSubmitted, forKey: .totalWordsSubmitted)
         try container.encode(totalGamesPlayed, forKey: .totalGamesPlayed)
         try container.encode(averageWordLength, forKey: .averageWordLength)
         try container.encode(highestLevel, forKey: .highestLevel)
+        try container.encode(highestScore, forKey: .highestScore)
         try container.encode(timePlayed, forKey: .timePlayed)
         try container.encode(lastProcessedSession, forKey: .lastProcessedSession)
     }
 
     // Update user statistics based on new session statistics
     func updateFromSession(_ newSession: SessionStatistics) {
-        // Ensure that no update happens if there are no words or games played
         guard newSession.totalWordsSubmitted > 0 else {
             print("No words submitted in the session, skipping update.")
             return
         }
         
-        // If this is the first time processing this session, use all the new data
         guard let lastSession = lastProcessedSession else {
             applyNewSessionStatistics(newSession)
             lastProcessedSession = newSession
             return
         }
 
-        // Check if the new session is the same as the last processed session
         if newSession.id != lastSession.id {
             applyNewSessionStatistics(newSession)
             lastProcessedSession = newSession
             return
         }
 
-        // Process only the difference (new data in the same session)
         let difference = calculateSessionDifference(newSession: newSession, lastSession: lastSession)
 
-        // Ensure there's something to update
         if difference.totalWordsSubmitted > 0 {
             let totalPreviousWords = Double(totalWordsSubmitted)
             let totalNewWords = Double(difference.totalWordsSubmitted)
 
-            // Avoid division by zero
             if totalPreviousWords + totalNewWords > 0 {
                 let newWeightedAverage = ((averageWordLength * totalPreviousWords) + (difference.averageWordLength * totalNewWords)) / (totalPreviousWords + totalNewWords)
-
-                // Ensure we don't assign NaN values
-                if !newWeightedAverage.isNaN {
-                    averageWordLength = newWeightedAverage
-                } else {
-                    print("Warning: Computed NaN for average word length. Keeping previous average.")
-                }
+                averageWordLength = !newWeightedAverage.isNaN ? newWeightedAverage : averageWordLength
             }
 
-            // Update total words submitted
             totalWordsSubmitted += difference.totalWordsSubmitted
-            // Update longest and highest scoring words
-            updateLongestWord(newWord: difference.longestWord)
-            updateHighestScoringWord(newWord: difference.highestScoringWord)
-            
-            // Update timePlayed
-            let newTime = difference.timePlayed
-            if newTime > 0 {
-                timePlayed += newTime
-            }
+
+            updateLongestWord(newWord: difference.longestWord, score: difference.longestWordPoints)
+            updateHighestScoringWord(newWord: difference.highestScoringWord, score: difference.highestScoringWordPoints)
+
+            timePlayed += difference.timePlayed
         }
 
-        // Mark this session as processed up to the new point
         lastProcessedSession = newSession
     }
 
     private func applyNewSessionStatistics(_ session: SessionStatistics) {
-        // Ensure no updates are applied if there are no valid words
         guard session.totalWordsSubmitted > 0 else {
-            print("No words submitted in the session, skipping new session statistics.")
+            print("No words submitted in the session, skipping update.")
             return
         }
 
-        // Calculate Average Word Length
-        let weightedSum = ((session.averageWordLength * Double(session.totalWordsSubmitted)) + (averageWordLength * Double(totalWordsSubmitted)))
         let totalWords = Double(session.totalWordsSubmitted + totalWordsSubmitted)
+        let weightedSum = ((session.averageWordLength * Double(session.totalWordsSubmitted)) + (averageWordLength * Double(totalWordsSubmitted)))
 
-        // Avoid division by zero
-        if totalWords > 0 {
-            averageWordLength = weightedSum / totalWords
-        } else {
-            print("Warning: Division by zero in applyNewSessionStatistics, skipping update.")
-        }
+        averageWordLength = totalWords > 0 ? weightedSum / totalWords : averageWordLength
 
-        // Update best words if possible
-        updateLongestWord(newWord: session.longestWord)
-        updateHighestScoringWord(newWord: session.highestScoringWord)
-        // Update total words and games played
+        updateLongestWord(newWord: session.longestWord, score: session.longestWordPoints)
+        updateHighestScoringWord(newWord: session.highestScoringWord, score: session.highestScoringWordPoints)
+
         totalWordsSubmitted += session.totalWordsSubmitted
-        
-        // Update timePlayed
+        highestScore = max(highestScore, session.highestScore)
         timePlayed += session.timePlayed
     }
 
-
-private func calculateSessionDifference(newSession: SessionStatistics, lastSession: SessionStatistics) -> SessionStatistics {
+    private func calculateSessionDifference(newSession: SessionStatistics, lastSession: SessionStatistics) -> SessionStatistics {
         var difference = SessionStatistics()
-        
-        // Calculate the difference in total words submitted
+
         difference.totalWordsSubmitted = newSession.totalWordsSubmitted - lastSession.totalWordsSubmitted
-        
-        // Safely calculate average word length for the difference, if words have been submitted
+
         if difference.totalWordsSubmitted > 0 {
             difference.averageWordLength = newSession.averageWordLength
-        } else {
-            difference.averageWordLength = 0.0 // No new words submitted
         }
-        
-        // Update the longest word if it's changed
+
         if newSession.longestWord.count > lastSession.longestWord.count {
             difference.longestWord = newSession.longestWord
+            difference.longestWordPoints = newSession.longestWordPoints
         }
-        
-        // Update the highest scoring word if it's changed
-        if newSession.highestScoringWord.count > lastSession.highestScoringWord.count {
+
+        if newSession.highestScoringWordPoints > lastSession.highestScoringWordPoints {
             difference.highestScoringWord = newSession.highestScoringWord
+            difference.highestScoringWordPoints = newSession.highestScoringWordPoints
         }
-        
-        // Calculate time difference
+
         difference.timePlayed = newSession.timePlayed - lastSession.timePlayed
-        
+
         return difference
     }
 
-    
-    private func updateLongestWord(newWord: String) {
+    private func updateLongestWord(newWord: String, score: Int) {
         if newWord.count > longestWord.count {
             longestWord = newWord
+            longestWordPoints = score
         }
     }
 
-    private func updateHighestScoringWord(newWord: String) {
-        if newWord.count > highestScoringWord.count {
+    private func updateHighestScoringWord(newWord: String, score: Int) {
+        if score > highestScoringWordPoints {
             highestScoringWord = newWord
+            highestScoringWordPoints = score
         }
     }
-    
-    func updateHighestlevel(level: Int) {
+
+    func updateHighestLevel(level: Int) {
         if level > highestLevel {
             highestLevel = level
         }
     }
 
     func resetStats() {
-        // Resetting all the properties to their initial values
         longestWord = ""
+        longestWordPoints = 0
         highestScoringWord = ""
+        highestScoringWordPoints = 0
         totalWordsSubmitted = 0
         totalGamesPlayed = 0
         averageWordLength = 0.0
+        highestLevel = 1
+        highestScore = 0
+        timePlayed = 0.0
         lastProcessedSession = nil
-        
-        // Optionally, you can add a message or log to indicate the reset
         print("User statistics have been reset.")
     }
 
-    
     // Save UserStatistics to file
     func saveUserStatistics() {
-        
         let fileURL = UserStatistics.getDocumentsDirectory().appendingPathComponent("userStatistics.json")
         do {
             let data = try JSONEncoder().encode(self)
@@ -234,3 +212,4 @@ private func calculateSessionDifference(newSession: SessionStatistics, lastSessi
         return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
     }
 }
+
