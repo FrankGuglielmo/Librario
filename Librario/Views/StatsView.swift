@@ -5,13 +5,6 @@
 //  Created by Frank Guglielmo on 8/31/24.
 //
 
-//
-//  StatsView.swift
-//  Librario
-//
-//  Created by Frank Guglielmo on 8/31/24.
-//
-
 import SwiftUI
 
 struct StatsView: View {
@@ -23,7 +16,7 @@ struct StatsView: View {
         GeometryReader { geometry in
             let isCompact = horizontalSizeClass == .compact
             let popupWidth = isCompact ? geometry.size.width * 0.9 : geometry.size.width * 0.8
-            let popupHeight = isCompact ? geometry.size.height * 0.9 : geometry.size.height * 0.9
+            let popupHeight = isCompact ? geometry.size.height * 0.75 : geometry.size.height * 0.9
 
             ZStack {
                 // Background image filling the entire safe area
@@ -43,56 +36,86 @@ struct StatsView: View {
 
                     VStack(spacing: popupWidth * 0.04) {
 
-                        VStack(alignment: .leading, spacing: popupWidth * 0.025) {
-                            // Longest Word
-                            statView(
-                                title: "Longest Word",
-                                value: userData.userStatistics.longestWord.isEmpty ? "N/A" : userData.userStatistics.longestWord.uppercased(),
-                                iconName: "textformat",
-                                iconColor: .blue,
-                                popupWidth: popupWidth
-                            )
+                        let scrollViewHeight = popupHeight * 0.65 // Adjust as needed
 
-                            // Highest Scoring Word
-                            statView(
-                                title: "Highest Scoring Word",
-                                value: userData.userStatistics.highestScoringWord.isEmpty ? "N/A" : userData.userStatistics.highestScoringWord.uppercased(),
-                                iconName: "star.fill",
-                                iconColor: .yellow,
-                                popupWidth: popupWidth
-                            )
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: popupWidth * 0.025) {
+                                // Longest Word
+                                statView(
+                                    title: "Longest Word",
+                                    value: userData.userStatistics.longestWord.isEmpty ? "N/A" : userData.userStatistics.longestWord.uppercased(),
+                                    iconName: "textformat",
+                                    iconColor: .blue,
+                                    popupWidth: popupWidth
+                                )
 
-                            // Total Words Submitted
-                            statView(
-                                title: "Total Words Submitted",
-                                value: "\(userData.userStatistics.totalWordsSubmitted)",
-                                iconName: "checkmark.circle.fill",
-                                iconColor: .green,
-                                popupWidth: popupWidth
-                            )
+                                // Highest Scoring Word
+                                statView(
+                                    title: "Highest Scoring Word",
+                                    value: userData.userStatistics.highestScoringWord.isEmpty ? "N/A" : userData.userStatistics.highestScoringWord.uppercased(),
+                                    iconName: "star.fill",
+                                    iconColor: .yellow,
+                                    popupWidth: popupWidth
+                                )
 
-                            // Total Games Played
-                            statView(
-                                title: "Total Games Played",
-                                value: "\(userData.userStatistics.totalGamesPlayed)",
-                                iconName: "gamecontroller.fill",
-                                iconColor: .purple,
-                                popupWidth: popupWidth
-                            )
-                            
-                            statView(title: "Total Time Played", value: userData.userStatistics.timePlayed.formattedCompact, iconName: "clock", iconColor: .gray, popupWidth: popupWidth)
+                                // Total Words Submitted
+                                statView(
+                                    title: "Total Words Submitted",
+                                    value: "\(userData.userStatistics.totalWordsSubmitted)",
+                                    iconName: "checkmark.circle.fill",
+                                    iconColor: .green,
+                                    popupWidth: popupWidth
+                                )
 
-                            // Lifetime Average Word Length
-                            statView(
-                                title: "Avg Word Length",
-                                value: String(format: "%.2f", userData.userStatistics.averageWordLength),
-                                iconName: "text.alignleft",
-                                iconColor: .orange,
-                                popupWidth: popupWidth
-                            )
+                                // Total Games Played
+                                statView(
+                                    title: "Total Games Played",
+                                    value: "\(userData.userStatistics.totalGamesPlayed)",
+                                    iconName: "gamecontroller.fill",
+                                    iconColor: .purple,
+                                    popupWidth: popupWidth
+                                )
+
+                                // Highest Level
+                                statView(
+                                    title: "Highest Level",
+                                    value: "\(userData.userStatistics.highestLevel)",
+                                    iconName: "flag.fill",
+                                    iconColor: .red,
+                                    popupWidth: popupWidth
+                                )
+
+                                // Highest Score
+                                statView(
+                                    title: "Highest Score",
+                                    value: "\(userData.userStatistics.highestScore)",
+                                    iconName: "rosette",
+                                    iconColor: .orange,
+                                    popupWidth: popupWidth
+                                )
+
+                                // Total Time Played
+                                statView(
+                                    title: "Total Time Played",
+                                    value: userData.userStatistics.timePlayed.formattedCompact,
+                                    iconName: "clock",
+                                    iconColor: .gray,
+                                    popupWidth: popupWidth
+                                )
+
+                                // Lifetime Average Word Length
+                                statView(
+                                    title: "Avg Word Length",
+                                    value: String(format: "%.2f", userData.userStatistics.averageWordLength),
+                                    iconName: "text.alignleft",
+                                    iconColor: .orange,
+                                    popupWidth: popupWidth
+                                )
+                            }
+                            .padding(.horizontal, popupWidth * 0.05)
+                            .padding(.vertical, popupHeight * 0.02)
                         }
-                        .padding(.horizontal, popupWidth * 0.05)
-                        .padding(.vertical, popupHeight * 0.02)
+                        .frame(height: scrollViewHeight)
 
                         // Back button using the BackButton image
                         Button(action: {
@@ -103,7 +126,6 @@ struct StatsView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: popupWidth * 0.5)
-                                
                         }
                     }
                     .frame(width: popupWidth * 0.85, height: popupHeight * 0.85)
@@ -136,15 +158,15 @@ struct StatsView: View {
     }
 }
 
-
 #Preview {
     let mockUserStatistics = UserStatistics()
     mockUserStatistics.longestWord = "Elephant"
     mockUserStatistics.highestScoringWord = "Zebra"
     mockUserStatistics.totalWordsSubmitted = 1234
     mockUserStatistics.totalGamesPlayed = 56
-    
+    mockUserStatistics.timePlayed = 3600 // Add this line if you have timePlayed
+
     let userData = UserData(userStatistics: mockUserStatistics)
-    
+
     return StatsView(userData: userData, navigationPath: .constant(NavigationPath()))
 }

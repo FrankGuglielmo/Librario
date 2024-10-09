@@ -174,7 +174,3 @@ struct TipView_Previews: PreviewProvider {
         }
     }
 }
-
-//#Preview {
-//    TipView(navigationPath: .constant(NavigationPath()))
-//}

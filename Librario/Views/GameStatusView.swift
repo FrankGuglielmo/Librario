@@ -118,14 +118,14 @@ struct GameStatusView: View {
             VStack {
                 Image(systemName: "arrowshape.left")
                     .font(.title)
-                    .foregroundStyle(Color.darkGrey)
+                    .foregroundStyle(Color.cream)
                 Text("Menu")
                     .font(Font.custom("NerkoOne-Regular", size: 20))
-                    .foregroundStyle(Color.darkGrey)
+                    .foregroundStyle(Color.cream)
             }
         }
         .frame(width: 70, height: 70) // Fixed size button
-        .background(Color.lightTan)
+        .background(Color.forestGreen)
         .contentShape(Rectangle()) // Ensure entire button area is tappable
     }
 
@@ -136,9 +136,8 @@ struct GameStatusView: View {
         }) {
             ZStack {
                 Rectangle()
-                    .strokeBorder(Color.darkGrey, lineWidth: 1)
-                    .background(Rectangle().fill(Color.lightTan))
-                    .foregroundStyle(Color.lightTan)
+                    .strokeBorder(Color.forestGreen, lineWidth: 1)
+                    .background(Rectangle().fill(Color.greenishGray))
 
                 Text("Submit")
                     .font(Font.custom("NerkoOne-Regular", size: 36))
@@ -155,14 +154,14 @@ struct GameStatusView: View {
             Text("LVL")
                 .font(Font.custom("NerkoOne-Regular", size: 22))
                 .fontWeight(.bold)
-                .foregroundStyle(Color.darkGrey)
+                .foregroundStyle(Color.cream)
             Text("\(gameManager.gameState.level)")
                 .font(Font.custom("NerkoOne-Regular", size: 22))
                 .fontWeight(.bold)
-                .foregroundStyle(Color.darkGrey)
+                .foregroundStyle(Color.cream)
         }
         .frame(width: 70, height: 70) // Fixed size for the level indicator
-        .background(Color.lightTan)
+        .background(Color.forestGreen)
     }
 }
 
@@ -195,5 +194,7 @@ struct GameStatusView_Previews: PreviewProvider {
 
 extension Color {
     static let darkGrey = Color(red: 47/255, green: 47/255, blue: 47/255)
-    static let lightTan = Color(red: 214/255, green: 189/255, blue: 152/255)
+    static let cream = Color(red: 214/255, green: 189/255, blue: 152/255)
+    static let forestGreen = Color(red: 26/255, green: 54/255, blue: 54/255)
+    static let greenishGray = Color(red: 97/255, green: 107/255, blue: 99/255)
 }

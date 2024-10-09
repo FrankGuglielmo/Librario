@@ -176,9 +176,11 @@ class UserStatistics: Codable {
         }
     
     private func reportHighScoreToGameCenter(score: Int) {
-            let leaderboardID = "all_time_high_score_leaderboard"
-            GameCenterManager.shared.submitScore(score, for: leaderboardID)
-        }
+        let allTimeLeaderboardID = "all_time_high_score_leaderboard"
+        let recurringLeaderboardID = "recurringHighScoreLeaderboard"
+        GameCenterManager.shared.submitScore(score, for: allTimeLeaderboardID)
+        GameCenterManager.shared.submitScore(score, for: recurringLeaderboardID)
+    }
 
     func resetStats() {
         longestWord = ""

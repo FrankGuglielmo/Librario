@@ -187,14 +187,6 @@ struct GameView: View {
     }
 }
 
-
-//struct GameView_Previews: PreviewProvider {
-//    @State static var navigationPath = NavigationPath()
-//
-//    static var previews: some View {
-//        GameView(navigationPath: $navigationPath)
-//            .environmentObject(GameManager(dictionaryManager: DictionaryManager())) // Replace with your actual GameManager setup
-//            .environmentObject(UserData())    // Replace with your actual UserData setup
-//            .previewDevice("iPhone 14 Pro")
-//    }
-//}
+#Preview {
+    GameView(gameManager: GameManager(dictionaryManager: DictionaryManager()), userData: UserData(), navigationPath: .constant(NavigationPath()))
+}

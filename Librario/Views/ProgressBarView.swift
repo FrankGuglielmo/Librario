@@ -33,6 +33,3 @@ struct ProgressBarView: View {
     }
 }
 
-//#Preview {
-//    ProgressBarView()
-//}
