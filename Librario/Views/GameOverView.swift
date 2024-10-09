@@ -11,25 +11,25 @@ struct GameOverView: View {
     @Bindable var gameManager: GameManager
     @Bindable var userData: UserData
     @Binding var navigationPath: NavigationPath
-
+    
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
-
+    
     var body: some View {
         GeometryReader { geometry in
             let isCompact = horizontalSizeClass == .compact
-            let popupWidth = isCompact ? geometry.size.width * 0.8 : geometry.size.width * 0.5
-            let popupHeight = isCompact ? geometry.size.height * 0.7 : geometry.size.height * 0.5
-            let dynamicFontSize: CGFloat = isCompact ? popupWidth * 0.1 : popupWidth * 0.06
-
+            let popupWidth = isCompact ? geometry.size.width * 0.8 : geometry.size.width * 0.8
+            let popupHeight = isCompact ? geometry.size.height * 0.7 : geometry.size.height * 0.7
+            let dynamicFontSize: CGFloat = isCompact ? popupWidth * 0.1 : popupWidth * 0.07
+            
             ZStack {
                 Image("GameOverPopup")
                     .resizable()
                     .scaledToFit()
                     .frame(width: popupWidth, height: popupHeight)
-
+                
                 VStack {
                     Spacer()
-
+                    
                     // Score display
                     VStack(spacing: 5) {
                         Text("Your score:")
@@ -40,9 +40,9 @@ struct GameOverView: View {
                             .foregroundColor(.blue)
                     }
                     .padding(.top)
-
+                    
                     Spacer()
-
+                    
                     // Best Word display
                     VStack(spacing: 5) {
                         Text("Best Word:")
@@ -52,9 +52,9 @@ struct GameOverView: View {
                             .font(.system(size: dynamicFontSize * 0.9))
                             .foregroundColor(.blue)
                     }
-
+                    
                     Spacer()
-
+                    
                     // Longest Word display
                     VStack(spacing: 5) {
                         Text("Longest Word:")
@@ -64,9 +64,9 @@ struct GameOverView: View {
                             .font(.system(size: dynamicFontSize * 0.9))
                             .foregroundColor(.blue)
                     }
-
+                    
                     Spacer()
-
+                    
                     // Custom Restart Game button image
                     Button(action: {
                         // Reset game logic
@@ -78,7 +78,7 @@ struct GameOverView: View {
                             .scaledToFit()
                             .frame(width: popupWidth * 0.5) // Adjust size to fit your needs
                     }
-
+                    
                     // Custom Exit button image
                     Button(action: {
                         if !navigationPath.isEmpty {
@@ -92,7 +92,7 @@ struct GameOverView: View {
                             .scaledToFit()
                             .frame(width: popupWidth * 0.5) // Adjust size to fit your needs
                     }
-
+                    
                     Spacer()
                 }
                 .frame(width: popupWidth * 0.85, height: popupHeight * 0.85)
@@ -101,13 +101,15 @@ struct GameOverView: View {
             .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
         }
     }
+}
 
-    struct GameOverView_Previews: PreviewProvider {
-        static var previews: some View {
-            let gameManager = GameManager(dictionaryManager: DictionaryManager())
-            let userData = UserData.loadUserData()
-            let navigationPath = NavigationPath()
-            GameOverView(gameManager: gameManager, userData: userData, navigationPath: .constant(navigationPath))
-        }
+
+struct GameOverView_Previews: PreviewProvider {
+    static var previews: some View {
+        let gameManager = GameManager(dictionaryManager: DictionaryManager())
+        let userData = UserData.loadUserData()
+        let navigationPath = NavigationPath()
+        GameOverView(gameManager: gameManager, userData: userData, navigationPath: .constant(navigationPath))
     }
 }
+

@@ -17,9 +17,9 @@ struct LevelUpView: View {
     var body: some View {
         GeometryReader { geometry in
             let isCompact = horizontalSizeClass == .compact
-            let popupWidth = isCompact ? geometry.size.width * 0.8 : geometry.size.width * 0.5
-            let popupHeight = isCompact ? geometry.size.height * 0.7 : geometry.size.height * 0.6
-            let dynamicFontSize: CGFloat = isCompact ? popupWidth * 0.08 : popupWidth * 0.06
+                        let popupWidth = isCompact ? geometry.size.width * 0.8 : geometry.size.width * 0.5
+                        let popupHeight = isCompact ? geometry.size.height * 0.7 : geometry.size.height * 0.6
+                        let dynamicFontSize: CGFloat = isCompact ? popupWidth * 0.09 : popupWidth * 0.06
 
                 // LevelUp popup container centered within the GeometryReader
                 ZStack {
@@ -111,3 +111,5 @@ struct LevelUpView_Previews: PreviewProvider {
         return gameManager
     }
 }
+
+
