@@ -15,12 +15,14 @@
 import SwiftUI
 import SwiftData
 import Observation
+import GameKit
 
 @main
 struct MyApp: App {
     let dictionaryManager: DictionaryManager
     let userData: UserData
     let gameManager: GameManager
+    let gameCenterManager = GameCenterManager.shared
     @Environment(\.scenePhase) var scenePhase
 
 
@@ -48,3 +50,10 @@ struct MyApp: App {
         }
     }
 }
+
+extension UIViewController: GKGameCenterControllerDelegate {
+    public func gameCenterViewControllerDidFinish(_ gameCenterViewController: GKGameCenterViewController) {
+        gameCenterViewController.dismiss(animated: true, completion: nil)
+    }
+}
+

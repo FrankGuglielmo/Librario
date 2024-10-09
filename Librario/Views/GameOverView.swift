@@ -111,31 +111,3 @@ struct GameOverView: View {
         }
     }
 }
-
-
-//struct GameOverView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        GameOverView(
-//            gameManager: mockGameManager(),
-//            navigationPath: .constant(NavigationPath())
-//        )
-//        .previewLayout(.sizeThatFits)
-//        .environmentObject(mockUserData())
-//        .environment(\.horizontalSizeClass, .compact) // Simulate compact/regular size classes
-//    }
-//
-//    // Mock GameManager for preview purposes
-//    static func mockGameManager() -> GameManager {
-//        let gameManager = GameManager(dictionaryManager: DictionaryManager()) // Adjust with your initializer
-//        gameManager.gameState.score = 1500
-//        gameManager.sessionData = SessionStatistics()
-//        return gameManager
-//    }
-//
-//    // Mock UserData for preview purposes
-//    static func mockUserData() -> UserData {
-//        let userData = UserData()
-//        userData.userStatistics = UserStatistics()
-//        return userData
-//    }
-//}

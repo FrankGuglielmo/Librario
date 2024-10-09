@@ -163,13 +163,22 @@ class UserStatistics: Codable {
     }
 
     func updateHighestLevel(level: Int, score: Int) {
-        if level > highestLevel {
-            highestLevel = level
+        print("Current level: \(level), \nCurrent score: \(score)")
+            if level > highestLevel {
+                highestLevel = level
+                // Optionally report level-based achievements here
+            }
+        print("HighestScore: \(highestScore)")
+            if score > highestScore {
+                highestScore = score
+                reportHighScoreToGameCenter(score: score)
+            }
         }
-        if score > highestScore {
-            highestScore = score
+    
+    private func reportHighScoreToGameCenter(score: Int) {
+            let leaderboardID = "all_time_high_score_leaderboard"
+            GameCenterManager.shared.submitScore(score, for: leaderboardID)
         }
-    }
 
     func resetStats() {
         longestWord = ""

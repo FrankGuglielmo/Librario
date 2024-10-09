@@ -101,6 +101,7 @@ struct GameView: View {
                     .onAppear {
                         gameManager.levelData.endGameplay()
                         gameManager.stopLevelTimer()
+                        userData.userStatistics.updateHighestLevel(level: gameManager.gameState.level, score: gameManager.gameState.score)
                     }
             }
         }

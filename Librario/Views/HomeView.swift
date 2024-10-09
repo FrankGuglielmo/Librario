@@ -1,11 +1,10 @@
 //
-//  HomePage2.swift
+//  HomeView.swift
 //  Librario
-//
-//
 //
 
 import SwiftUI
+import GameKit
 
 struct HomeView: View {
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
@@ -13,7 +12,10 @@ struct HomeView: View {
     @State private var showActionSheet = false
     @State private var pathStore = PathStore() // Create PathStore instance
     @State var gameManager: GameManager
+    @State private var gameCenterManager = GameCenterManager.shared
     @Bindable var userData: UserData
+    @State private var showingGameCenter = false
+
 
     // Getting screen size to calculate dynamic values
     let screenWidth = UIScreen.main.bounds.width
@@ -44,9 +46,15 @@ struct HomeView: View {
                                 .scaledToFit()
                                 .frame(width: spriteSize, height: spriteSize)
                             
-                            WelcomeBubbleView() //TODO: Ask for username and display username, need a prompt view and store username is userData. Username must be unique!
-                                .frame(width: bubbleWidth, height: bubbleHeight)
-                                .offset(x: bubbleOffsetX, y: bubbleOffsetY)
+                            if gameCenterManager.isAuthenticated {
+                                WelcomeBubbleView(name: GKLocalPlayer.local.alias)
+                                    .frame(width: bubbleWidth, height: bubbleHeight)
+                                    .offset(x: bubbleOffsetX, y: bubbleOffsetY)
+                            } else {
+                                WelcomeBubbleView(name: "Librarian")
+                                    .frame(width: bubbleWidth, height: bubbleHeight)
+                                    .offset(x: bubbleOffsetX, y: bubbleOffsetY)
+                            }
                         }
                         
                         Spacer()
@@ -146,16 +154,22 @@ struct HomeView: View {
                                     .frame(height: bookHeights[3])
                             })
                             
-                            // Leaderboards Button
+                            // Blank Book
+                            // Blank Book Button
                             Button(action: {
                                 AudioManager.shared.playSoundEffect(named: "switch_view_sound")
-                                pathStore.path.append(ViewType.leaderboard)
+                                if gameCenterManager.isAuthenticated {
+                                   presentGameCenterDashboard()
+                                } else {
+                                    gameCenterManager.authenticateUser()
+                                }
                             }, label: {
                                 Image(bookImages[4])
                                     .resizable()
                                     .scaledToFit()
-                                    .frame(height: bookHeights[4])
-                            })
+                                    .frame(height: bookHeights[4]) // Adjust height as needed
+                                })
+
                         }
                     }
                 }
@@ -175,9 +189,7 @@ struct HomeView: View {
                     TipView(navigationPath: $pathStore.path)
                         .navigationBarBackButtonHidden(true)
                 case .leaderboard:
-                    Text("Leaderboard")
-//                    LeaderboardView(currentUser: "john_doe", navigationPath: $pathStore.path, userData: userData)
-                    //                    .navigationBarBackButtonHidden(true)
+                    GameCenterView(viewState: .leaderboards)
                 }
             }
         }
@@ -256,6 +268,23 @@ struct HomeView: View {
 
     var bookFontSize: CGFloat {
         screenHeight * 0.03
+    }
+    
+    
+    func presentGameCenterDashboard() {
+        // Get the active window scene
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootVC = windowScene.windows.first?.rootViewController {
+
+            // Initialize the Game Center dashboard view controller
+            let gameCenterVC = GKGameCenterViewController(state: .dashboard)
+            gameCenterVC.gameCenterDelegate = rootVC  // No need for a conditional cast
+
+            // Present the Game Center dashboard
+            rootVC.present(gameCenterVC, animated: true, completion: nil)
+        } else {
+            print("Failed to find the root view controller")
+        }
     }
 }
 

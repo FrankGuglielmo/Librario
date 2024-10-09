@@ -20,7 +20,7 @@ struct SettingsView: View {
 
             ZStack {
                 // Background color filling the entire safe area
-                Image("red_curtain")
+                Image("Background_Image_2")
                     .resizable()
                     .scaledToFill()
                     .frame(minWidth: 0)

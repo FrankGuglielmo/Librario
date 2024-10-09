@@ -9,6 +9,7 @@ import SwiftUI
 
 struct WelcomeBubbleView: View {
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    let name: String
     
     var body: some View {
         let isCompact = horizontalSizeClass == .compact
@@ -21,7 +22,7 @@ struct WelcomeBubbleView: View {
                 .shadow(radius: 5)
             
             // Text inside the bubble
-            Text("Hello, Frank!")
+            Text("Hello, \(name)!")
                 .font(Font.custom("NerkoOne-Regular", size: titleFontSize, relativeTo: .title))
                 .foregroundColor(.black)
                 .padding(10)
@@ -30,5 +31,5 @@ struct WelcomeBubbleView: View {
 }
 
 #Preview {
-    WelcomeBubbleView()
+    WelcomeBubbleView(name: "Frank")
 }

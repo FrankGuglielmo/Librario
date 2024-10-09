@@ -27,11 +27,11 @@ struct StatsView: View {
 
             ZStack {
                 // Background image filling the entire safe area
-                Image("red_curtain")
+                Image("Background_Image_2")
                     .resizable()
                     .scaledToFill()
+                    .frame(minWidth: 0)
                     .edgesIgnoringSafeArea(.all)
-                    .frame(width: geometry.size.width, height: geometry.size.height)
 
                 // Stats popup container centered within the GeometryReader
                 ZStack {
@@ -112,7 +112,6 @@ struct StatsView: View {
                 .frame(width: popupWidth, height: popupHeight)
                 .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
             }
-            .frame(width: geometry.size.width, height: geometry.size.height)
         }
     }
 
@@ -138,15 +137,14 @@ struct StatsView: View {
 }
 
 
-//#Preview {
-//    let mockUserStatistics = UserStatistics()
-//    mockUserStatistics.longestWord = "Elephant"
-//    mockUserStatistics.highestScoringWord = "Zebra"
-//    mockUserStatistics.totalWordsSubmitted = 1234
-//    mockUserStatistics.totalGamesPlayed = 56
-//    
-//    let userData = UserData(userStatistics: mockUserStatistics)
-//    
-//    return StatsView(navigationPath: .constant(NavigationPath()))
-//        .environmentObject(userData)
-//}
+#Preview {
+    let mockUserStatistics = UserStatistics()
+    mockUserStatistics.longestWord = "Elephant"
+    mockUserStatistics.highestScoringWord = "Zebra"
+    mockUserStatistics.totalWordsSubmitted = 1234
+    mockUserStatistics.totalGamesPlayed = 56
+    
+    let userData = UserData(userStatistics: mockUserStatistics)
+    
+    return StatsView(userData: userData, navigationPath: .constant(NavigationPath()))
+}
