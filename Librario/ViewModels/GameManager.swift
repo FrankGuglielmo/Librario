@@ -218,7 +218,7 @@ import Observation
     func updateUserStatistics(_ userStatistics: UserStatistics) {
         sessionData.updateFromLevel(levelData)
         userStatistics.updateFromSession(sessionData)
-        userStatistics.updateHighestLevel(level: gameState.level)
+        userStatistics.updateHighestLevel(level: gameState.level, score: gameState.score)
         userStatistics.saveUserStatistics()
     }
 

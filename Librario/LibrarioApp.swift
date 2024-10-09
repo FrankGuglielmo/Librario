@@ -5,6 +5,13 @@
 //  Created by Frank Guglielmo on 8/11/24.
 //
 
+//
+//  LibrarioApp.swift
+//  Librario
+//
+//  Created by Frank Guglielmo on 8/11/24.
+//
+
 import SwiftUI
 import SwiftData
 import Observation
@@ -15,6 +22,7 @@ struct MyApp: App {
     let userData: UserData
     let gameManager: GameManager
     @Environment(\.scenePhase) var scenePhase
+
 
     init() {
         let dictionaryManager = DictionaryManager()

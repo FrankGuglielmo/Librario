@@ -162,9 +162,12 @@ class UserStatistics: Codable {
         }
     }
 
-    func updateHighestLevel(level: Int) {
+    func updateHighestLevel(level: Int, score: Int) {
         if level > highestLevel {
             highestLevel = level
+        }
+        if score > highestScore {
+            highestScore = score
         }
     }
 

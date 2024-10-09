@@ -1,56 +1,63 @@
 //
-//  HomeView.swift
+//  HomePage2.swift
 //  Librario
 //
-//  Created by Frank Guglielmo on 8/29/24.
 //
-
-import SwiftUI
+//
 
 import SwiftUI
 
 struct HomeView: View {
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    @Environment(\.verticalSizeClass) var verticalSizeClass
     @State private var showActionSheet = false
     @State private var pathStore = PathStore() // Create PathStore instance
-    @Bindable var gameManager: GameManager
+    @State var gameManager: GameManager
     @Bindable var userData: UserData
-    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+
+    // Getting screen size to calculate dynamic values
+    let screenWidth = UIScreen.main.bounds.width
+    let screenHeight = UIScreen.main.bounds.height
 
     var body: some View {
-        NavigationStack(path: $pathStore.path) { // Simple navigation stack
-            GeometryReader { geometry in
-                let isCompact = horizontalSizeClass == .compact
-                let titleFontSize: CGFloat = isCompact ? geometry.size.width * 0.2 : geometry.size.width * 0.18
-                let gameText: CGFloat = geometry.size.width * 0.07
-                let imageWidth: CGFloat = isCompact ? geometry.size.width * 0.8 : geometry.size.width * 0.7
+        NavigationStack(path: $pathStore.path) {
+            ZStack {
+                Image("Background_Image")
+                    .resizable()
+                    .edgesIgnoringSafeArea(.all)
                 
-                let spriteWidth: CGFloat = isCompact ? geometry.size.width * 0.5 : geometry.size.width * 0.25
-
-                ZStack {
-                    // Background color filling the entire safe area
-                    Image("red_curtain")
+                VStack {
+                    Spacer().frame(height: topSpacing) // Adjusted spacing based on screen size
+                    
+                    // Librario text as image
+                    Image("Librario_regular")
                         .resizable()
-                        .scaledToFill()
-                        .frame(minWidth: 0)
-                        .edgesIgnoringSafeArea(.all)
-
-                    VStack {
-                        // Header
-                        VStack(spacing: 4) {
-                            Text("Librario")
-                                .font(Font.custom("NerkoOne-Regular", size: titleFontSize, relativeTo: .title))
-                                .fontWeight(.bold)
-                                .foregroundStyle(Color.white)
-
-                            HStack {
-                                Image("happy_sprite")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: spriteWidth) // Adjust sprite size based on screen
-                            }
+                        .scaledToFit()
+                        .frame(width: imageWidth, height: imageHeight)
+                    
+                    
+                    // Sprite and text bubble
+                    HStack {
+                        ZStack {
+                            Image("happy_sprite")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: spriteSize, height: spriteSize)
+                            
+                            WelcomeBubbleView() //TODO: Ask for username and display username, need a prompt view and store username is userData. Username must be unique!
+                                .frame(width: bubbleWidth, height: bubbleHeight)
+                                .offset(x: bubbleOffsetX, y: bubbleOffsetY)
                         }
-
-                        // Center with Navigation to various views
+                        
+                        Spacer()
+                    }
+                    .padding()
+                    
+                    Spacer()
+                    
+                    // Stack of books (buttons)
+                    HStack {
+                        Spacer()
                         VStack(alignment: .trailing, spacing: 0) {
                             // Classic Game Button
                             Button(action: {
@@ -64,21 +71,18 @@ struct HomeView: View {
                             }, label: {
                                 ZStack {
                                     if gameManager.gameState.score > 0 {
-                                        Image("Resume_book")
+                                        Image(horizontalSizeClass == .compact ? "Resume_Book" : "Resume_Book_Large")
                                             .resizable()
                                             .scaledToFit()
-                                            .frame(width: imageWidth)
+                                            .frame(height: bookHeights[0])
                                     } else {
-                                        Image("Title_Book_3")
+                                        Image(bookImages[0])
                                             .resizable()
                                             .scaledToFit()
-                                            .frame(width: imageWidth)
+                                            .frame(height: bookHeights[0])
                                     }
                                     
-                                    Text("Classic Game")
-                                        .font(Font.custom("NerkoOne-Regular", size: gameText, relativeTo: .title))
-                                        .fontWeight(.bold)
-                                        .foregroundStyle(Color.white)
+                                    
                                 }
                             })
                             .actionSheet(isPresented: $showActionSheet) {
@@ -99,69 +103,60 @@ struct HomeView: View {
                                     ]
                                 )
                             }
-
+                            
                             // Settings Button
                             Button(action: {
                                 AudioManager.shared.playSoundEffect(named: "switch_view_sound")
                                 pathStore.path.append(ViewType.settings)
                             }, label: {
                                 ZStack {
-                                    Image("Title_Book_2")
+                                    Image(bookImages[1])
                                         .resizable()
                                         .scaledToFit()
-                                        .frame(width: imageWidth)
+                                        .frame(height: bookHeights[1])
                                     
-                                    Text("Settings")
-                                        .font(Font.custom("NerkoOne-Regular", size: gameText, relativeTo: .title))
-                                        .fontWeight(.bold)
-                                        .foregroundStyle(Color.white)
+                                    
                                 }
                             })
-                            .padding(.trailing, 5)
-
+                            
                             // How to Play Button
                             Button(action: {
                                 AudioManager.shared.playSoundEffect(named: "switch_view_sound")
                                 pathStore.path.append(ViewType.tips)
                             }, label: {
                                 ZStack {
-                                    Image("Title_Book_4")
+                                    Image(bookImages[2])
                                         .resizable()
                                         .scaledToFit()
-                                        .frame(width: imageWidth)
+                                        .frame(height: bookHeights[2])
                                     
-                                    Text("How To Play")
-                                        .font(Font.custom("NerkoOne-Regular", size: gameText, relativeTo: .title))
-                                        .fontWeight(.bold)
-                                        .foregroundStyle(Color.white)
+                                    
                                 }
                             })
                             
-
                             // Stats Button
                             Button(action: {
                                 AudioManager.shared.playSoundEffect(named: "switch_view_sound")
                                 gameManager.updateUserStatistics(userData.userStatistics)
                                 pathStore.path.append(ViewType.stats)
                             }, label: {
-                                ZStack {
-                                    Image("Title_Book_1")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: imageWidth)
-                                    
-                                    Text("Stats")
-                                        .font(Font.custom("NerkoOne-Regular", size: gameText, relativeTo: .title))
-                                        .fontWeight(.bold)
-                                        .foregroundStyle(Color.white)
-                                }
+                                Image(bookImages[3])
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: bookHeights[3])
                             })
-                            .padding(.trailing, 5)
-                            if !isCompact {
-                                Spacer()
-                            }
+                            
+                            // Leaderboards Button
+                            Button(action: {
+                                AudioManager.shared.playSoundEffect(named: "switch_view_sound")
+                                pathStore.path.append(ViewType.leaderboard)
+                            }, label: {
+                                Image(bookImages[4])
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: bookHeights[4])
+                            })
                         }
-                        .padding()
                     }
                 }
             }
@@ -179,8 +174,95 @@ struct HomeView: View {
                 case .tips:
                     TipView(navigationPath: $pathStore.path)
                         .navigationBarBackButtonHidden(true)
+                case .leaderboard:
+                    Text("Leaderboard")
+//                    LeaderboardView(currentUser: "john_doe", navigationPath: $pathStore.path, userData: userData)
+                    //                    .navigationBarBackButtonHidden(true)
                 }
             }
+        }
+    }
+    
+    // MARK: - Dynamic Size Variables
+
+    var topSpacing: CGFloat {
+        screenHeight * (horizontalSizeClass == .compact ? 0.02 : 0.03)
+    }
+    
+    var imageWidth: CGFloat {
+        screenWidth * (horizontalSizeClass == .compact ? 0.5 : 0.4)
+    }
+    
+    var imageHeight: CGFloat {
+        screenHeight * (horizontalSizeClass == .compact ? 0.09 : 0.1)
+    }
+    
+    var imageBottomPadding: CGFloat {
+        screenHeight * 0.02
+    }
+    
+    var spriteSize: CGFloat {
+        screenWidth * (horizontalSizeClass == .compact ? 0.4 : 0.325)
+    }
+    
+    var bubbleWidth: CGFloat {
+        screenWidth * (horizontalSizeClass == .compact ? 0.4 : 0.3)
+    }
+    
+    var bubbleHeight: CGFloat {
+        screenHeight * (horizontalSizeClass == .compact ? 0.1 : 0.12)
+    }
+    
+    var bubbleOffsetX: CGFloat {
+        screenWidth * (horizontalSizeClass == .compact ? 0.36 : 0.3)
+    }
+    
+    var bubbleOffsetY: CGFloat {
+        screenHeight * (horizontalSizeClass == .compact ? -0.04 : -0.06)
+    }
+    
+    var bottomPadding: CGFloat {
+        screenHeight * 0.02
+    }
+    
+    var bookImages: [String] {
+        // Append "_Large" for larger devices
+        if horizontalSizeClass == .compact {
+            return ["Classic_Book", "Settings_Book", "HowTo_Book", "Stats_Book", "Leaderboard_Book"]
+        } else {
+            return ["Classic_Book_Large", "Settings_Book_Large", "HowTo_Book_Large", "Stats_Book_Large", "Leaderboard_Book_Large"]
+        }
+    }
+    
+    var bookHeights: [CGFloat] {
+        let isDynamicIsland = UIDevice.current.userInterfaceIdiom == .phone && screenHeight > 800 && screenHeight < 950
+        let baseHeight: CGFloat
+
+        if isDynamicIsland {
+            // Reduce book size for dynamic island devices (e.g., iPhone 14 Pro/Pro Max)
+            baseHeight = screenHeight * 0.105
+        } else {
+            baseHeight = screenHeight * 0.12
+        }
+
+        return [
+            baseHeight * (95.0 / 90.0),
+            baseHeight * (80.0 / 90.0),
+            baseHeight * (80.0 / 90.0),
+            baseHeight * (80.0 / 90.0),
+            baseHeight * (80.0 / 90.0)
+        ]
+    }
+
+    var bookFontSize: CGFloat {
+        screenHeight * 0.03
+    }
+}
+
+struct HomePage2_Previews: PreviewProvider {
+    static var previews: some View {
+        Group {
+            HomeView(gameManager: GameManager(dictionaryManager: DictionaryManager()), userData: UserData())
         }
     }
 }
@@ -190,5 +272,8 @@ enum ViewType: Hashable, Codable {
     case settings
     case stats
     case tips
+    case leaderboard
 }
+
+
 
