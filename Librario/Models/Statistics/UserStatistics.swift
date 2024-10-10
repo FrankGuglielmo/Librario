@@ -163,12 +163,10 @@ class UserStatistics: Codable {
     }
 
     func updateHighestLevel(level: Int, score: Int) {
-        print("Current level: \(level), \nCurrent score: \(score)")
             if level > highestLevel {
                 highestLevel = level
                 // Optionally report level-based achievements here
             }
-        print("HighestScore: \(highestScore)")
             if score > highestScore {
                 highestScore = score
                 reportHighScoreToGameCenter(score: score)
@@ -176,10 +174,8 @@ class UserStatistics: Codable {
         }
     
     private func reportHighScoreToGameCenter(score: Int) {
-        let allTimeLeaderboardID = "all_time_high_score_leaderboard"
-        let recurringLeaderboardID = "recurringHighScoreLeaderboard"
-        GameCenterManager.shared.submitScore(score, for: allTimeLeaderboardID)
-        GameCenterManager.shared.submitScore(score, for: recurringLeaderboardID)
+        let leaderboards: [String] = ["all_time_high_score_leaderboard", "recurringHighScoreLeaderboard"]
+        GameCenterManager.shared.submitScore(score, for: leaderboards)
     }
 
     func resetStats() {

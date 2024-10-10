@@ -43,18 +43,12 @@ class GameCenterManager {
     }
 
     // Submit a score to a leaderboard
-    func submitScore(_ score: Int, for leaderboardID: String) {
+    func submitScore(_ score: Int, for leaderboardIDs: [String]) {
         guard isAuthenticated else { return }
-
-        let scoreReporter = GKLeaderboardScore()
-        scoreReporter.leaderboardID = leaderboardID
-        scoreReporter.value = score
-
-        GKLeaderboard.submitScore(score, context: 0, player: GKLocalPlayer.local, leaderboardIDs: [leaderboardID]) { error in
+        GKLeaderboard.submitScore(score, context: 0, player: GKLocalPlayer.local, leaderboardIDs: leaderboardIDs) { error in
             if let error = error {
                 print("Error submitting score: \(error.localizedDescription)")
             } else {
-                print("Submitted score of \(score) to Game Center.")
                 print("Score submitted successfully.")
             }
         }
@@ -76,4 +70,24 @@ class GameCenterManager {
             }
         }
     }
+    
+    func fetchLeaderboards() async {
+        do {
+            // Fetch leaderboards by IDs
+            let leaderboards = try await GKLeaderboard.loadLeaderboards(IDs: ["all_time_high_score_leaderboard", "recurringHighScoreLeaderboard"])
+            
+            for leaderboard in leaderboards {
+                let result = try await leaderboard.loadEntries(for: .global, timeScope: .allTime, range: NSMakeRange(1, 10))
+                
+                print("Leaderboard: \(String(describing: leaderboard.title))")
+                for entry in result.1 { // result.1 is the leaderboard entries
+                    print("Player: \(entry.player.alias), Score: \(entry.score)")
+                }
+            }
+        } catch {
+            print("Error fetching leaderboards: \(error.localizedDescription)")
+        }
+    }
+
+
 }

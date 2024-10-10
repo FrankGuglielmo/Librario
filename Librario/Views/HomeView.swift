@@ -154,8 +154,7 @@ struct HomeView: View {
                                     .frame(height: bookHeights[3])
                             })
                             
-                            // Blank Book
-                            // Blank Book Button
+                            // Leaderboard Button
                             Button(action: {
                                 AudioManager.shared.playSoundEffect(named: "switch_view_sound")
                                 if gameCenterManager.isAuthenticated {
