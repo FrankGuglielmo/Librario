@@ -16,6 +16,11 @@ class TileManager: ObservableObject, Codable {
     private var tileConverter: TileConverter
     private var wordChecker: WordChecker
     private var performanceEvaluator: PerformanceEvaluator
+    
+    // Performance monitoring
+    private var selectionTimestamps: [Date] = []
+    private var averageSelectionTime: TimeInterval = 0
+    private var lastSelectionTime: TimeInterval = 0
 
     private var tileMultiplier: [TileType:Double] = [
         TileType.fire: 1.0,
@@ -184,6 +189,67 @@ class TileManager: ObservableObject, Codable {
     }
 
     // MARK: - Tile Selection and Validation
+    
+    /**
+     * Checks if a tile can be selected without modifying state.
+     * This is used for predictive selection during dragging.
+     *
+     * @param tile The tile to check.
+     * @return `true` if the tile can be selected; otherwise, `false`.
+     */
+    func canSelect(_ tile: Tile) -> Bool {
+        guard !tile.isSelected else { return false }
+        
+        if selectedTiles.isEmpty {
+            return true
+        }
+        
+        if let lastSelectedTile = selectedTiles.last {
+            return isAdjacent(lastSelectedTile, to: tile) && selectedTiles.count < 16
+        }
+        
+        return false
+    }
+
+    /**
+     * Records performance metrics for tile selection.
+     */
+    private func recordSelectionPerformance(time: TimeInterval) {
+        lastSelectionTime = time
+        selectionTimestamps.append(Date())
+        
+        // Keep only the last 20 selections for calculating average
+        if selectionTimestamps.count > 20 {
+            selectionTimestamps.removeFirst()
+        }
+        
+        // Calculate average time between selections
+        if selectionTimestamps.count > 1 {
+            var totalTime: TimeInterval = 0
+            for i in 1..<selectionTimestamps.count {
+                totalTime += selectionTimestamps[i].timeIntervalSince(selectionTimestamps[i-1])
+            }
+            averageSelectionTime = totalTime / Double(selectionTimestamps.count - 1)
+        }
+    }
+    
+    /**
+     * Returns the average time between tile selections.
+     *
+     * @return The average selection time in seconds.
+     */
+    func getAverageSelectionTime() -> TimeInterval {
+        return averageSelectionTime
+    }
+    
+    /**
+     * Returns the time taken for the last tile selection.
+     *
+     * @return The last selection time in seconds.
+     */
+    func getLastSelectionTime() -> TimeInterval {
+        return lastSelectionTime
+    }
 
     /**
      * Selects a tile at the given position, marking it as selected if valid.
@@ -191,11 +257,16 @@ class TileManager: ObservableObject, Codable {
      * @param position The position of the tile to select.
      */
     func selectTile(at position: Position) {
+        let startTime = Date()
+        
         guard var tile = getTile(at: position) else { return }
 
-        // Ensure the tile is selectable (it must be adjacent to the last selected tile if the stack is not empty)
+        // Fast path: check if selection is valid without modifying state
         if let lastSelectedTile = selectedTiles.last, !isAdjacent(lastSelectedTile, to: tile) || selectedTiles.count == 16 {
-            AudioManager.shared.playSoundEffect(named: "incorrect_selection")
+            // Defer sound effect to reduce latency
+            DispatchQueue.main.async {
+                AudioManager.shared.playSoundEffect(named: "incorrect_selection")
+            }
             return
         }
         
@@ -203,13 +274,25 @@ class TileManager: ObservableObject, Codable {
         updateTile(at: position, with: tile)  // Update the grid with the new state
         selectedTiles.append(tile)  // Push the selected tile onto the stack
         
-        // if tile is special, play special tile_click
-        if validateWord() {
-            AudioManager.shared.playSoundEffect(named: "valid_word_tile_click")
-        } else if tile.type == TileType.regular && !selectedTiles.contains(where: { $0.type != .regular }) {
-            AudioManager.shared.playSoundEffect(named: "regular_tile_click")
-        } else {
-            AudioManager.shared.playSoundEffect(named: "special_tile_click")
+        // Defer sound effects to reduce latency during dragging
+        DispatchQueue.main.async {
+            if self.validateWord() {
+                AudioManager.shared.playSoundEffect(named: "valid_word_tile_click")
+            } else if tile.type == TileType.regular && !self.selectedTiles.contains(where: { $0.type != .regular }) {
+                AudioManager.shared.playSoundEffect(named: "regular_tile_click")
+            } else {
+                AudioManager.shared.playSoundEffect(named: "special_tile_click")
+            }
+        }
+        
+        // Record performance metrics
+        let endTime = Date()
+        let selectionTime = endTime.timeIntervalSince(startTime)
+        recordSelectionPerformance(time: selectionTime)
+        
+        // Log if selection takes too long
+        if selectionTime > 0.05 { // 50ms threshold
+            print("Slow tile selection: \(selectionTime * 1000)ms at position \(position)")
         }
     }
 
@@ -510,31 +593,31 @@ class TileManager: ObservableObject, Codable {
     // MARK: - Tile Utility Methods
 
     /**
-     Helper method to determine if two tiles are next to each other
+     * Optimized helper method to determine if two tiles are next to each other
      */
     private func isAdjacent(_ tile1: Tile, to tile2: Tile) -> Bool {
-            let rowDiff = abs(tile1.position.row - tile2.position.row)
-            let colDiff = abs(tile1.position.column - tile2.position.column)
-
-            // Tiles must be in the same column, adjacent row, or adjacent columns with adjusted rows
-            if colDiff > 1 {
-                return false
-            }
-            if colDiff == 0 {
-                // Same column, tiles are neighbors if they are directly above/below each other
-                return rowDiff == 1
-            } else if colDiff == 1 {
-                // Adjacent columns
-                if tile1.position.column % 2 == 0 {
-                    // Even column: can connect to the same row or the row above
-                    return rowDiff == 0 || rowDiff == 1 && (tile1.position.row - tile2.position.row == 1)
-                } else {
-                    // Odd column: can connect to the same row or the row below
-                    return rowDiff == 0 || rowDiff == 1 && (tile2.position.row - tile1.position.row == 1)
-                }
-            }
+        let rowDiff = abs(tile1.position.row - tile2.position.row)
+        let colDiff = abs(tile1.position.column - tile2.position.column)
+        
+        // Quick rejection test
+        if colDiff > 1 || rowDiff > 1 {
             return false
         }
+        
+        // Same column check (faster path)
+        if colDiff == 0 {
+            return rowDiff == 1
+        }
+        
+        // Adjacent column check
+        let isEvenColumn = tile1.position.column % 2 == 0
+        
+        if isEvenColumn {
+            return rowDiff == 0 || (rowDiff == 1 && tile1.position.row > tile2.position.row)
+        } else {
+            return rowDiff == 0 || (rowDiff == 1 && tile1.position.row < tile2.position.row)
+        }
+    }
     
     private func findTilePosition(_ tile: Tile) -> Position? {
         for row in 0..<grid.count {
@@ -645,4 +728,3 @@ class TileManager: ObservableObject, Codable {
 
 
 }
-

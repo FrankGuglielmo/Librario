@@ -15,6 +15,7 @@ struct GameView: View {
     @State private var bubbleText = ""
     @State private var showReminderBubble = false
     @State private var showLevelUp = false // State to control LevelUpView visibility
+    @State private var showPerformanceDebug = false // State to control performance debug visibility
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     let praisePhrases = ["Nice word!", "Fantastic!", "Awesome!", "Well done!", "Impressive!"]
@@ -27,6 +28,16 @@ struct GameView: View {
                 .scaledToFill()
                 .frame(minWidth: 0)
                 .edgesIgnoringSafeArea(.all)
+                
+            // Add a hidden gesture recognizer to toggle performance debug view
+            // This is a developer feature that won't be obvious to regular users
+            Color.clear
+                .contentShape(Rectangle())
+                .frame(width: 50, height: 50)
+                .position(x: 25, y: 25)
+                .onTapGesture(count: 3) { // Triple tap to toggle
+                    showPerformanceDebug.toggle()
+                }
 
             GeometryReader { geometry in
                 let isCompact = horizontalSizeClass == .compact
@@ -80,6 +91,18 @@ struct GameView: View {
                     
                 }
                 .frame(maxHeight: .infinity)
+            }
+            
+            // Performance debug view overlay
+            if showPerformanceDebug {
+                VStack {
+                    HStack {
+                        PerformanceDebugView(tileManager: gameManager.tileManager)
+                        Spacer()
+                    }
+                    Spacer()
+                }
+                .zIndex(2)
             }
 
             // Show LevelUpView based on showLevelUp state
