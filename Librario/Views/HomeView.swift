@@ -15,6 +15,7 @@ struct HomeView: View {
     @State private var gameCenterManager = GameCenterManager.shared
     @Bindable var userData: UserData
     @State private var showingGameCenter = false
+    @State private var isParentalGatePassed = false
 
 
     // Getting screen size to calculate dynamic values
@@ -154,21 +155,30 @@ struct HomeView: View {
                                     .frame(height: bookHeights[3])
                             })
                             
-                            // Leaderboard Button
-                            Button(action: {
-                                AudioManager.shared.playSoundEffect(named: "switch_view_sound")
-                                if gameCenterManager.isAuthenticated {
-                                   presentGameCenterDashboard()
-                                } else {
-                                    gameCenterManager.authenticateUser()
+                            // Leaderboard Button with Parental Gate
+                            if gameCenterManager.isAuthenticated {
+                                Button(action: {
+                                    AudioManager.shared.playSoundEffect(named: "switch_view_sound")
+                                    if isParentalGatePassed {
+                                        presentGameCenterDashboard()
+                                    } else {
+                                        showingGameCenter = true
+                                    }
+                                }, label: {
+                                    Image(bookImages[4])
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(height: bookHeights[4]) // Adjust height as needed
+                                })
+                                .sheet(isPresented: $showingGameCenter) {
+                                    ParentalGateView(isParentalGatePassed: $isParentalGatePassed, presentGameCenterDashboard: presentGameCenterDashboard)
                                 }
-                            }, label: {
-                                Image(bookImages[4])
+                            } else {
+                                Image(bookImages[5])
                                     .resizable()
                                     .scaledToFit()
-                                    .frame(height: bookHeights[4]) // Adjust height as needed
-                                })
-
+                                    .frame(height: bookHeights[5]) // Adjust height as needed
+                            }
                         }
                     }
                 }
@@ -239,9 +249,9 @@ struct HomeView: View {
     var bookImages: [String] {
         // Append "_Large" for larger devices
         if horizontalSizeClass == .compact {
-            return ["Classic_Book", "Settings_Book", "HowTo_Book", "Stats_Book", "Leaderboard_Book"]
+            return ["Classic_Book", "Settings_Book", "HowTo_Book", "Stats_Book", "Leaderboard_Book", "Blank_Book"]
         } else {
-            return ["Classic_Book_Large", "Settings_Book_Large", "HowTo_Book_Large", "Stats_Book_Large", "Leaderboard_Book_Large"]
+            return ["Classic_Book_Large", "Settings_Book_Large", "HowTo_Book_Large", "Stats_Book_Large", "Leaderboard_Book_Large", "Blank_Book_Large"]
         }
     }
     
@@ -258,6 +268,7 @@ struct HomeView: View {
 
         return [
             baseHeight * (95.0 / 90.0),
+            baseHeight * (80.0 / 90.0),
             baseHeight * (80.0 / 90.0),
             baseHeight * (80.0 / 90.0),
             baseHeight * (80.0 / 90.0),

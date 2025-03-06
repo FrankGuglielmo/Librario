@@ -34,6 +34,8 @@ struct MyApp: App {
         self.gameManager = gameManager
         self.userData = userData
         AudioManager.shared.playMusic(named: "gameLoop1", loop: true)
+        
+        gameCenterManager.userStatistics = userData.userStatistics
     }
 
     var body: some Scene {
@@ -51,7 +53,7 @@ struct MyApp: App {
     }
 }
 
-extension UIViewController: GKGameCenterControllerDelegate {
+extension UIViewController: @retroactive GKGameCenterControllerDelegate {
     public func gameCenterViewControllerDidFinish(_ gameCenterViewController: GKGameCenterViewController) {
         gameCenterViewController.dismiss(animated: true, completion: nil)
     }

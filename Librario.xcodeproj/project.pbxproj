@@ -7,14 +7,77 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7B00B9692C96253E000F9FD6 /* PerformanceEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B00B9682C96253E000F9FD6 /* PerformanceEvaluator.swift */; };
+		7B0464C72C8ABEC800AEA807 /* ProgressBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B0464C62C8ABEC800AEA807 /* ProgressBarView.swift */; };
+		7B0DE70A2C9CEA6B00D4B4C9 /* TileManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B0DE7092C9CEA6B00D4B4C9 /* TileManagerTests.swift */; };
+		7B3121F02C8BFA9A00F0A458 /* PathStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B3121EF2C8BFA9A00F0A458 /* PathStore.swift */; };
+		7B358FB42C71592A0041FBA9 /* LetterGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B358FB32C71592A0041FBA9 /* LetterGenerator.swift */; };
+		7B358FB62C7166FE0041FBA9 /* TileTypeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B358FB52C7166FE0041FBA9 /* TileTypeGenerator.swift */; };
+		7B358FB82C71740B0041FBA9 /* LetterGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B358FB72C71740B0041FBA9 /* LetterGeneratorTests.swift */; };
+		7B358FBB2C71BF750041FBA9 /* TileGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B358FBA2C71BF750041FBA9 /* TileGenerator.swift */; };
+		7B358FBE2C728CBF0041FBA9 /* TileConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B358FBD2C728CBF0041FBA9 /* TileConverter.swift */; };
+		7B358FC02C728CD90041FBA9 /* TileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B358FBF2C728CD90041FBA9 /* TileManager.swift */; };
+		7B358FC22C72C8630041FBA9 /* GameStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B358FC12C72C8630041FBA9 /* GameStatusView.swift */; };
+		7B358FC62C72C8B30041FBA9 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B358FC52C72C8B30041FBA9 /* GameView.swift */; };
+		7B358FC82C73011D0041FBA9 /* WordChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B358FC72C73011D0041FBA9 /* WordChecker.swift */; };
+		7B358FD62C73D9740041FBA9 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 7B358FD52C73D9740041FBA9 /* .gitignore */; };
+		7B358FDA2C77DFDD0041FBA9 /* DictionaryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B358FD92C77DFDD0041FBA9 /* DictionaryManager.swift */; };
+		7B64643C2CAF70FA00F7D950 /* WelcomeBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B64643B2CAF70FA00F7D950 /* WelcomeBubbleView.swift */; };
+		7B68F9C02C9B3E54008578A2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B68F9BF2C9B3E54008578A2 /* SettingsView.swift */; };
+		7B68F9C42C9B530E008578A2 /* CustomSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B68F9C32C9B530E008578A2 /* CustomSlider.swift */; };
+		7B748ED72C9D2EAB00487796 /* TimeInterval.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B748ED62C9D2EAB00487796 /* TimeInterval.swift */; };
+		7B7822602C9A375F00040F44 /* special_tile_valid_word3.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7B78224E2C9A375E00040F44 /* special_tile_valid_word3.mp3 */; };
+		7B7822612C9A375F00040F44 /* special_tile_click.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7B78224F2C9A375E00040F44 /* special_tile_click.mp3 */; };
+		7B7822622C9A375F00040F44 /* special_tile_valid_word6.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7B7822502C9A375E00040F44 /* special_tile_valid_word6.mp3 */; };
+		7B7822632C9A375F00040F44 /* soft_bell.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7B7822512C9A375E00040F44 /* soft_bell.mp3 */; };
+		7B7822642C9A375F00040F44 /* special_tile_valid_word1.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7B7822522C9A375E00040F44 /* special_tile_valid_word1.mp3 */; };
+		7B7822652C9A375F00040F44 /* incorrect_selection.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7B7822532C9A375E00040F44 /* incorrect_selection.mp3 */; };
+		7B7822662C9A375F00040F44 /* valid_word_tile_click.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7B7822542C9A375E00040F44 /* valid_word_tile_click.mp3 */; };
+		7B7822672C9A375F00040F44 /* word_submit_swoosh3.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7B7822552C9A375E00040F44 /* word_submit_swoosh3.mp3 */; };
+		7B7822682C9A375F00040F44 /* tile_drop.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7B7822562C9A375E00040F44 /* tile_drop.mp3 */; };
+		7B7822692C9A375F00040F44 /* word_submit_swoosh.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7B7822572C9A375E00040F44 /* word_submit_swoosh.mp3 */; };
+		7B78226A2C9A375F00040F44 /* special_tile_valid_word4.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7B7822582C9A375E00040F44 /* special_tile_valid_word4.mp3 */; };
+		7B78226B2C9A375F00040F44 /* settings_button.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7B7822592C9A375E00040F44 /* settings_button.mp3 */; };
+		7B78226C2C9A375F00040F44 /* special_tile_valid_word2.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7B78225A2C9A375E00040F44 /* special_tile_valid_word2.mp3 */; };
+		7B78226D2C9A375F00040F44 /* switch_view_sound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7B78225B2C9A375E00040F44 /* switch_view_sound.mp3 */; };
+		7B78226E2C9A375F00040F44 /* bite_sound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7B78225C2C9A375E00040F44 /* bite_sound.mp3 */; };
+		7B78226F2C9A375F00040F44 /* special_tile_valid_word5.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7B78225D2C9A375F00040F44 /* special_tile_valid_word5.mp3 */; };
+		7B7822702C9A375F00040F44 /* game_over_sound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7B78225E2C9A375F00040F44 /* game_over_sound.mp3 */; };
+		7B7822732C9A3D5C00040F44 /* regular_tile_click.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7B7822722C9A3D5C00040F44 /* regular_tile_click.mp3 */; };
+		7B7822752C9A43EC00040F44 /* tile_falling.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7B7822742C9A43EC00040F44 /* tile_falling.mp3 */; };
+		7B7822852C9A65B800040F44 /* TextBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B7822842C9A65B800040F44 /* TextBubbleView.swift */; };
+		7B7822872C9A9ACA00040F44 /* valid_words.json in Resources */ = {isa = PBXBuildFile; fileRef = 7B7822862C9A9ACA00040F44 /* valid_words.json */; };
+		7B83DEEA2C90F8C7008ACBF9 /* TipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B83DEE92C90F8C7008ACBF9 /* TipView.swift */; };
+		7B8D1CD02C8E4FD9001D2231 /* tile_click.wav in Resources */ = {isa = PBXBuildFile; fileRef = 7B8D1CCF2C8E4FD9001D2231 /* tile_click.wav */; };
+		7B8D1CD22C8E53BA001D2231 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B8D1CD12C8E53BA001D2231 /* Settings.swift */; };
+		7B8D1CD42C8E548D001D2231 /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B8D1CD32C8E548D001D2231 /* AudioManager.swift */; };
+		7B8D1CD62C8E8786001D2231 /* GameOverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B8D1CD52C8E8786001D2231 /* GameOverView.swift */; };
+		7B8D1CD82C8FEF5D001D2231 /* LevelStatistics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B8D1CD72C8FEF5D001D2231 /* LevelStatistics.swift */; };
+		7B8D1CDA2C8FF855001D2231 /* SessionStatistics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B8D1CD92C8FF855001D2231 /* SessionStatistics.swift */; };
+		7B8D1CDC2C900070001D2231 /* UserStatistics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B8D1CDB2C900070001D2231 /* UserStatistics.swift */; };
+		7B8D1CDE2C902B5F001D2231 /* GameManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B8D1CDD2C902B5F001D2231 /* GameManager.swift */; };
+		7B8D1CE02C9048A4001D2231 /* LevelUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B8D1CDF2C9048A4001D2231 /* LevelUpView.swift */; };
+		7B93794C2C7D598600834018 /* SubmitWordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B93794B2C7D598600834018 /* SubmitWordView.swift */; };
+		7B9B03DA2CB7321900E7D5D8 /* GameCenterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B9B03D92CB7321900E7D5D8 /* GameCenterManager.swift */; };
+		7B9B03DC2CB7351600E7D5D8 /* GameCenterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B9B03DB2CB7351600E7D5D8 /* GameCenterView.swift */; };
+		7B9ECEED2C7912CA00FB87D2 /* TileTypeGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B9ECEEC2C7912CA00FB87D2 /* TileTypeGeneratorTests.swift */; };
 		7B9F77D42C69A21E000A3CEE /* LibrarioApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B9F77D32C69A21E000A3CEE /* LibrarioApp.swift */; };
-		7B9F77D62C69A21E000A3CEE /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B9F77D52C69A21E000A3CEE /* ContentView.swift */; };
-		7B9F77D82C69A21E000A3CEE /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B9F77D72C69A21E000A3CEE /* Item.swift */; };
 		7B9F77DA2C69A21F000A3CEE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7B9F77D92C69A21F000A3CEE /* Assets.xcassets */; };
 		7B9F77DD2C69A21F000A3CEE /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7B9F77DC2C69A21F000A3CEE /* Preview Assets.xcassets */; };
 		7B9F77E72C69A21F000A3CEE /* LibrarioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B9F77E62C69A21F000A3CEE /* LibrarioTests.swift */; };
 		7B9F77F12C69A21F000A3CEE /* LibrarioUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B9F77F02C69A21F000A3CEE /* LibrarioUITests.swift */; };
 		7B9F77F32C69A21F000A3CEE /* LibrarioUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B9F77F22C69A21F000A3CEE /* LibrarioUITestsLaunchTests.swift */; };
+		7BB39D392C953C8D006FE7F8 /* gameLoop1.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7BB39D382C953C8D006FE7F8 /* gameLoop1.mp3 */; };
+		7BB39D3B2C953CA5006FE7F8 /* gameLoop2.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7BB39D3A2C953CA5006FE7F8 /* gameLoop2.mp3 */; };
+		7BB39D3D2C953D7C006FE7F8 /* tile_click2.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7BB39D3C2C953D7C006FE7F8 /* tile_click2.mp3 */; };
+		7BB67A242C82F2BA00BB25EC /* StatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BB67A232C82F2BA00BB25EC /* StatsView.swift */; };
+		7BCE3B392CC00A37003F35A6 /* ParentalGateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BCE3B382CC00A37003F35A6 /* ParentalGateView.swift */; };
+		7BE0CF212C6EF72A00B272FE /* Tile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE0CF202C6EF72A00B272FE /* Tile.swift */; };
+		7BE0CF232C6EFC9900B272FE /* TileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE0CF222C6EFC9900B272FE /* TileView.swift */; };
+		7BE0CF252C6F016C00B272FE /* GameState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE0CF242C6F016C00B272FE /* GameState.swift */; };
+		7BE0CF282C6F025F00B272FE /* GameGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE0CF272C6F025F00B272FE /* GameGridView.swift */; };
+		7BE0CF2A2C6F0CBC00B272FE /* UserData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE0CF292C6F0CBC00B272FE /* UserData.swift */; };
+		7BE831FA2CAF69E600161EE6 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE831F92CAF69E600161EE6 /* HomeView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,10 +98,64 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		7B00B9682C96253E000F9FD6 /* PerformanceEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerformanceEvaluator.swift; sourceTree = "<group>"; };
+		7B0464C62C8ABEC800AEA807 /* ProgressBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressBarView.swift; sourceTree = "<group>"; };
+		7B0DE7092C9CEA6B00D4B4C9 /* TileManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TileManagerTests.swift; sourceTree = "<group>"; };
+		7B22A4F22CB3D94200CB81FF /* Librario.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Librario.entitlements; sourceTree = "<group>"; };
+		7B3121EF2C8BFA9A00F0A458 /* PathStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathStore.swift; sourceTree = "<group>"; };
+		7B358FB32C71592A0041FBA9 /* LetterGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LetterGenerator.swift; sourceTree = "<group>"; };
+		7B358FB52C7166FE0041FBA9 /* TileTypeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TileTypeGenerator.swift; sourceTree = "<group>"; };
+		7B358FB72C71740B0041FBA9 /* LetterGeneratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LetterGeneratorTests.swift; sourceTree = "<group>"; };
+		7B358FBA2C71BF750041FBA9 /* TileGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TileGenerator.swift; sourceTree = "<group>"; };
+		7B358FBD2C728CBF0041FBA9 /* TileConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TileConverter.swift; sourceTree = "<group>"; };
+		7B358FBF2C728CD90041FBA9 /* TileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TileManager.swift; sourceTree = "<group>"; };
+		7B358FC12C72C8630041FBA9 /* GameStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStatusView.swift; sourceTree = "<group>"; };
+		7B358FC52C72C8B30041FBA9 /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
+		7B358FC72C73011D0041FBA9 /* WordChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordChecker.swift; sourceTree = "<group>"; };
+		7B358FD52C73D9740041FBA9 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		7B358FD92C77DFDD0041FBA9 /* DictionaryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryManager.swift; sourceTree = "<group>"; };
+		7B5F88742C9C07C00060545C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		7B64643B2CAF70FA00F7D950 /* WelcomeBubbleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeBubbleView.swift; sourceTree = "<group>"; };
+		7B68F9BF2C9B3E54008578A2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		7B68F9C32C9B530E008578A2 /* CustomSlider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomSlider.swift; sourceTree = "<group>"; };
+		7B748ED62C9D2EAB00487796 /* TimeInterval.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeInterval.swift; sourceTree = "<group>"; };
+		7B78224E2C9A375E00040F44 /* special_tile_valid_word3.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = special_tile_valid_word3.mp3; sourceTree = "<group>"; };
+		7B78224F2C9A375E00040F44 /* special_tile_click.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = special_tile_click.mp3; sourceTree = "<group>"; };
+		7B7822502C9A375E00040F44 /* special_tile_valid_word6.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = special_tile_valid_word6.mp3; sourceTree = "<group>"; };
+		7B7822512C9A375E00040F44 /* soft_bell.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = soft_bell.mp3; sourceTree = "<group>"; };
+		7B7822522C9A375E00040F44 /* special_tile_valid_word1.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = special_tile_valid_word1.mp3; sourceTree = "<group>"; };
+		7B7822532C9A375E00040F44 /* incorrect_selection.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = incorrect_selection.mp3; sourceTree = "<group>"; };
+		7B7822542C9A375E00040F44 /* valid_word_tile_click.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = valid_word_tile_click.mp3; sourceTree = "<group>"; };
+		7B7822552C9A375E00040F44 /* word_submit_swoosh3.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = word_submit_swoosh3.mp3; sourceTree = "<group>"; };
+		7B7822562C9A375E00040F44 /* tile_drop.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = tile_drop.mp3; sourceTree = "<group>"; };
+		7B7822572C9A375E00040F44 /* word_submit_swoosh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = word_submit_swoosh.mp3; sourceTree = "<group>"; };
+		7B7822582C9A375E00040F44 /* special_tile_valid_word4.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = special_tile_valid_word4.mp3; sourceTree = "<group>"; };
+		7B7822592C9A375E00040F44 /* settings_button.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = settings_button.mp3; sourceTree = "<group>"; };
+		7B78225A2C9A375E00040F44 /* special_tile_valid_word2.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = special_tile_valid_word2.mp3; sourceTree = "<group>"; };
+		7B78225B2C9A375E00040F44 /* switch_view_sound.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = switch_view_sound.mp3; sourceTree = "<group>"; };
+		7B78225C2C9A375E00040F44 /* bite_sound.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = bite_sound.mp3; sourceTree = "<group>"; };
+		7B78225D2C9A375F00040F44 /* special_tile_valid_word5.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = special_tile_valid_word5.mp3; sourceTree = "<group>"; };
+		7B78225E2C9A375F00040F44 /* game_over_sound.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = game_over_sound.mp3; sourceTree = "<group>"; };
+		7B7822722C9A3D5C00040F44 /* regular_tile_click.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = regular_tile_click.mp3; sourceTree = "<group>"; };
+		7B7822742C9A43EC00040F44 /* tile_falling.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = tile_falling.mp3; sourceTree = "<group>"; };
+		7B7822842C9A65B800040F44 /* TextBubbleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextBubbleView.swift; sourceTree = "<group>"; };
+		7B7822862C9A9ACA00040F44 /* valid_words.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = valid_words.json; sourceTree = "<group>"; };
+		7B83DEE92C90F8C7008ACBF9 /* TipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipView.swift; sourceTree = "<group>"; };
+		7B8D1CCF2C8E4FD9001D2231 /* tile_click.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = tile_click.wav; path = "../../../../Downloads/firefox-downloads/tile_click.wav"; sourceTree = "<group>"; };
+		7B8D1CD12C8E53BA001D2231 /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
+		7B8D1CD32C8E548D001D2231 /* AudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
+		7B8D1CD52C8E8786001D2231 /* GameOverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameOverView.swift; sourceTree = "<group>"; };
+		7B8D1CD72C8FEF5D001D2231 /* LevelStatistics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelStatistics.swift; sourceTree = "<group>"; };
+		7B8D1CD92C8FF855001D2231 /* SessionStatistics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStatistics.swift; sourceTree = "<group>"; };
+		7B8D1CDB2C900070001D2231 /* UserStatistics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserStatistics.swift; sourceTree = "<group>"; };
+		7B8D1CDD2C902B5F001D2231 /* GameManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameManager.swift; sourceTree = "<group>"; };
+		7B8D1CDF2C9048A4001D2231 /* LevelUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelUpView.swift; sourceTree = "<group>"; };
+		7B93794B2C7D598600834018 /* SubmitWordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmitWordView.swift; sourceTree = "<group>"; };
+		7B9B03D92CB7321900E7D5D8 /* GameCenterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCenterManager.swift; sourceTree = "<group>"; };
+		7B9B03DB2CB7351600E7D5D8 /* GameCenterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCenterView.swift; sourceTree = "<group>"; };
+		7B9ECEEC2C7912CA00FB87D2 /* TileTypeGeneratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TileTypeGeneratorTests.swift; sourceTree = "<group>"; };
 		7B9F77D02C69A21E000A3CEE /* Librario.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Librario.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7B9F77D32C69A21E000A3CEE /* LibrarioApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibrarioApp.swift; sourceTree = "<group>"; };
-		7B9F77D52C69A21E000A3CEE /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		7B9F77D72C69A21E000A3CEE /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
 		7B9F77D92C69A21F000A3CEE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7B9F77DC2C69A21F000A3CEE /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		7B9F77E22C69A21F000A3CEE /* LibrarioTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LibrarioTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -46,6 +163,17 @@
 		7B9F77EC2C69A21F000A3CEE /* LibrarioUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LibrarioUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7B9F77F02C69A21F000A3CEE /* LibrarioUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibrarioUITests.swift; sourceTree = "<group>"; };
 		7B9F77F22C69A21F000A3CEE /* LibrarioUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibrarioUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		7BB39D382C953C8D006FE7F8 /* gameLoop1.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = gameLoop1.mp3; sourceTree = "<group>"; };
+		7BB39D3A2C953CA5006FE7F8 /* gameLoop2.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = gameLoop2.mp3; sourceTree = "<group>"; };
+		7BB39D3C2C953D7C006FE7F8 /* tile_click2.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = tile_click2.mp3; sourceTree = "<group>"; };
+		7BB67A232C82F2BA00BB25EC /* StatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsView.swift; sourceTree = "<group>"; };
+		7BCE3B382CC00A37003F35A6 /* ParentalGateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParentalGateView.swift; sourceTree = "<group>"; };
+		7BE0CF202C6EF72A00B272FE /* Tile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tile.swift; sourceTree = "<group>"; };
+		7BE0CF222C6EFC9900B272FE /* TileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TileView.swift; sourceTree = "<group>"; };
+		7BE0CF242C6F016C00B272FE /* GameState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameState.swift; sourceTree = "<group>"; };
+		7BE0CF272C6F025F00B272FE /* GameGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameGridView.swift; sourceTree = "<group>"; };
+		7BE0CF292C6F0CBC00B272FE /* UserData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserData.swift; sourceTree = "<group>"; };
+		7BE831F92CAF69E600161EE6 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -73,6 +201,79 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		7B00B96A2C96496C000F9FD6 /* Statistics */ = {
+			isa = PBXGroup;
+			children = (
+				7B00B9682C96253E000F9FD6 /* PerformanceEvaluator.swift */,
+				7B8D1CD72C8FEF5D001D2231 /* LevelStatistics.swift */,
+				7B8D1CD92C8FF855001D2231 /* SessionStatistics.swift */,
+				7B8D1CDB2C900070001D2231 /* UserStatistics.swift */,
+				7BE0CF292C6F0CBC00B272FE /* UserData.swift */,
+			);
+			path = Statistics;
+			sourceTree = "<group>";
+		};
+		7B358FB92C71787C0041FBA9 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				7B358FBF2C728CD90041FBA9 /* TileManager.swift */,
+				7B8D1CDD2C902B5F001D2231 /* GameManager.swift */,
+				7B9B03D92CB7321900E7D5D8 /* GameCenterManager.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		7B358FBC2C728C920041FBA9 /* Tiles */ = {
+			isa = PBXGroup;
+			children = (
+				7B358FB32C71592A0041FBA9 /* LetterGenerator.swift */,
+				7B358FB52C7166FE0041FBA9 /* TileTypeGenerator.swift */,
+				7B358FBA2C71BF750041FBA9 /* TileGenerator.swift */,
+				7BE0CF202C6EF72A00B272FE /* Tile.swift */,
+				7B358FBD2C728CBF0041FBA9 /* TileConverter.swift */,
+			);
+			path = Tiles;
+			sourceTree = "<group>";
+		};
+		7B358FCB2C73105F0041FBA9 /* Words */ = {
+			isa = PBXGroup;
+			children = (
+				7B358FC72C73011D0041FBA9 /* WordChecker.swift */,
+				7B358FD92C77DFDD0041FBA9 /* DictionaryManager.swift */,
+			);
+			path = Words;
+			sourceTree = "<group>";
+		};
+		7B8D1CCE2C8E4FC5001D2231 /* Sounds */ = {
+			isa = PBXGroup;
+			children = (
+				7B7822742C9A43EC00040F44 /* tile_falling.mp3 */,
+				7B7822722C9A3D5C00040F44 /* regular_tile_click.mp3 */,
+				7B78225C2C9A375E00040F44 /* bite_sound.mp3 */,
+				7B78225E2C9A375F00040F44 /* game_over_sound.mp3 */,
+				7B7822532C9A375E00040F44 /* incorrect_selection.mp3 */,
+				7B7822592C9A375E00040F44 /* settings_button.mp3 */,
+				7B7822512C9A375E00040F44 /* soft_bell.mp3 */,
+				7B78224F2C9A375E00040F44 /* special_tile_click.mp3 */,
+				7B7822522C9A375E00040F44 /* special_tile_valid_word1.mp3 */,
+				7B78225A2C9A375E00040F44 /* special_tile_valid_word2.mp3 */,
+				7B78224E2C9A375E00040F44 /* special_tile_valid_word3.mp3 */,
+				7B7822582C9A375E00040F44 /* special_tile_valid_word4.mp3 */,
+				7B78225D2C9A375F00040F44 /* special_tile_valid_word5.mp3 */,
+				7B7822502C9A375E00040F44 /* special_tile_valid_word6.mp3 */,
+				7B78225B2C9A375E00040F44 /* switch_view_sound.mp3 */,
+				7B7822542C9A375E00040F44 /* valid_word_tile_click.mp3 */,
+				7B7822572C9A375E00040F44 /* word_submit_swoosh.mp3 */,
+				7B7822562C9A375E00040F44 /* tile_drop.mp3 */,
+				7B7822552C9A375E00040F44 /* word_submit_swoosh3.mp3 */,
+				7BB39D3C2C953D7C006FE7F8 /* tile_click2.mp3 */,
+				7BB39D3A2C953CA5006FE7F8 /* gameLoop2.mp3 */,
+				7BB39D382C953C8D006FE7F8 /* gameLoop1.mp3 */,
+				7B8D1CCF2C8E4FD9001D2231 /* tile_click.wav */,
+			);
+			path = Sounds;
+			sourceTree = "<group>";
+		};
 		7B9F77C72C69A21E000A3CEE = {
 			isa = PBXGroup;
 			children = (
@@ -80,6 +281,7 @@
 				7B9F77E52C69A21F000A3CEE /* LibrarioTests */,
 				7B9F77EF2C69A21F000A3CEE /* LibrarioUITests */,
 				7B9F77D12C69A21E000A3CEE /* Products */,
+				7BA2BAD62CB07EB400E7B8C9 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -96,11 +298,17 @@
 		7B9F77D22C69A21E000A3CEE /* Librario */ = {
 			isa = PBXGroup;
 			children = (
+				7B22A4F22CB3D94200CB81FF /* Librario.entitlements */,
+				7B5F88742C9C07C00060545C /* Info.plist */,
+				7B8D1CCE2C8E4FC5001D2231 /* Sounds */,
+				7B358FB92C71787C0041FBA9 /* ViewModels */,
+				7BE0CF1F2C6EF71C00B272FE /* Models */,
+				7B9F77FF2C69A7B5000A3CEE /* Views */,
 				7B9F77D32C69A21E000A3CEE /* LibrarioApp.swift */,
-				7B9F77D52C69A21E000A3CEE /* ContentView.swift */,
-				7B9F77D72C69A21E000A3CEE /* Item.swift */,
 				7B9F77D92C69A21F000A3CEE /* Assets.xcassets */,
+				7B7822862C9A9ACA00040F44 /* valid_words.json */,
 				7B9F77DB2C69A21F000A3CEE /* Preview Content */,
+				7B358FD52C73D9740041FBA9 /* .gitignore */,
 			);
 			path = Librario;
 			sourceTree = "<group>";
@@ -117,6 +325,9 @@
 			isa = PBXGroup;
 			children = (
 				7B9F77E62C69A21F000A3CEE /* LibrarioTests.swift */,
+				7B358FB72C71740B0041FBA9 /* LetterGeneratorTests.swift */,
+				7B9ECEEC2C7912CA00FB87D2 /* TileTypeGeneratorTests.swift */,
+				7B0DE7092C9CEA6B00D4B4C9 /* TileManagerTests.swift */,
 			);
 			path = LibrarioTests;
 			sourceTree = "<group>";
@@ -128,6 +339,52 @@
 				7B9F77F22C69A21F000A3CEE /* LibrarioUITestsLaunchTests.swift */,
 			);
 			path = LibrarioUITests;
+			sourceTree = "<group>";
+		};
+		7B9F77FF2C69A7B5000A3CEE /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				7BCE3B382CC00A37003F35A6 /* ParentalGateView.swift */,
+				7BE0CF222C6EFC9900B272FE /* TileView.swift */,
+				7BE0CF272C6F025F00B272FE /* GameGridView.swift */,
+				7B358FC12C72C8630041FBA9 /* GameStatusView.swift */,
+				7B358FC52C72C8B30041FBA9 /* GameView.swift */,
+				7B93794B2C7D598600834018 /* SubmitWordView.swift */,
+				7BB67A232C82F2BA00BB25EC /* StatsView.swift */,
+				7B0464C62C8ABEC800AEA807 /* ProgressBarView.swift */,
+				7B8D1CD52C8E8786001D2231 /* GameOverView.swift */,
+				7B8D1CDF2C9048A4001D2231 /* LevelUpView.swift */,
+				7B83DEE92C90F8C7008ACBF9 /* TipView.swift */,
+				7B7822842C9A65B800040F44 /* TextBubbleView.swift */,
+				7B68F9BF2C9B3E54008578A2 /* SettingsView.swift */,
+				7B68F9C32C9B530E008578A2 /* CustomSlider.swift */,
+				7BE831F92CAF69E600161EE6 /* HomeView.swift */,
+				7B64643B2CAF70FA00F7D950 /* WelcomeBubbleView.swift */,
+				7B9B03DB2CB7351600E7D5D8 /* GameCenterView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		7BA2BAD62CB07EB400E7B8C9 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		7BE0CF1F2C6EF71C00B272FE /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				7B00B96A2C96496C000F9FD6 /* Statistics */,
+				7BE0CF242C6F016C00B272FE /* GameState.swift */,
+				7B358FCB2C73105F0041FBA9 /* Words */,
+				7B358FBC2C728C920041FBA9 /* Tiles */,
+				7B3121EF2C8BFA9A00F0A458 /* PathStore.swift */,
+				7B8D1CD12C8E53BA001D2231 /* Settings.swift */,
+				7B8D1CD32C8E548D001D2231 /* AudioManager.swift */,
+				7B748ED62C9D2EAB00487796 /* TimeInterval.swift */,
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -146,6 +403,8 @@
 			dependencies = (
 			);
 			name = Librario;
+			packageProductDependencies = (
+			);
 			productName = Librario;
 			productReference = 7B9F77D02C69A21E000A3CEE /* Librario.app */;
 			productType = "com.apple.product-type.application";
@@ -194,7 +453,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1520;
-				LastUpgradeCheck = 1520;
+				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					7B9F77CF2C69A21E000A3CEE = {
 						CreatedOnToolsVersion = 15.2;
@@ -218,6 +477,9 @@
 				Base,
 			);
 			mainGroup = 7B9F77C72C69A21E000A3CEE;
+			packageReferences = (
+				7BA2BAD32CB07E6A00E7B8C9 /* XCRemoteSwiftPackageReference "Kitura-redis" */,
+			);
 			productRefGroup = 7B9F77D12C69A21E000A3CEE /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -234,7 +496,32 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7BB39D392C953C8D006FE7F8 /* gameLoop1.mp3 in Resources */,
+				7B78226D2C9A375F00040F44 /* switch_view_sound.mp3 in Resources */,
+				7B7822632C9A375F00040F44 /* soft_bell.mp3 in Resources */,
+				7B7822602C9A375F00040F44 /* special_tile_valid_word3.mp3 in Resources */,
+				7B7822662C9A375F00040F44 /* valid_word_tile_click.mp3 in Resources */,
+				7B78226C2C9A375F00040F44 /* special_tile_valid_word2.mp3 in Resources */,
+				7BB39D3B2C953CA5006FE7F8 /* gameLoop2.mp3 in Resources */,
+				7B7822702C9A375F00040F44 /* game_over_sound.mp3 in Resources */,
+				7B78226F2C9A375F00040F44 /* special_tile_valid_word5.mp3 in Resources */,
+				7B7822682C9A375F00040F44 /* tile_drop.mp3 in Resources */,
+				7B7822652C9A375F00040F44 /* incorrect_selection.mp3 in Resources */,
+				7B7822872C9A9ACA00040F44 /* valid_words.json in Resources */,
+				7B7822612C9A375F00040F44 /* special_tile_click.mp3 in Resources */,
+				7B78226A2C9A375F00040F44 /* special_tile_valid_word4.mp3 in Resources */,
+				7BB39D3D2C953D7C006FE7F8 /* tile_click2.mp3 in Resources */,
 				7B9F77DD2C69A21F000A3CEE /* Preview Assets.xcassets in Resources */,
+				7B7822672C9A375F00040F44 /* word_submit_swoosh3.mp3 in Resources */,
+				7B7822692C9A375F00040F44 /* word_submit_swoosh.mp3 in Resources */,
+				7B8D1CD02C8E4FD9001D2231 /* tile_click.wav in Resources */,
+				7B78226E2C9A375F00040F44 /* bite_sound.mp3 in Resources */,
+				7B7822642C9A375F00040F44 /* special_tile_valid_word1.mp3 in Resources */,
+				7B358FD62C73D9740041FBA9 /* .gitignore in Resources */,
+				7B7822752C9A43EC00040F44 /* tile_falling.mp3 in Resources */,
+				7B7822622C9A375F00040F44 /* special_tile_valid_word6.mp3 in Resources */,
+				7B7822732C9A3D5C00040F44 /* regular_tile_click.mp3 in Resources */,
+				7B78226B2C9A375F00040F44 /* settings_button.mp3 in Resources */,
 				7B9F77DA2C69A21F000A3CEE /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -260,9 +547,44 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7B9F77D62C69A21E000A3CEE /* ContentView.swift in Sources */,
-				7B9F77D82C69A21E000A3CEE /* Item.swift in Sources */,
+				7B358FC22C72C8630041FBA9 /* GameStatusView.swift in Sources */,
+				7BE0CF232C6EFC9900B272FE /* TileView.swift in Sources */,
+				7B358FBE2C728CBF0041FBA9 /* TileConverter.swift in Sources */,
+				7B9B03DA2CB7321900E7D5D8 /* GameCenterManager.swift in Sources */,
+				7B358FDA2C77DFDD0041FBA9 /* DictionaryManager.swift in Sources */,
+				7B358FC62C72C8B30041FBA9 /* GameView.swift in Sources */,
+				7B0464C72C8ABEC800AEA807 /* ProgressBarView.swift in Sources */,
+				7BB67A242C82F2BA00BB25EC /* StatsView.swift in Sources */,
+				7B8D1CDE2C902B5F001D2231 /* GameManager.swift in Sources */,
+				7BE0CF212C6EF72A00B272FE /* Tile.swift in Sources */,
+				7B358FC02C728CD90041FBA9 /* TileManager.swift in Sources */,
+				7BE0CF2A2C6F0CBC00B272FE /* UserData.swift in Sources */,
+				7B358FC82C73011D0041FBA9 /* WordChecker.swift in Sources */,
+				7B93794C2C7D598600834018 /* SubmitWordView.swift in Sources */,
+				7B00B9692C96253E000F9FD6 /* PerformanceEvaluator.swift in Sources */,
+				7B8D1CE02C9048A4001D2231 /* LevelUpView.swift in Sources */,
+				7B8D1CDC2C900070001D2231 /* UserStatistics.swift in Sources */,
+				7B68F9C02C9B3E54008578A2 /* SettingsView.swift in Sources */,
+				7BCE3B392CC00A37003F35A6 /* ParentalGateView.swift in Sources */,
+				7B68F9C42C9B530E008578A2 /* CustomSlider.swift in Sources */,
+				7BE0CF252C6F016C00B272FE /* GameState.swift in Sources */,
+				7B358FBB2C71BF750041FBA9 /* TileGenerator.swift in Sources */,
+				7B748ED72C9D2EAB00487796 /* TimeInterval.swift in Sources */,
+				7B8D1CD82C8FEF5D001D2231 /* LevelStatistics.swift in Sources */,
+				7B358FB42C71592A0041FBA9 /* LetterGenerator.swift in Sources */,
+				7BE0CF282C6F025F00B272FE /* GameGridView.swift in Sources */,
+				7B8D1CDA2C8FF855001D2231 /* SessionStatistics.swift in Sources */,
+				7B8D1CD42C8E548D001D2231 /* AudioManager.swift in Sources */,
+				7B8D1CD22C8E53BA001D2231 /* Settings.swift in Sources */,
 				7B9F77D42C69A21E000A3CEE /* LibrarioApp.swift in Sources */,
+				7B83DEEA2C90F8C7008ACBF9 /* TipView.swift in Sources */,
+				7B64643C2CAF70FA00F7D950 /* WelcomeBubbleView.swift in Sources */,
+				7BE831FA2CAF69E600161EE6 /* HomeView.swift in Sources */,
+				7B358FB62C7166FE0041FBA9 /* TileTypeGenerator.swift in Sources */,
+				7B8D1CD62C8E8786001D2231 /* GameOverView.swift in Sources */,
+				7B3121F02C8BFA9A00F0A458 /* PathStore.swift in Sources */,
+				7B7822852C9A65B800040F44 /* TextBubbleView.swift in Sources */,
+				7B9B03DC2CB7351600E7D5D8 /* GameCenterView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -271,6 +593,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				7B9F77E72C69A21F000A3CEE /* LibrarioTests.swift in Sources */,
+				7B0DE70A2C9CEA6B00D4B4C9 /* TileManagerTests.swift in Sources */,
+				7B358FB82C71740B0041FBA9 /* LetterGeneratorTests.swift in Sources */,
+				7B9ECEED2C7912CA00FB87D2 /* TileTypeGeneratorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -396,6 +721,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1.0.2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -423,24 +749,33 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Librario/Librario.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"Librario/Preview Content\"";
+				CURRENT_PROJECT_VERSION = "";
+				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 574355JH3A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Librario/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Librario;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.educational-games";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MARKETING_VERSION = 1.0.3;
 				PRODUCT_BUNDLE_IDENTIFIER = co.frankguglielmo.Librario;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -452,24 +787,33 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Librario/Librario.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"Librario/Preview Content\"";
+				CURRENT_PROJECT_VERSION = 1.0.3;
+				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 574355JH3A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Librario/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Librario;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.educational-games";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MARKETING_VERSION = 1.0.3;
 				PRODUCT_BUNDLE_IDENTIFIER = co.frankguglielmo.Librario;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -479,7 +823,6 @@
 		7B9F77FA2C69A21F000A3CEE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -499,7 +842,6 @@
 		7B9F77FB2C69A21F000A3CEE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -519,7 +861,6 @@
 		7B9F77FD2C69A21F000A3CEE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 574355JH3A;
@@ -537,7 +878,6 @@
 		7B9F77FE2C69A21F000A3CEE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 574355JH3A;
@@ -592,6 +932,17 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		7BA2BAD32CB07E6A00E7B8C9 /* XCRemoteSwiftPackageReference "Kitura-redis" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Kitura/Kitura-redis.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.1.200;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
 	};
 	rootObject = 7B9F77C82C69A21E000A3CEE /* Project object */;
 }

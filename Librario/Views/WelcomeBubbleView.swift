@@ -12,8 +12,6 @@ struct WelcomeBubbleView: View {
     let name: String
     
     var body: some View {
-        let isCompact = horizontalSizeClass == .compact
-        let titleFontSize: CGFloat = isCompact ? 24 : 36
         
         ZStack {
             // Background of the text bubble
@@ -23,8 +21,9 @@ struct WelcomeBubbleView: View {
             
             // Text inside the bubble
             Text("Hello, \(name)!")
-                .font(Font.custom("NerkoOne-Regular", size: titleFontSize, relativeTo: .title))
-                .foregroundColor(.black)
+                .font(.title2)
+                .foregroundStyle(.black)
+                .fontWeight(.bold)
                 .padding(10)
         }
     }
