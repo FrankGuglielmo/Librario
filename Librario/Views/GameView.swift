@@ -16,7 +16,7 @@ struct GameView: View {
     @State private var showReminderBubble = false
     @State private var showLevelUp = false // State to control LevelUpView visibility
     @State private var showPerformanceDebug = false // State to control performance debug visibility
-    @State private var showTimerDebug = true // State to control timer debug visibility
+    @State private var showTimerDebug = false // State to control timer debug visibility
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     let praisePhrases = ["Nice word!", "Fantastic!", "Awesome!", "Well done!", "Impressive!"]
