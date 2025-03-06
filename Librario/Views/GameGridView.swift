@@ -18,6 +18,11 @@ struct GameGridView: View {
     @State private var lastDragLocation: CGPoint?
     @State private var dragVelocity: CGVector = .zero
     @State private var lastUpdateTime: Date = Date()
+    
+    // Double-tap detection state
+    @State private var lastTapPosition: Position?
+    @State private var lastTapTime: Date = Date.distantPast
+    @State private var isDragging: Bool = false
     @Namespace private var tileNamespace
 
     var body: some View {
@@ -114,47 +119,122 @@ struct GameGridView: View {
         }
     }
     
-    // Optimized drag gesture with velocity tracking and predictive selection
+    // Optimized drag gesture with velocity tracking, predictive selection, and double-tap detection
     private func dragGesture(tileSize: CGFloat, columns: Int, rows: Int) -> some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { value in
                 let location = value.location
-                updateDragVelocity(currentLocation: location)
+                let dragDistance = value.translation.width * value.translation.width + 
+                                  value.translation.height * value.translation.height
                 
-                if let position = positionFrom(location: location, tileSize: tileSize, columns: columns, rows: rows) {
-                    if !selectedDuringDrag.contains(position) {
-                        selectedDuringDrag.insert(position)
-                        
-                        if let tile = tileManager.getTile(at: position) {
-                            if tile.isSelected {
-                                // If the tile is already selected, use toggleTileSelection to handle deselection
-                                DispatchQueue.main.async {
-                                    self.tileManager.toggleTileSelection(at: position)
-                                }
-                            } else {
-                                // If the tile is not selected, use the optimized selection method
-                                DispatchQueue.main.async {
-                                    self.tileManager.selectTile(at: position)
-                                }
-                                
-                                // Try to predict and pre-select the next tile
-                                if let nextPosition = predictNextPosition(from: position),
-                                   !selectedDuringDrag.contains(nextPosition),
-                                   let nextTile = tileManager.getTile(at: nextPosition),
-                                   !nextTile.isSelected,
-                                   tileManager.canSelect(nextTile) {
-                                    // Don't actually select yet, but prepare for faster selection
-                                    // This is handled by the canSelect method in TileManager
+                // Determine if this is a significant drag (not just a tap)
+                if dragDistance > 25 { // Small threshold for drag vs. tap
+                    // We're in dragging mode
+                    isDragging = true
+                    
+                    // Process drag selection
+                    updateDragVelocity(currentLocation: location)
+                    
+                    if let position = positionFrom(location: location, tileSize: tileSize, columns: columns, rows: rows) {
+                        if !selectedDuringDrag.contains(position) {
+                            selectedDuringDrag.insert(position)
+                            
+                            if let tile = tileManager.getTile(at: position) {
+                                if tile.isSelected {
+                                    // If the tile is already selected, use toggleTileSelection to handle deselection
+                                    DispatchQueue.main.async {
+                                        self.tileManager.toggleTileSelection(at: position)
+                                    }
+                                } else {
+                                    // If the tile is not selected, use the optimized selection method
+                                    DispatchQueue.main.async {
+                                        self.tileManager.selectTile(at: position)
+                                    }
+                                    
+                                    // Try to predict and pre-select the next tile
+                                    if let nextPosition = predictNextPosition(from: position),
+                                       !selectedDuringDrag.contains(nextPosition),
+                                       let nextTile = tileManager.getTile(at: nextPosition),
+                                       !nextTile.isSelected,
+                                       tileManager.canSelect(nextTile) {
+                                        // Don't actually select yet, but prepare for faster selection
+                                        // This is handled by the canSelect method in TileManager
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-            .onEnded { _ in
-                selectedDuringDrag.removeAll()
-                lastDragLocation = nil
-                dragVelocity = .zero
+            .onEnded { value in
+                // If this was a drag, reset drag state
+                if isDragging {
+                    isDragging = false
+                    selectedDuringDrag.removeAll()
+                    lastDragLocation = nil
+                    dragVelocity = .zero
+                    return
+                }
+                
+                // If we get here, it was a tap (not a drag)
+                // Handle tap or double-tap
+                if let position = positionFrom(location: value.location, tileSize: tileSize, columns: columns, rows: rows),
+                   let tile = tileManager.getTile(at: position) {
+                    
+                    let now = Date()
+                    
+                    // Check if this is a double-tap (same position tapped twice within a short time)
+                    if let lastPosition = lastTapPosition, 
+                       lastPosition == position,
+                       now.timeIntervalSince(lastTapTime) < 0.3 { // 300ms threshold for double-tap
+                        
+                        // Only process double-tap for word submission if:
+                        // 1. There are selected tiles
+                        // 2. The double-tapped tile is the last selected tile
+                        // 3. The selected tiles form a valid word
+                        if !tileManager.selectedTiles.isEmpty && 
+                           tileManager.isLastSelectedTile(tile: tile) && 
+                           tileManager.validateWord() {
+                            // Submit the word
+                            gameManager.submitWord()
+                        } else {
+                            // Otherwise, just handle as a normal tap
+                            tileManager.toggleTileSelection(at: position)
+                        }
+                        
+                        // Reset tap tracking
+                        lastTapPosition = nil
+                        lastTapTime = Date.distantPast
+                    } else {
+                        // For a single tap, we need to delay the action to allow for double-tap detection
+                        // Store the position and time for potential double-tap detection
+                        lastTapPosition = position
+                        lastTapTime = now
+                        
+                        // Check if this tile is the last selected tile and forms a valid word
+                        // If so, we'll delay the toggle to allow for double-tap detection
+                        let isLastSelectedTile = tileManager.isLastSelectedTile(tile: tile)
+                        let isValidWord = !tileManager.selectedTiles.isEmpty && tileManager.validateWord()
+                        
+                        if isLastSelectedTile && isValidWord {
+                            // Don't toggle immediately - wait to see if a double-tap follows
+                            // The toggle will happen if no second tap comes within the threshold
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { // 300ms delay
+                                // Only toggle if this wasn't part of a double-tap
+                                // (if it was, lastTapTime would have been reset)
+                                if self.lastTapPosition == position && now.timeIntervalSince1970 == self.lastTapTime.timeIntervalSince1970 {
+                                    self.tileManager.toggleTileSelection(at: position)
+                                    // Reset tap tracking after handling
+                                    self.lastTapPosition = nil
+                                    self.lastTapTime = Date.distantPast
+                                }
+                            }
+                        } else {
+                            // For non-critical tiles (not last tile of valid word), toggle immediately
+                            tileManager.toggleTileSelection(at: position)
+                        }
+                    }
+                }
             }
     }
     
