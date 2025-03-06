@@ -6,6 +6,7 @@
 //
 
 import XCTest
+@testable import Librario
 
 final class TileManagerTests: XCTestCase {
 
@@ -33,3 +34,5 @@ final class TileManagerTests: XCTestCase {
     }
 
 }
+
+

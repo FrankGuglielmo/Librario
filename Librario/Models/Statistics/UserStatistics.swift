@@ -174,7 +174,7 @@ class UserStatistics: Codable {
         }
     
     private func reportHighScoreToGameCenter(score: Int) {
-        let leaderboards: [String] = ["all_time_high_score_leaderboard", "recurringHighScoreLeaderboard"]
+        let leaderboards: [String] = ["allTimeHighScoreLeaderboard", "recurringHighScoreLeaderboard"]
         GameCenterManager.shared.submitScore(score, for: leaderboards)
     }
 

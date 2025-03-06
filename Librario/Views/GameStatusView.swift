@@ -120,8 +120,9 @@ struct GameStatusView: View {
                     .font(.title)
                     .foregroundStyle(Color.cream)
                 Text("Menu")
-                    .font(Font.custom("NerkoOne-Regular", size: 20))
+                    .font(.title3)
                     .foregroundStyle(Color.cream)
+                    .fontWeight(.bold)
             }
         }
         .frame(width: 70, height: 70) // Fixed size button
@@ -140,9 +141,9 @@ struct GameStatusView: View {
                     .background(Rectangle().fill(Color.greenishGray))
 
                 Text("Submit")
-                    .font(Font.custom("NerkoOne-Regular", size: 36))
                     .font(.title)
                     .foregroundStyle(Color.darkGrey)
+                    .fontWeight(.bold)
             }
         }
         .frame(maxWidth: .infinity) // Make this button stretch to fill available space
@@ -152,11 +153,11 @@ struct GameStatusView: View {
     private func levelView() -> some View {
         VStack(alignment: .center) {
             Text("LVL")
-                .font(Font.custom("NerkoOne-Regular", size: 22))
+                .font(.title3)
                 .fontWeight(.bold)
                 .foregroundStyle(Color.cream)
             Text("\(gameManager.gameState.level)")
-                .font(Font.custom("NerkoOne-Regular", size: 22))
+                .font(.title3)
                 .fontWeight(.bold)
                 .foregroundStyle(Color.cream)
         }

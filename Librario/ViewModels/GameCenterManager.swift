@@ -12,6 +12,8 @@ import Observation
 @Observable
 class GameCenterManager {
     static let shared = GameCenterManager()
+    
+    var userStatistics: UserStatistics? // Reference to UserStatistics to update score when authenticated
 
     // This automatically behaves like a @Published property
     var isAuthenticated = false
@@ -24,15 +26,18 @@ class GameCenterManager {
         let localPlayer = GKLocalPlayer.local
         localPlayer.authenticateHandler = { gcAuthVC, error in
             if let vc = gcAuthVC {
-                // Present the authentication view controller
                 if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                    let rootVC = windowScene.windows.first?.rootViewController {
                     rootVC.present(vc, animated: true, completion: nil)
                 }
-
             } else if localPlayer.isAuthenticated {
                 self.isAuthenticated = true
                 print("Game Center authentication successful.")
+                
+                // Submit high score after authentication
+                if let highScore = self.userStatistics?.highestScore {
+                    self.submitScore(highScore, for: ["allTimeHighScoreLeaderboard", "recurringHighScoreLeaderboard"])
+                }
             } else {
                 self.isAuthenticated = false
                 if let error = error {
