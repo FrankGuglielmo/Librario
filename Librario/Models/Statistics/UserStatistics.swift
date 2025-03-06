@@ -21,6 +21,10 @@ class UserStatistics: Codable {
     var highestScore: Int = 0 // Highest score achieved in a single game
     var timePlayed: TimeInterval = 0.0 // In seconds
     
+    // Engagement statistics
+    var lastPlayedDate: Date? = nil // Last day the user played the game
+    var loginStreak: Int = 0 // Number of consecutive days played
+    
     // Get the current elapsed time (including stored time and current session time)
     func currentElapsedTime(currentSession: SessionStatistics, currentLevel: LevelStatistics) -> TimeInterval {
         // Add the current session's elapsed time to the stored user time
@@ -32,7 +36,7 @@ class UserStatistics: Codable {
 
     // Codable keys
     private enum CodingKeys: String, CodingKey {
-        case longestWord, longestWordPoints, highestScoringWord, highestScoringWordPoints, totalWordsSubmitted, totalGamesPlayed, averageWordLength, highestLevel, highestScore, timePlayed, lastProcessedSession
+        case longestWord, longestWordPoints, highestScoringWord, highestScoringWordPoints, totalWordsSubmitted, totalGamesPlayed, averageWordLength, highestLevel, highestScore, timePlayed, lastProcessedSession, lastPlayedDate, loginStreak
     }
 
     // Default initializer
@@ -52,6 +56,8 @@ class UserStatistics: Codable {
         highestScore = try container.decode(Int.self, forKey: .highestScore)
         timePlayed = try container.decode(TimeInterval.self, forKey: .timePlayed)
         lastProcessedSession = try container.decodeIfPresent(SessionStatistics.self, forKey: .lastProcessedSession)
+        lastPlayedDate = try container.decodeIfPresent(Date.self, forKey: .lastPlayedDate)
+        loginStreak = try container.decodeIfPresent(Int.self, forKey: .loginStreak) ?? 0
     }
 
     // Codable conformance for encoding
@@ -68,6 +74,8 @@ class UserStatistics: Codable {
         try container.encode(highestScore, forKey: .highestScore)
         try container.encode(timePlayed, forKey: .timePlayed)
         try container.encode(lastProcessedSession, forKey: .lastProcessedSession)
+        try container.encode(lastPlayedDate, forKey: .lastPlayedDate)
+        try container.encode(loginStreak, forKey: .loginStreak)
     }
 
     // Update user statistics based on new session statistics
@@ -198,7 +206,52 @@ class UserStatistics: Codable {
         highestScore = 0
         timePlayed = 0.0
         lastProcessedSession = nil
+        // Don't reset login streak or last played date when resetting game stats
         print("User statistics have been reset.")
+    }
+    
+    /**
+     * Updates the login streak based on the current date and last played date.
+     * - If this is the first time playing, initializes values
+     * - If playing on the same day, does nothing to the streak
+     * - If playing on consecutive days, increments the streak
+     * - If more than one day has passed, resets the streak to 1
+     */
+    func updateLoginStreak() {
+        let calendar = Calendar.current
+        let today = Date()
+        
+        // If this is the first time playing, initialize values
+        if lastPlayedDate == nil {
+            lastPlayedDate = today
+            loginStreak = 1
+            print("First time playing, initialized login streak to 1")
+            return
+        }
+        
+        guard let lastPlayed = lastPlayedDate else { return }
+        
+        // Check if the last played date is from a different day
+        if !calendar.isDate(lastPlayed, inSameDayAs: today) {
+            // Calculate days between
+            if let daysBetween = calendar.dateComponents([.day], from: calendar.startOfDay(for: lastPlayed), 
+                                                       to: calendar.startOfDay(for: today)).day {
+                if daysBetween == 1 {
+                    // Consecutive day, increment streak
+                    loginStreak += 1
+                    print("Consecutive day login! Streak increased to \(loginStreak)")
+                } else {
+                    // Not consecutive, reset streak
+                    loginStreak = 1
+                    print("Non-consecutive login after \(daysBetween) days. Streak reset to 1")
+                }
+            }
+        } else {
+            print("Already played today. Streak remains at \(loginStreak)")
+        }
+        
+        // Always update the last played date
+        lastPlayedDate = today
     }
 
     // Save UserStatistics to file

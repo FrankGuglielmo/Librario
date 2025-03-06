@@ -111,6 +111,24 @@ struct StatsView: View {
                                     iconColor: .orange,
                                     popupWidth: popupWidth
                                 )
+                                
+                                // Last Played Date
+                                statView(
+                                    title: "Last Played",
+                                    value: userData.userStatistics.lastPlayedDate?.formatted(date: .abbreviated, time: .omitted) ?? "Today",
+                                    iconName: "calendar",
+                                    iconColor: .blue,
+                                    popupWidth: popupWidth
+                                )
+                                
+                                // Login Streak
+                                statView(
+                                    title: "Login Streak",
+                                    value: "\(userData.userStatistics.loginStreak) day\(userData.userStatistics.loginStreak == 1 ? "" : "s")",
+                                    iconName: "flame.fill",
+                                    iconColor: .orange,
+                                    popupWidth: popupWidth
+                                )
                             }
                             .padding(.horizontal, popupWidth * 0.05)
                             .padding(.vertical, popupHeight * 0.02)
@@ -164,7 +182,9 @@ struct StatsView: View {
     mockUserStatistics.highestScoringWord = "Zebra"
     mockUserStatistics.totalWordsSubmitted = 1234
     mockUserStatistics.totalGamesPlayed = 56
-    mockUserStatistics.timePlayed = 3600 // Add this line if you have timePlayed
+    mockUserStatistics.timePlayed = 3600
+    mockUserStatistics.lastPlayedDate = Date()
+    mockUserStatistics.loginStreak = 3
 
     let userData = UserData(userStatistics: mockUserStatistics)
 

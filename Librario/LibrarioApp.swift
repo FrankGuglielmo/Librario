@@ -5,13 +5,6 @@
 //  Created by Frank Guglielmo on 8/11/24.
 //
 
-//
-//  LibrarioApp.swift
-//  Librario
-//
-//  Created by Frank Guglielmo on 8/11/24.
-//
-
 import SwiftUI
 import SwiftData
 import Observation
@@ -50,6 +43,11 @@ struct MyApp: App {
                     print("App became active from background")
                     NotificationCenter.default.post(name: .appDidBecomeActive, object: nil)
                 }
+                
+                // Update login streak when app becomes active
+                userData.userStatistics.updateLoginStreak()
+                userData.userStatistics.saveUserStatistics()
+                print("Updated login streak on app launch")
             case .inactive:
                 print("App became inactive")
                 // Pause timer but don't save state yet
