@@ -115,21 +115,27 @@ struct GameGridView: View {
                     if !selectedDuringDrag.contains(position) {
                         selectedDuringDrag.insert(position)
                         
-                        // Use a more efficient selection method
-                        if let tile = tileManager.getTile(at: position), !tile.isSelected {
-                            // Directly select the tile instead of toggling
-                            DispatchQueue.main.async {
-                                self.tileManager.selectTile(at: position)
-                            }
-                            
-                            // Try to predict and pre-select the next tile
-                            if let nextPosition = predictNextPosition(from: position),
-                               !selectedDuringDrag.contains(nextPosition),
-                               let nextTile = tileManager.getTile(at: nextPosition),
-                               !nextTile.isSelected,
-                               tileManager.canSelect(nextTile) {
-                                // Don't actually select yet, but prepare for faster selection
-                                // This is handled by the canSelect method in TileManager
+                        if let tile = tileManager.getTile(at: position) {
+                            if tile.isSelected {
+                                // If the tile is already selected, use toggleTileSelection to handle deselection
+                                DispatchQueue.main.async {
+                                    self.tileManager.toggleTileSelection(at: position)
+                                }
+                            } else {
+                                // If the tile is not selected, use the optimized selection method
+                                DispatchQueue.main.async {
+                                    self.tileManager.selectTile(at: position)
+                                }
+                                
+                                // Try to predict and pre-select the next tile
+                                if let nextPosition = predictNextPosition(from: position),
+                                   !selectedDuringDrag.contains(nextPosition),
+                                   let nextTile = tileManager.getTile(at: nextPosition),
+                                   !nextTile.isSelected,
+                                   tileManager.canSelect(nextTile) {
+                                    // Don't actually select yet, but prepare for faster selection
+                                    // This is handled by the canSelect method in TileManager
+                                }
                             }
                         }
                     }
