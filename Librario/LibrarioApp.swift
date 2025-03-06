@@ -43,11 +43,26 @@ struct MyApp: App {
             HomeView(gameManager: gameManager, userData: userData)
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
-            if newPhase == .background || newPhase == .inactive {
+            switch newPhase {
+            case .active:
+                // Only restart timer if we were previously in background
+                if oldPhase == .background {
+                    print("App became active from background")
+                    NotificationCenter.default.post(name: .appDidBecomeActive, object: nil)
+                }
+            case .inactive:
+                print("App became inactive")
+                // Pause timer but don't save state yet
+                gameManager.pauseGameTimer()
+            case .background:
                 print("App going into background")
-                gameManager.levelData.endGameplay()
+                // Update statistics with current game time before going to background
+                gameManager.updateStatisticsWithGameTime()
+                // Save state
                 gameManager.saveGame()
                 userData.saveUserData()
+            @unknown default:
+                break
             }
         }
     }
@@ -58,4 +73,3 @@ extension UIViewController: @retroactive GKGameCenterControllerDelegate {
         gameCenterViewController.dismiss(animated: true, completion: nil)
     }
 }
-

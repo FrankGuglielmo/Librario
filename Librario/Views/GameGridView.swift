@@ -13,6 +13,8 @@ struct GameGridView: View {
     @State private var selectedDuringDrag: Set<Position> = []
     @State private var tilePositionCache: [Position: CGRect] = [:]
     @State private var arrowPositionCache: [String: (CGPoint, CGPoint)] = [:]
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @State private var lastDragLocation: CGPoint?
     @State private var dragVelocity: CGVector = .zero
     @State private var lastUpdateTime: Date = Date()
@@ -42,7 +44,15 @@ struct GameGridView: View {
 
                 // Draw arrows between selected tiles
                 if tileManager.selectedTiles.count > 1 {
-                    drawArrows(tileSize: tileSize)
+                    ArrowsView(
+                        selectedTiles: tileManager.selectedTiles,
+                        tileSize: tileSize,
+                        arrowPositionCache: arrowPositionCache,
+                        horizontalSizeClass: horizontalSizeClass,
+                        verticalSizeClass: verticalSizeClass,
+                        calculateDirection: calculateDirection,
+                        calculatePoint: calculatePoint
+                    )
                 }
             }
             .frame(width: gridWidth, height: gridHeight)
@@ -257,6 +267,63 @@ struct GameGridView: View {
     // Include your existing drawArrows function here...
 
 
+    // Helper functions to get adjustments based on size class
+    private func getXAdjustment(for direction: String) -> CGFloat {
+        // For iPad (regular horizontal size class)
+        if horizontalSizeClass == .regular {
+            return -20.0
+        } else {
+            // For iPhone (compact horizontal size class)
+            return -15.0
+        }
+    }
+    
+    private func getYAdjustment(for direction: String) -> CGFloat {
+        // For iPad (regular horizontal size class)
+        if horizontalSizeClass == .regular {
+            return 25.0
+        } else {
+            // For iPhone (compact horizontal size class)
+            return 18.0
+        }
+    }
+    
+    private func getAdditionalAdjustment(for direction: String, isEvenColumn: Bool) -> (CGFloat, CGFloat) {
+        // Base adjustments
+        let baseXAdjust: CGFloat
+        let baseYAdjust: CGFloat
+        
+        // For iPad (regular horizontal size class)
+        if horizontalSizeClass == .regular {
+            baseXAdjust = 36.0
+            baseYAdjust = 36.0
+        } else {
+            // For iPhone (compact horizontal size class)
+            baseXAdjust = 27.0
+            baseYAdjust = 27.0
+        }
+        
+        // Special case for up_arrow in odd columns
+        if direction == "up_arrow" && !isEvenColumn {
+            let xAdjust: CGFloat
+            let yAdjust: CGFloat
+            
+            // For iPad (regular horizontal size class)
+            if horizontalSizeClass == .regular {
+                xAdjust = -20.0
+                yAdjust = 65.0
+            } else {
+                // For iPhone (compact horizontal size class)
+                xAdjust = -15.0
+                yAdjust = 50.0
+            }
+            
+            return (xAdjust, yAdjust)
+        }
+        
+        return (baseXAdjust, baseYAdjust)
+    }
+    
     // Cache arrow positions for faster rendering
     private func cacheArrowPositions(tileSize: CGFloat) {
         arrowPositionCache.removeAll()
@@ -309,44 +376,89 @@ struct GameGridView: View {
         return adjacentPositions.filter { $0.row >= 0 && $0.row < 7 && $0.column >= 0 && $0.column < 7 }
     }
     
-    // Optimized arrow drawing using cached positions
-    private func drawArrows(tileSize: CGFloat) -> some View {
-        let selectedTiles = tileManager.selectedTiles
-
-        return Group {
-            if selectedTiles.count > 1 {
-                // Create pairs of tiles using zip
-                let tilePairs = zip(selectedTiles, selectedTiles.dropFirst())
-
-                ZStack {
-                    ForEach(Array(tilePairs.enumerated()), id: \.offset) { (index, pair) in
-                        let (currentTile, nextTile) = pair
-                        let direction = calculateDirection(from: currentTile.position, to: nextTile.position)
-                        
-                        // Use cached positions if available
-                        let key = "\(currentTile.position.row),\(currentTile.position.column)-\(nextTile.position.row),\(nextTile.position.column)"
-                        
-                        let (start, end) = arrowPositionCache[key] ?? (
-                            calculatePoint(for: currentTile.position, tileSize: tileSize, direction: direction, isStart: true),
-                            calculatePoint(for: nextTile.position, tileSize: tileSize, direction: direction, isStart: false)
-                        )
-                        
-                        // Position the arrow between start and end points
-                        let adjustedMidPoint = CGPoint(
-                            x: (start.x + end.x) / 2,
-                            y: (start.y + end.y) / 2
-                        )
-
-                        Image(direction)
-                            .resizable()
-                            .frame(width: tileSize / 2.5, height: tileSize / 2.5)
-                            .position(adjustedMidPoint)
-                            .zIndex(-1)
-                    }
+    // Separate view for arrows to avoid SwiftUI view hierarchy issues
+    struct ArrowsView: View {
+        let selectedTiles: [Tile]
+        let tileSize: CGFloat
+        let arrowPositionCache: [String: (CGPoint, CGPoint)]
+        let horizontalSizeClass: UserInterfaceSizeClass?
+        let verticalSizeClass: UserInterfaceSizeClass?
+        let calculateDirection: (Position, Position) -> String
+        let calculatePoint: (Position, CGFloat, String, Bool) -> CGPoint
+        
+        var body: some View {
+            ZStack {
+                ForEach(Array(zip(selectedTiles, selectedTiles.dropFirst()).enumerated()), id: \.offset) { index, pair in
+                    let (currentTile, nextTile) = pair
+                    let direction = calculateDirection(currentTile.position, nextTile.position)
+                    
+                    // Use cached positions if available
+                    let key = "\(currentTile.position.row),\(currentTile.position.column)-\(nextTile.position.row),\(nextTile.position.column)"
+                    
+                    // Create a view that uses the calculated or cached positions
+                    ArrowPositionedView(
+                        direction: direction,
+                        tileSize: tileSize,
+                        currentPosition: currentTile.position,
+                        nextPosition: nextTile.position,
+                        arrowPositionCache: arrowPositionCache,
+                        key: key,
+                        calculatePoint: calculatePoint
+                    )
                 }
-            } else {
-                EmptyView()
             }
+        }
+    }
+
+    // New helper view that handles the positioning logic
+    struct ArrowPositionedView: View {
+        let direction: String
+        let tileSize: CGFloat
+        let currentPosition: Position
+        let nextPosition: Position
+        let arrowPositionCache: [String: (CGPoint, CGPoint)]
+        let key: String
+        let calculatePoint: (Position, CGFloat, String, Bool) -> CGPoint
+        
+        var body: some View {
+            // Calculate positions here
+            let positions = calculatePositions()
+            
+            // Return the arrow view with the calculated midpoint
+            ArrowImageView(
+                direction: direction,
+                tileSize: tileSize,
+                position: CGPoint(
+                    x: (positions.start.x + positions.end.x) / 2,
+                    y: (positions.start.y + positions.end.y) / 2
+                )
+            )
+        }
+        
+        // Move the position calculation logic to a method
+        private func calculatePositions() -> (start: CGPoint, end: CGPoint) {
+            if let cachedPositions = arrowPositionCache[key] {
+                return cachedPositions
+            } else {
+                let start = calculatePoint(currentPosition, tileSize, direction, true)
+                let end = calculatePoint(nextPosition, tileSize, direction, false)
+                return (start, end)
+            }
+        }
+    }
+    
+    // Simple view for arrow images
+    struct ArrowImageView: View {
+        let direction: String
+        let tileSize: CGFloat
+        let position: CGPoint
+        
+        var body: some View {
+            Image(direction)
+                .resizable()
+                .frame(width: tileSize / 2.5, height: tileSize / 2.5)
+                .position(position)
+                .zIndex(-1)
         }
     }
 
@@ -357,18 +469,19 @@ struct GameGridView: View {
         let baseX = tileSize * CGFloat(position.column) + xOffset
         let baseY = tileSize * CGFloat(position.row)
         
-        // Small adjustments
-        let xAdjustment: CGFloat = -15.0 // Adjust this value as needed
-        let yAdjustment: CGFloat = 18.0 // Adjust this value as needed for diagonal arrows
+        // Get size class-based adjustments
+        let xAdjustment = getXAdjustment(for: direction)
+        let yAdjustment = getYAdjustment(for: direction)
+        let (additionalXAdjust, additionalYAdjust) = getAdditionalAdjustment(for: direction, isEvenColumn: isEvenColumn)
 
         if isEvenColumn {
             // Logic for even columns
             switch direction {
             case "up_arrow":
-                return isStart ? CGPoint(x: baseX + tileSize / 2 + xAdjustment + 27, y: baseY + tileSize / 2 + yAdjustment)
+                return isStart ? CGPoint(x: baseX + tileSize / 2 + xAdjustment + additionalXAdjust, y: baseY + tileSize / 2 + yAdjustment)
                                : CGPoint(x: baseX + tileSize / 2 + xAdjustment, y: baseY + yAdjustment) // Adjusted start and end points for up_arrow
             case "down_arrow":
-                return isStart ? CGPoint(x: baseX + tileSize / 2 + xAdjustment + 27, y: baseY + yAdjustment + 27)
+                return isStart ? CGPoint(x: baseX + tileSize / 2 + xAdjustment + additionalXAdjust, y: baseY + yAdjustment + additionalYAdjust)
                                : CGPoint(x: baseX + tileSize / 2 + xAdjustment, y: baseY + tileSize / 2) // Adjusted start and end points for down_arrow
             case "up_left_arrow":
                 return isStart ? CGPoint(x: baseX + xAdjustment, y: baseY + yAdjustment)
@@ -389,10 +502,10 @@ struct GameGridView: View {
             // Logic for odd columns
             switch direction {
             case "up_arrow":
-                return isStart ? CGPoint(x: baseX + xAdjustment - 15, y: baseY + yAdjustment + tileSize + 50)
+                return isStart ? CGPoint(x: baseX + xAdjustment + additionalXAdjust, y: baseY + yAdjustment + tileSize + additionalYAdjust)
                                : CGPoint(x: baseX + tileSize / 2, y: baseY) // Adjusted start and end points for up_arrow
             case "down_arrow":
-                return isStart ? CGPoint(x: baseX + xAdjustment, y: baseY + tileSize + yAdjustment + 27)
+                return isStart ? CGPoint(x: baseX + xAdjustment, y: baseY + tileSize + yAdjustment + additionalYAdjust)
                                : CGPoint(x: baseX + tileSize / 2 + xAdjustment, y: baseY + tileSize / 2) // Adjusted start and end points for down_arrow
             case "up_left_arrow":
                 return isStart ? CGPoint(x: baseX + xAdjustment, y: baseY + yAdjustment)

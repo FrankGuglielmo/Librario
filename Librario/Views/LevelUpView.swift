@@ -9,6 +9,7 @@ import SwiftUI
 
 struct LevelUpView: View {
     @Bindable var gameManager: GameManager
+    @Bindable var userData: UserData
     @Binding var navigationPath: NavigationPath
     var onDismiss: () -> Void // Callback for when the user presses continue
     
@@ -74,6 +75,10 @@ struct LevelUpView: View {
                         Button(action: {
                             gameManager.handleLevelCompletion()
                             gameManager.resetLevelStatistics()
+                            // Set gameplay state back to active
+                            gameManager.gameplayState = .active
+                            // Resume the game timer
+                            gameManager.resumeGameTimer()
                             onDismiss() // Call the dismiss action to hide the view
                         }) {
                             Image("ContinueButton") // Replace with your custom continue button image
@@ -90,6 +95,14 @@ struct LevelUpView: View {
                 .frame(width: popupWidth, height: popupHeight)
                 .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
         }
+        .onAppear {
+            // Set gameplay state to level transition
+            gameManager.gameplayState = .levelTransition
+            // Pause the game timer
+            gameManager.pauseGameTimer()
+            // Update user statistics directly with the current userData
+            gameManager.updateUserLifetimeStatistics(userData: userData)
+        }
     }
 }
 
@@ -97,6 +110,7 @@ struct LevelUpView_Previews: PreviewProvider {
     static var previews: some View {
         LevelUpView(
             gameManager: mockGameManager(),
+            userData: UserData(),
             navigationPath: .constant(NavigationPath()),
             onDismiss: {}
         )
@@ -111,5 +125,3 @@ struct LevelUpView_Previews: PreviewProvider {
         return gameManager
     }
 }
-
-

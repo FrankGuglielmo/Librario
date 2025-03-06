@@ -10,14 +10,51 @@ import SwiftUI
 import Observation
 
 @Observable class GameManager: Codable {
-    var gameOver: Bool = false
+    // Game state enum to track the current state of gameplay
+    enum GameplayState {
+        case active
+        case paused
+        case levelTransition
+        case gameOver
+    }
+    
+    var gameOver: Bool = false {
+        didSet {
+            if gameOver {
+                gameplayState = .gameOver
+            }
+        }
+    }
     var gameState: GameState
     var levelData: LevelStatistics
     var sessionData: SessionStatistics
     var tileManager: TileManager
     
     // Timer-related properties
-    private var levelTimer: Timer?
+    private var gameTimer: Timer?
+    private var gameStartTime: Date?
+    private var accumulatedGameTime: TimeInterval = 0.0
+    
+    // Current elapsed time for the active game session
+    var currentGameTime: TimeInterval {
+        if let startTime = gameStartTime {
+            return accumulatedGameTime + Date().timeIntervalSince(startTime)
+        } else {
+            return accumulatedGameTime
+        }
+    }
+    
+    // Track if the user is currently in the GameView
+    var isInGameView: Bool = false
+    
+    // Track the current gameplay state
+    var gameplayState: GameplayState = .active {
+        didSet {
+            if oldValue != gameplayState {
+                handleGameplayStateChange(from: oldValue, to: gameplayState)
+            }
+        }
+    }
 
     var levelSystem: [Int: Int] = [:]
     private let dictionaryManager: DictionaryManager
@@ -57,6 +94,7 @@ import Observation
 
         setupLevelSystem()
         setupGameOverHandler()
+        setupNotificationObservers()
     }
 
     /**
@@ -169,7 +207,10 @@ import Observation
      * Updates the session statistics based on the current level statistics upon level completion.
      */
     func handleLevelCompletion() {
-        //Update the session statistics with the level statistics
+        // Update statistics with current game time before completing level
+        updateStatisticsWithGameTime()
+        
+        // Update the session statistics with the level statistics
         sessionData.updateFromLevel(levelData)
         sessionData.saveSessionData()
     }
@@ -180,6 +221,9 @@ import Observation
      * @param userStatistics The `UserStatistics` instance to update with session data.
      */
     func handleSessionCompletion(userStatistics: UserStatistics) {
+        // Update statistics with current game time before completing session
+        updateStatisticsWithGameTime()
+        
         handleLevelCompletion() // Update the session with the current level statistics
         userStatistics.updateFromSession(sessionData)
         userStatistics.saveUserStatistics()
@@ -196,6 +240,9 @@ import Observation
      * Completes the current level, updating session data accordingly.
      */
     func completeLevel() {
+        // Update statistics with current game time before completing level
+        updateStatisticsWithGameTime()
+        
         sessionData.updateFromLevel(levelData)
         levelData = LevelStatistics()
     }
@@ -204,6 +251,9 @@ import Observation
      * Saves the current game state, level data, session data, and tile manager to persistent storage.
      */
     func saveGame() {
+        // Update statistics with current game time before saving
+        updateStatisticsWithGameTime()
+        
         gameState.saveGameState()
         levelData.saveLevelData(levelData)
         sessionData.saveSessionData()
@@ -216,6 +266,9 @@ import Observation
      * @param userStatistics The `UserStatistics` instance to update.
      */
     func updateUserStatistics(_ userStatistics: UserStatistics) {
+        // Update statistics with current game time before updating user statistics
+        updateStatisticsWithGameTime()
+        
         sessionData.updateFromLevel(levelData)
         userStatistics.updateFromSession(sessionData)
         userStatistics.updateHighestLevel(level: gameState.level, score: gameState.score)
@@ -229,6 +282,25 @@ import Observation
         DispatchQueue.main.async {
             AudioManager.shared.playSoundEffect(named: "game_over_sound")
             self.gameOver = true
+            // gameplayState will be updated via the didSet on gameOver
+        }
+    }
+    
+    /**
+     * Handles changes in gameplay state.
+     */
+    private func handleGameplayStateChange(from oldState: GameplayState, to newState: GameplayState) {
+        print("Gameplay state changed from \(oldState) to \(newState)")
+        
+        switch newState {
+        case .active:
+            if oldState != .active && isInGameView {
+                resumeGameTimer()
+            }
+        case .paused, .levelTransition, .gameOver:
+            if oldState == .active {
+                pauseGameTimer()
+            }
         }
     }
     
@@ -280,25 +352,207 @@ import Observation
         spriteChangeHandler?(sprite, duration)
     }
     
-    // Start the level timer
-    func startLevelTimer() {
-        // Avoid multiple timers
-        guard levelTimer == nil else { return }
-        // Start timing in LevelStatistics
-        levelData.startLevel()
-        print("Level timer started.")
+    /**
+     * Sets up notification observers for app lifecycle and view transitions.
+     */
+    private func setupNotificationObservers() {
+        // App lifecycle notifications
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAppDidBecomeActive),
+            name: .appDidBecomeActive,
+            object: nil
+        )
+        
+        // View transition notifications
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleGameViewDidAppear),
+            name: .gameViewDidAppear,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleGameViewDidDisappear),
+            name: .gameViewDidDisappear,
+            object: nil
+        )
     }
     
-    // Stop the level timer
-    func stopLevelTimer() {
-        // Invalidate and nil the timer
-        levelTimer?.invalidate()
-        levelTimer = nil
-        // Update SessionStatistics with the updated LevelStatistics
+    /**
+     * Handles the app becoming active again after being in the background.
+     */
+    @objc private func handleAppDidBecomeActive() {
+        print("App became active")
+        // Only restart timer if we're in GameView and gameplay is active
+        if isInGameView && gameplayState == .active {
+            resumeGameTimer()
+        }
+    }
+    
+    /**
+     * Handles the GameView appearing.
+     */
+    @objc private func handleGameViewDidAppear() {
+        print("GameView appeared")
+        isInGameView = true
+        // Only start timer if gameplay is active
+        if gameplayState == .active {
+            startGameTimer()
+        }
+    }
+    
+    /**
+     * Handles the GameView disappearing.
+     */
+    @objc private func handleGameViewDidDisappear(_ notification: Notification) {
+        print("GameView disappeared")
+        isInGameView = false
+        pauseGameTimer()
+        
+        // Get userData from notification if available
+        if let userInfo = notification.userInfo,
+           let userData = userInfo["userData"] as? UserData {
+            // Update user statistics with the provided userData
+            updateUserLifetimeStatistics(userData: userData)
+            print("Updated user statistics with provided userData from notification")
+        } else {
+            // Fall back to loading userData from disk
+            updateUserLifetimeStatistics()
+            print("Updated user statistics with userData loaded from disk")
+        }
+    }
+
+    /**
+     * Updates the user's lifetime statistics with the current session data.
+     * This is called when leaving the game view to ensure lifetime stats are current.
+     */
+    func updateUserLifetimeStatistics(userData: UserData? = nil) {
+        print("--- Starting updateUserLifetimeStatistics ---")
+        
+        // First update statistics with any current game time
+        updateStatisticsWithGameTime()
+        
+        // Then ensure that session data is up to date with the latest level data
         sessionData.updateFromLevel(levelData)
         sessionData.saveSessionData()
-        print("Level timer stopped.")
+        
+        print("Session time to be added to user stats: \(sessionData.timePlayed.formattedCompact)")
+        
+        // Work with either provided userData or load from disk
+        let userDataToUpdate = userData ?? UserData.loadUserData()
+        
+        // Capture the time before update for logging
+        let beforeUpdateTime = userDataToUpdate.userStatistics.timePlayed
+        print("User lifetime time before update: \(beforeUpdateTime.formattedCompact)")
+        
+        // Update user statistics with session data
+        userDataToUpdate.userStatistics.updateFromSession(sessionData)
+        
+        // Log time after update
+        let afterUpdateTime = userDataToUpdate.userStatistics.timePlayed
+        let timeDifference = afterUpdateTime - beforeUpdateTime
+        print("User lifetime time after update: \(afterUpdateTime.formattedCompact)")
+        print("Time difference added: \(timeDifference.formattedCompact)")
+        
+        // Save updated user statistics
+        userDataToUpdate.userStatistics.saveUserStatistics()
+        
+        // Reset session time to prevent double counting in future updates
+        let originalTime = sessionData.timePlayed
+        sessionData.timePlayed = 0
+        sessionData.saveSessionData()
+        print("Reset session time (was: \(originalTime.formattedCompact))")
+        
+        print("--- Finished updateUserLifetimeStatistics ---")
+    }
+
+    /**
+     * Updates statistics with the current game time.
+     */
+    func updateStatisticsWithGameTime() {
+        // Calculate the current game time if timer is still running
+        var timeToAdd: TimeInterval = 0.0
+        
+        if let startTime = gameStartTime {
+            let currentRunningTime = Date().timeIntervalSince(startTime)
+            timeToAdd = currentRunningTime
+            // Reset the start time to now to avoid double counting
+            gameStartTime = Date()
+            print("Added current running time: \(currentRunningTime.formattedCompact)")
+        }
+        
+        // Add accumulated time if any
+        if accumulatedGameTime > 0 {
+            timeToAdd += accumulatedGameTime
+            // Reset accumulated time
+            accumulatedGameTime = 0.0
+        }
+        
+        if timeToAdd > 0 {
+            // Update level statistics with new time
+            levelData.updateTimePlayed(additionalTime: timeToAdd)
+            
+            print("Statistics updated with game time: \(timeToAdd.formattedCompact)")
+            print("Current level time played: \(levelData.timePlayed.formattedCompact)")
+            
+            // Don't update session statistics here - that will happen when updateFromLevel is called
+            
+            // Save level data immediately
+            levelData.saveLevelData(levelData)
+        }
     }
     
+    // Start the game timer
+    func startGameTimer() {
+        // Avoid multiple timers
+        guard gameStartTime == nil else { return }
+        gameStartTime = Date()
+        print("Game timer started.")
+    }
     
+    // Pause the game timer
+    func pauseGameTimer() {
+        if let startTime = gameStartTime {
+            // Add elapsed time to accumulated time
+            accumulatedGameTime += Date().timeIntervalSince(startTime)
+            gameStartTime = nil
+            print("Game timer paused. Accumulated time: \(accumulatedGameTime.formattedCompact)")
+        }
+    }
+    
+    // Resume the game timer
+    func resumeGameTimer() {
+        if gameStartTime == nil {
+            gameStartTime = Date()
+            print("Game timer resumed. Accumulated time: \(accumulatedGameTime.formattedCompact)")
+        }
+    }
+    
+    // Stop the game timer and update statistics
+    func stopGameTimer() {
+        pauseGameTimer() // Pause first to accumulate time
+        updateStatisticsWithGameTime()
+        // Reset the timer
+        accumulatedGameTime = 0.0
+        print("Game timer stopped and reset.")
+    }
+    
+    // For backward compatibility
+    func startLevelTimer() {
+        startGameTimer()
+    }
+    
+    func pauseLevelTimer() {
+        pauseGameTimer()
+    }
+    
+    func resumeLevelTimer() {
+        resumeGameTimer()
+    }
+    
+    func stopLevelTimer() {
+        stopGameTimer()
+    }
 }
