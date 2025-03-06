@@ -20,6 +20,12 @@ class UserStatistics: Codable {
     var highestLevel: Int = 1 // Highest level the player has reached
     var highestScore: Int = 0 // Highest score achieved in a single game
     var timePlayed: TimeInterval = 0.0 // In seconds
+    
+    // Get the current elapsed time (including stored time and current session time)
+    func currentElapsedTime(currentSession: SessionStatistics, currentLevel: LevelStatistics) -> TimeInterval {
+        // Add the current session's elapsed time to the stored user time
+        return timePlayed + (currentSession.currentElapsedTime(currentLevel: currentLevel) - (lastProcessedSession?.timePlayed ?? 0.0))
+    }
 
     // Track the last processed session for difference calculations
     private var lastProcessedSession: SessionStatistics? = nil
@@ -65,44 +71,46 @@ class UserStatistics: Codable {
     }
 
     // Update user statistics based on new session statistics
-    func updateFromSession(_ newSession: SessionStatistics) {
-        guard newSession.totalWordsSubmitted > 0 else {
-            print("No words submitted in the session, skipping update.")
-            return
+    /**
+     * Updates the UserStatistics with data from a SessionStatistics object.
+     * This method is called when updating lifetime statistics from a game session.
+     *
+     * @param sessionData The SessionStatistics containing data to update with.
+     */
+    func updateFromSession(_ sessionData: SessionStatistics) {
+        // Get the session time before adding
+        let sessionTime = sessionData.timePlayed
+        
+        // Only add positive time values
+        if sessionTime > 0 {
+            print("UserStatistics: Adding session time to lifetime stats: \(sessionTime.formattedCompact)")
+            print("UserStatistics: Current total time played: \(self.timePlayed.formattedCompact)")
+            
+            // Add session time to lifetime total time
+            self.timePlayed += sessionTime
+            
+            print("UserStatistics: Updated total time played: \(self.timePlayed.formattedCompact)")
+        } else {
+            print("UserStatistics: No session time to add (timePlayed = \(sessionTime.formattedCompact))")
         }
         
-        guard let lastSession = lastProcessedSession else {
-            applyNewSessionStatistics(newSession)
-            lastProcessedSession = newSession
-            return
+        // Update other statistics
+        self.totalWordsSubmitted += sessionData.totalWordsSubmitted
+        
+        // Update highest scoring word if applicable
+        if sessionData.highestScoringWordPoints > self.highestScoringWordPoints {
+            self.highestScoringWord = sessionData.highestScoringWord
+            self.highestScoringWordPoints = sessionData.highestScoringWordPoints
         }
-
-        if newSession.id != lastSession.id {
-            applyNewSessionStatistics(newSession)
-            lastProcessedSession = newSession
-            return
+        
+        // Update longest word if applicable
+        if sessionData.longestWord.count > self.longestWord.count {
+            self.longestWord = sessionData.longestWord
+            self.longestWordPoints = sessionData.longestWordPoints
         }
-
-        let difference = calculateSessionDifference(newSession: newSession, lastSession: lastSession)
-
-        if difference.totalWordsSubmitted > 0 {
-            let totalPreviousWords = Double(totalWordsSubmitted)
-            let totalNewWords = Double(difference.totalWordsSubmitted)
-
-            if totalPreviousWords + totalNewWords > 0 {
-                let newWeightedAverage = ((averageWordLength * totalPreviousWords) + (difference.averageWordLength * totalNewWords)) / (totalPreviousWords + totalNewWords)
-                averageWordLength = !newWeightedAverage.isNaN ? newWeightedAverage : averageWordLength
-            }
-
-            totalWordsSubmitted += difference.totalWordsSubmitted
-
-            updateLongestWord(newWord: difference.longestWord, score: difference.longestWordPoints)
-            updateHighestScoringWord(newWord: difference.highestScoringWord, score: difference.highestScoringWordPoints)
-
-            timePlayed += difference.timePlayed
-        }
-
-        lastProcessedSession = newSession
+        
+        // Save the updated statistics immediately
+        saveUserStatistics()
     }
 
     private func applyNewSessionStatistics(_ session: SessionStatistics) {
@@ -222,4 +230,3 @@ class UserStatistics: Codable {
         return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
     }
 }
-

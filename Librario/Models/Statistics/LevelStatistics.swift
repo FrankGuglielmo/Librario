@@ -26,6 +26,22 @@ struct LevelStatistics: Codable {
         
     // Transient Properties (not encoded)
     private var levelStartTime: Date? = nil
+    private var accumulatedTime: TimeInterval = 0.0
+    private var isPaused: Bool = false
+    
+    // Get the current elapsed time (including accumulated time and current running time)
+    var currentElapsedTime: TimeInterval {
+        if let startTime = levelStartTime {
+            // Timer is running, add current elapsed time to accumulated time
+            return accumulatedTime + Date().timeIntervalSince(startTime)
+        } else if isPaused {
+            // Timer is paused, return accumulated time
+            return accumulatedTime
+        } else {
+            // Timer is not running and not paused, return stored time
+            return timePlayed
+        }
+    }
     
     private enum CodingKeys: String, CodingKey {
         case id, longestWord, longestWordPoints, highestScoringWord, highestScoringWordPoints, wordsSubmitted, totalCharacterCount, averageWordLength, highestScore, timePlayed
@@ -66,19 +82,65 @@ struct LevelStatistics: Codable {
         try container.encode(timePlayed, forKey: .timePlayed)
     }
     
+    mutating func updateTimePlayed(additionalTime: TimeInterval) {
+        if additionalTime > 0 {
+            timePlayed += additionalTime
+            print("LevelStatistics: Added \(additionalTime.formattedCompact) to timePlayed")
+            print("LevelStatistics: Total timePlayed is now \(timePlayed.formattedCompact)")
+        }
+    }
+    
     // Start timing the level
     mutating func startLevel() {
-        levelStartTime = Date()
+        if levelStartTime == nil && !isPaused {
+            levelStartTime = Date()
+            print("Level timer started.")
+        }
+    }
+    
+    // Pause timing without ending the gameplay session
+    mutating func pauseGameplay() {
+        if let startTime = levelStartTime, !isPaused {
+            // Add elapsed time to accumulated time
+            accumulatedTime += Date().timeIntervalSince(startTime)
+            levelStartTime = nil
+            isPaused = true
+            print("Level timer paused. Accumulated time: \(accumulatedTime.formattedCompact)")
+        }
+    }
+    
+    // Resume timing from a paused state
+    mutating func resumeGameplay() {
+        if isPaused {
+            levelStartTime = Date()
+            isPaused = false
+            print("Level timer resumed. Accumulated time: \(accumulatedTime.formattedCompact)")
+        }
     }
     
     // Stop timing the level and update timePlayed
     mutating func endGameplay() {
         if let startTime = levelStartTime {
             let elapsed = Date().timeIntervalSince(startTime)
-            timePlayed += elapsed
+            timePlayed = accumulatedTime + elapsed
             levelStartTime = nil
+            accumulatedTime = 0.0
+            isPaused = false
+            print("Level timer ended. Total time: \(timePlayed.formattedCompact)")
+            
+            // Save the level data
+            saveLevelData(self)
+        } else if isPaused {
+            // If we're paused, just use the accumulated time
+            timePlayed = accumulatedTime
+            accumulatedTime = 0.0
+            isPaused = false
+            print("Level timer ended from paused state. Total time: \(timePlayed.formattedCompact)")
+            
+            // Save the level data
+            saveLevelData(self)
         } else {
-            print("Level was not started.")
+            print("Level timer was not started.")
         }
     }
 
@@ -117,6 +179,34 @@ struct LevelStatistics: Codable {
             print("Failed to save level data: \(error)")
         }
     }
+    
+    mutating func finalizeCurrentTime() {
+        if let startTime = levelStartTime {
+            // If timer is running, add current elapsed time to timePlayed
+            let currentRunningTime = Date().timeIntervalSince(startTime)
+            
+            // Reset timer
+            levelStartTime = Date()
+            
+            // Update timePlayed with accumulated and current time
+            timePlayed += accumulatedTime + currentRunningTime
+            
+            // Reset accumulated time
+            accumulatedTime = 0.0
+            
+            print("Finalized level time: Added \(currentRunningTime.formattedCompact) + \(accumulatedTime.formattedCompact)")
+            print("Level total time is now: \(timePlayed.formattedCompact)")
+        } else if isPaused {
+            // If we're paused, add accumulated time
+            timePlayed += accumulatedTime
+            accumulatedTime = 0.0
+            print("Finalized paused level time: Added \(accumulatedTime.formattedCompact)")
+            print("Level total time is now: \(timePlayed.formattedCompact)")
+        }
+        
+        // Save the level data
+        saveLevelData(self)
+    }
 
     // Load LevelData from file
     static func loadLevelData() -> LevelStatistics {
@@ -142,3 +232,4 @@ struct LevelStatistics: Codable {
         return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
     }
 }
+

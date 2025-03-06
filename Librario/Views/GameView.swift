@@ -15,6 +15,8 @@ struct GameView: View {
     @State private var bubbleText = ""
     @State private var showReminderBubble = false
     @State private var showLevelUp = false // State to control LevelUpView visibility
+    @State private var showPerformanceDebug = false // State to control performance debug visibility
+    @State private var showTimerDebug = true // State to control timer debug visibility
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     let praisePhrases = ["Nice word!", "Fantastic!", "Awesome!", "Well done!", "Impressive!"]
@@ -27,6 +29,30 @@ struct GameView: View {
                 .scaledToFill()
                 .frame(minWidth: 0)
                 .edgesIgnoringSafeArea(.all)
+                
+            // Add hidden gesture recognizers to toggle debug views
+            // These are developer features that won't be obvious to regular users
+            HStack {
+                // Performance debug toggle (left corner)
+                Color.clear
+                    .contentShape(Rectangle())
+                    .frame(width: 50, height: 50)
+                    .position(x: 25, y: 25)
+                    .onTapGesture(count: 3) { // Triple tap to toggle
+                        showPerformanceDebug.toggle()
+                    }
+                
+                Spacer()
+                
+                // Timer debug toggle (right corner)
+                Color.clear
+                    .contentShape(Rectangle())
+                    .frame(width: 50, height: 50)
+                    .position(x: 25, y: 25)
+                    .onTapGesture(count: 3) { // Triple tap to toggle
+                        showTimerDebug.toggle()
+                    }
+            }
 
             GeometryReader { geometry in
                 let isCompact = horizontalSizeClass == .compact
@@ -81,16 +107,34 @@ struct GameView: View {
                 }
                 .frame(maxHeight: .infinity)
             }
+            
+            // Debug view overlays
+            VStack {
+                HStack {
+                    // Performance debug view (top left)
+                    if showPerformanceDebug {
+                        PerformanceDebugView(tileManager: gameManager.tileManager)
+                    }
+                    
+                    Spacer()
+                    
+                    // Timer debug view (top right)
+                    if showTimerDebug {
+                        TimerDebugView(gameManager: gameManager, userData: userData)
+                    }
+                }
+                Spacer()
+            }
+            .zIndex(2)
 
             // Show LevelUpView based on showLevelUp state
             if showLevelUp {
-                LevelUpView(gameManager: gameManager, navigationPath: $navigationPath, onDismiss: {
+                LevelUpView(gameManager: gameManager, userData: userData, navigationPath: $navigationPath, onDismiss: {
                     showLevelUp = false
                 })
                 .zIndex(1)
                 .onAppear {
-                    gameManager.levelData.endGameplay()
-                    gameManager.stopLevelTimer()
+                    gameManager.pauseGameTimer()
                 }
             }
             
@@ -99,15 +143,20 @@ struct GameView: View {
                 GameOverView(gameManager: gameManager, userData: userData, navigationPath: $navigationPath)
                     .zIndex(1)
                     .onAppear {
-                        gameManager.levelData.endGameplay()
-                        gameManager.stopLevelTimer()
+                        gameManager.stopGameTimer()
                         userData.userStatistics.updateHighestLevel(level: gameManager.gameState.level, score: gameManager.gameState.score)
                     }
             }
         }
         .onAppear {
-            // Start gameplay timer
-            gameManager.startLevelTimer()
+            // Notify that GameView has appeared
+            NotificationCenter.default.post(name: .gameViewDidAppear, object: nil)
+            
+            // Set gameplay state to active if not in game over state
+            if !gameManager.gameOver {
+                gameManager.gameplayState = .active
+            }
+            
             // Set up the sprite change handler
             gameManager.spriteChangeHandler = { sprite, duration in
                 changeSprite(to: sprite, for: duration)
@@ -131,9 +180,12 @@ struct GameView: View {
             startReminderTimer()
         }
         .onDisappear {
-            // Stop the level timer when GameView disappears
-            gameManager.levelData.endGameplay()
-            gameManager.stopLevelTimer()
+            // Update userData reference in the notification for GameManager to use
+            NotificationCenter.default.post(
+                name: .gameViewDidDisappear,
+                object: nil,
+                userInfo: ["userData": userData]
+            )
         }
         .onChange(of: gameManager.gameState.score, {
             if gameManager.checkLevelProgression() {

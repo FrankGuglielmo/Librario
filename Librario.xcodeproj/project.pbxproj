@@ -22,6 +22,9 @@
 		7B358FC82C73011D0041FBA9 /* WordChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B358FC72C73011D0041FBA9 /* WordChecker.swift */; };
 		7B358FD62C73D9740041FBA9 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 7B358FD52C73D9740041FBA9 /* .gitignore */; };
 		7B358FDA2C77DFDD0041FBA9 /* DictionaryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B358FD92C77DFDD0041FBA9 /* DictionaryManager.swift */; };
+		7B4057C02D792353009E1D0F /* PerformanceDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B4057BF2D792353009E1D0F /* PerformanceDebugView.swift */; };
+		7B4057C42D792B9D009E1D0F /* NotifcationNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B4057C32D792B9D009E1D0F /* NotifcationNames.swift */; };
+		7B63B2052D79665400015666 /* TimerDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B63B2042D79665400015666 /* TimerDebugView.swift */; };
 		7B64643C2CAF70FA00F7D950 /* WelcomeBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B64643B2CAF70FA00F7D950 /* WelcomeBubbleView.swift */; };
 		7B68F9C02C9B3E54008578A2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B68F9BF2C9B3E54008578A2 /* SettingsView.swift */; };
 		7B68F9C42C9B530E008578A2 /* CustomSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B68F9C32C9B530E008578A2 /* CustomSlider.swift */; };
@@ -114,7 +117,10 @@
 		7B358FC72C73011D0041FBA9 /* WordChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordChecker.swift; sourceTree = "<group>"; };
 		7B358FD52C73D9740041FBA9 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		7B358FD92C77DFDD0041FBA9 /* DictionaryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryManager.swift; sourceTree = "<group>"; };
+		7B4057BF2D792353009E1D0F /* PerformanceDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerformanceDebugView.swift; sourceTree = "<group>"; };
+		7B4057C32D792B9D009E1D0F /* NotifcationNames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotifcationNames.swift; sourceTree = "<group>"; };
 		7B5F88742C9C07C00060545C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		7B63B2042D79665400015666 /* TimerDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerDebugView.swift; sourceTree = "<group>"; };
 		7B64643B2CAF70FA00F7D950 /* WelcomeBubbleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeBubbleView.swift; sourceTree = "<group>"; };
 		7B68F9BF2C9B3E54008578A2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		7B68F9C32C9B530E008578A2 /* CustomSlider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomSlider.swift; sourceTree = "<group>"; };
@@ -344,6 +350,8 @@
 		7B9F77FF2C69A7B5000A3CEE /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				7B63B2042D79665400015666 /* TimerDebugView.swift */,
+				7B4057BF2D792353009E1D0F /* PerformanceDebugView.swift */,
 				7BCE3B382CC00A37003F35A6 /* ParentalGateView.swift */,
 				7BE0CF222C6EFC9900B272FE /* TileView.swift */,
 				7BE0CF272C6F025F00B272FE /* GameGridView.swift */,
@@ -383,6 +391,7 @@
 				7B8D1CD12C8E53BA001D2231 /* Settings.swift */,
 				7B8D1CD32C8E548D001D2231 /* AudioManager.swift */,
 				7B748ED62C9D2EAB00487796 /* TimeInterval.swift */,
+				7B4057C32D792B9D009E1D0F /* NotifcationNames.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -550,7 +559,9 @@
 				7B358FC22C72C8630041FBA9 /* GameStatusView.swift in Sources */,
 				7BE0CF232C6EFC9900B272FE /* TileView.swift in Sources */,
 				7B358FBE2C728CBF0041FBA9 /* TileConverter.swift in Sources */,
+				7B4057C42D792B9D009E1D0F /* NotifcationNames.swift in Sources */,
 				7B9B03DA2CB7321900E7D5D8 /* GameCenterManager.swift in Sources */,
+				7B4057C02D792353009E1D0F /* PerformanceDebugView.swift in Sources */,
 				7B358FDA2C77DFDD0041FBA9 /* DictionaryManager.swift in Sources */,
 				7B358FC62C72C8B30041FBA9 /* GameView.swift in Sources */,
 				7B0464C72C8ABEC800AEA807 /* ProgressBarView.swift in Sources */,
@@ -584,6 +595,7 @@
 				7B8D1CD62C8E8786001D2231 /* GameOverView.swift in Sources */,
 				7B3121F02C8BFA9A00F0A458 /* PathStore.swift in Sources */,
 				7B7822852C9A65B800040F44 /* TextBubbleView.swift in Sources */,
+				7B63B2052D79665400015666 /* TimerDebugView.swift in Sources */,
 				7B9B03DC2CB7351600E7D5D8 /* GameCenterView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -751,7 +763,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Librario/Librario.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "";
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 574355JH3A;
 				ENABLE_PREVIEWS = YES;
@@ -789,7 +801,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Librario/Librario.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1.0.3;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 574355JH3A;
 				ENABLE_PREVIEWS = YES;

@@ -71,6 +71,8 @@ struct GameOverView: View {
                     Button(action: {
                         // Reset game logic
                         gameManager.startNewGame(userStatistics: userData.userStatistics)
+                        // Set gameplay state back to active
+                        gameManager.gameplayState = .active
                         print("Game restarted")
                     }) {
                         Image("RestartButton") // Replace with your custom image name
@@ -100,6 +102,14 @@ struct GameOverView: View {
             .frame(width: popupWidth, height: popupHeight)
             .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
         }
+        .onAppear {
+            // Set gameplay state to game over
+            gameManager.gameplayState = .gameOver
+            // Stop the game timer and update statistics
+            gameManager.stopGameTimer()
+            // Update user statistics directly with the current userData
+            gameManager.updateUserLifetimeStatistics(userData: userData)
+        }
     }
 }
 
@@ -112,4 +122,3 @@ struct GameOverView_Previews: PreviewProvider {
         GameOverView(gameManager: gameManager, userData: userData, navigationPath: .constant(navigationPath))
     }
 }
-

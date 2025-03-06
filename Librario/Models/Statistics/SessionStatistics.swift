@@ -22,13 +22,23 @@ struct SessionStatistics: Codable {
     var averageWordLength: Double = 0.0 // Running average for the session
     var highestScore: Int = 0 // Highest score achieved in the session
     var timePlayed: TimeInterval = 0.0 // Time played in seconds
+    private var levelTimeTracker: [UUID: TimeInterval] = [:]
+    
+    // Get the current elapsed time (including stored time and current level time)
+    func currentElapsedTime(currentLevel: LevelStatistics) -> TimeInterval {
+        // Add the current level's elapsed time to the stored session time
+        return timePlayed + (currentLevel.currentElapsedTime - (lastProcessedLevel?.timePlayed ?? 0.0))
+    }
     
     // Track the last processed level for difference calculations
     private var lastProcessedLevel: LevelStatistics? = nil
 
     private enum CodingKeys: String, CodingKey {
-        case id, longestWord, longestWordPoints, highestScoringWord, highestScoringWordPoints, totalWordsSubmitted, averageWordLength, highestScore, timePlayed, lastProcessedLevel
+        case id, longestWord, longestWordPoints, highestScoringWord, highestScoringWordPoints,
+             totalWordsSubmitted, averageWordLength, highestScore, timePlayed, lastProcessedLevel,
+             levelTimeTracker
     }
+
     
     // Initialize the struct
     init() {
@@ -36,21 +46,6 @@ struct SessionStatistics: Codable {
     }
 
     // Codable conformance for custom decoding
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        id = try container.decode(UUID.self, forKey: .id)
-        longestWord = try container.decode(String.self, forKey: .longestWord)
-        longestWordPoints = try container.decode(Int.self, forKey: .longestWordPoints)
-        highestScoringWord = try container.decode(String.self, forKey: .highestScoringWord)
-        highestScoringWordPoints = try container.decode(Int.self, forKey: .highestScoringWordPoints)
-        totalWordsSubmitted = try container.decode(Int.self, forKey: .totalWordsSubmitted)
-        averageWordLength = try container.decode(Double.self, forKey: .averageWordLength)
-        highestScore = try container.decode(Int.self, forKey: .highestScore)
-        timePlayed = try container.decode(TimeInterval.self, forKey: .timePlayed)
-        lastProcessedLevel = try container.decodeIfPresent(LevelStatistics.self, forKey: .lastProcessedLevel)
-    }
-
-    // Codable conformance for custom encoding
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
@@ -63,57 +58,99 @@ struct SessionStatistics: Codable {
         try container.encode(highestScore, forKey: .highestScore)
         try container.encode(timePlayed, forKey: .timePlayed)
         try container.encode(lastProcessedLevel, forKey: .lastProcessedLevel)
+        try container.encode(levelTimeTracker, forKey: .levelTimeTracker)
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        longestWord = try container.decode(String.self, forKey: .longestWord)
+        longestWordPoints = try container.decode(Int.self, forKey: .longestWordPoints)
+        highestScoringWord = try container.decode(String.self, forKey: .highestScoringWord)
+        highestScoringWordPoints = try container.decode(Int.self, forKey: .highestScoringWordPoints)
+        totalWordsSubmitted = try container.decode(Int.self, forKey: .totalWordsSubmitted)
+        averageWordLength = try container.decode(Double.self, forKey: .averageWordLength)
+        highestScore = try container.decode(Int.self, forKey: .highestScore)
+        timePlayed = try container.decode(TimeInterval.self, forKey: .timePlayed)
+        lastProcessedLevel = try container.decodeIfPresent(LevelStatistics.self, forKey: .lastProcessedLevel)
+        levelTimeTracker = try container.decodeIfPresent([UUID: TimeInterval].self, forKey: .levelTimeTracker) ?? [:]
     }
     
     // Update session statistics based on new level statistics
     mutating func updateFromLevel(_ newLevel: LevelStatistics) {
-        // If this is the first time processing, use all the new data
-        guard let lastLevel = lastProcessedLevel else {
-            applyLevelStatistics(newLevel)
-            lastProcessedLevel = newLevel
-            return
+        // If this is the first time processing this level, store its current time
+        if levelTimeTracker[newLevel.id] == nil {
+            levelTimeTracker[newLevel.id] = 0
         }
-
-        // Check if there's new unprocessed data for the level
-        if newLevel.id != lastLevel.id {
-            // If it's a different level, treat it as a new level
-            applyLevelStatistics(newLevel)
-            lastProcessedLevel = newLevel
-            return
-        }
-
-        // Now process only the difference (new data in the same level)
-        let difference = calculateLevelDifference(newLevel: newLevel, lastLevel: lastLevel)
-
-        // Only apply the difference if there's new data
-        if difference.wordsSubmitted != 0 {
-            totalWordsSubmitted += difference.wordsSubmitted
-            updateLongestWord(newWord: difference.longestWord, score: difference.longestWordPoints)
-            updateHighestScoringWord(newWord: difference.highestScoringWord, score: difference.highestScoringWordPoints)
-
-            // Update the running average word length
-            let levelWords = difference.wordsSubmitted
-            let totalPreviousWords = totalWordsSubmitted - levelWords
-            if levelWords > 0 {
-                averageWordLength = ((averageWordLength * Double(totalPreviousWords)) +
-                                     (newLevel.averageWordLength * Double(levelWords))) /
-                                    Double(totalPreviousWords + levelWords)
-            }
-
-            // Update highest score if the new level has a higher score
-            highestScore = max(highestScore, newLevel.highestScore)
+        
+        // Calculate the time difference since last update for this level
+        let previousTimeForLevel = levelTimeTracker[newLevel.id] ?? 0
+        let currentLevelTime = newLevel.timePlayed
+        let timeToAdd = currentLevelTime - previousTimeForLevel
+        
+        // Only add positive time differences
+        if timeToAdd > 0 {
+            print("Adding time from level \(newLevel.id): \(timeToAdd.formattedCompact)")
+            print("  Level time: \(currentLevelTime.formattedCompact)")
+            print("  Previous tracked time: \(previousTimeForLevel.formattedCompact)")
+            timePlayed += timeToAdd
             
-            // Update timePlayed
-            let newTime = newLevel.timePlayed
-            let lastTime = lastLevel.timePlayed
-            let differenceTime = newTime - lastTime
-            if differenceTime > 0 {
-                timePlayed += differenceTime
-            }
-
-            // Mark this level as processed up to the new point
-            lastProcessedLevel = newLevel
+            // Update the tracked time for this level
+            levelTimeTracker[newLevel.id] = currentLevelTime
+        } else {
+            print("No new time to add from level \(newLevel.id)")
         }
+        
+        // Update the rest of the statistics
+        // Ensure there is level data to submit
+        guard newLevel.averageWordLength > 0 && newLevel.wordsSubmitted > 0 else {
+            print("No new word data from Level to submit")
+            return
+        }
+        
+        // If it's not the same level as before or we haven't processed a level yet
+        if lastProcessedLevel == nil || newLevel.id != lastProcessedLevel!.id {
+            // This is a new level, so we process all its data
+            // Calculate new averageWordLength
+            let weightedSum = ((averageWordLength * Double(totalWordsSubmitted)) +
+                              (newLevel.averageWordLength * Double(newLevel.wordsSubmitted)))
+            let totalWords = totalWordsSubmitted + newLevel.wordsSubmitted
+            if totalWords > 0 {
+                averageWordLength = weightedSum / Double(totalWords)
+            }
+            
+            totalWordsSubmitted += newLevel.wordsSubmitted
+            updateLongestWord(newWord: newLevel.longestWord, score: newLevel.longestWordPoints)
+            updateHighestScoringWord(newWord: newLevel.highestScoringWord, score: newLevel.highestScoringWordPoints)
+            
+            // Update highest score
+            highestScore = max(highestScore, newLevel.highestScore)
+        } else {
+            // This is the same level as before, so we only process new data
+            let difference = calculateLevelDifference(newLevel: newLevel, lastLevel: lastProcessedLevel!)
+            
+            // Only apply the difference if there's new data
+            if difference.wordsSubmitted > 0 {
+                totalWordsSubmitted += difference.wordsSubmitted
+                updateLongestWord(newWord: difference.longestWord, score: difference.longestWordPoints)
+                updateHighestScoringWord(newWord: difference.highestScoringWord, score: difference.highestScoringWordPoints)
+
+                // Update the running average word length
+                let levelWords = difference.wordsSubmitted
+                let totalPreviousWords = totalWordsSubmitted - levelWords
+                if totalPreviousWords + levelWords > 0 {
+                    averageWordLength = ((averageWordLength * Double(totalPreviousWords)) +
+                                         (newLevel.averageWordLength * Double(levelWords))) /
+                                        Double(totalPreviousWords + levelWords)
+                }
+
+                // Update highest score if the new level has a higher score
+                highestScore = max(highestScore, newLevel.highestScore)
+            }
+        }
+        
+        // Mark this level as processed up to the new point
+        lastProcessedLevel = newLevel
     }
 
     private mutating func applyLevelStatistics(_ level: LevelStatistics) {
