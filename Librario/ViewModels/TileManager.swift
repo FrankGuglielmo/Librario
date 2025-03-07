@@ -671,44 +671,72 @@ class TileManager: ObservableObject, Codable {
             return
         }
         
-        AudioManager.shared.playSoundEffect(named: "tile_drop")
         // Clear current grid and selected tiles
         clearSelection()
 
-        // Step 1: Count existing fire tiles
-        var fireTileCount = 0
-        for row in grid {
-            for tile in row {
+        // Step 1: Track existing fire tile row positions and their letters
+        var existingFireTileRows: [Int] = []
+        var existingFireTileColumns: [Int] = []
+        var existingFireTileLetters: [String] = []
+        
+        for row in 0..<grid.count {
+            for column in 0..<grid[row].count {
+                let tile = grid[row][column]
                 if tile.type == .fire {
-                    fireTileCount += 1
+                    existingFireTileRows.append(row)
+                    existingFireTileColumns.append(column)
+                    existingFireTileLetters.append(tile.letter)
                 }
             }
         }
 
-        // Step 2: Decide to add 1 to 3 fire tiles, regardless of level
-        let additionalFireTilesToAdd = Int.random(in: 2...4)
-        fireTileCount += additionalFireTilesToAdd
+        // Step 2: Decide to add 1 to 3 additional fire tiles
+        let additionalFireTilesToAdd = Int.random(in: 1...3)
+        let totalFireTiles = existingFireTileRows.count + additionalFireTilesToAdd
         
         // Apply the scramble lock if there are three rows worth of fire tiles
-        if fireTileCount >= 21 {
+        if totalFireTiles >= 21 {
             scrambleLock = true
         }
-        
-        
 
-        // Regenerate all tiles for a fresh grid
-        grid = (0..<7).map { row in
+        // Step 3: Create a temporary grid with all new tiles
+        let tempGrid = (0..<7).map { row in
             (0..<7).map { column in
                 tileGenerator.generateTile(at: Position(row: row, column: column), for: grid)
             }
         }
-
-        // Step 3: Add fire tiles across the top 3 rows
+        
+        // Step 4: Replace the grid with the temporary grid
+        grid = tempGrid
+        
+        // Step 5: Place fire tiles at the same row positions as before
         let columns = grid[0].count
         var firePositions: Set<Position> = [] // Track positions where fire tiles have been placed
 
-        while firePositions.count < fireTileCount && firePositions.count < 3 * columns {
-            let randomRow = Int.random(in: 0..<3) // Restrict fire tiles to rows 0, 1, and 2
+        // First, place fire tiles at the same row positions as before
+        for i in 0..<existingFireTileRows.count {
+            let row = existingFireTileRows[i]
+            // Try to use the same column if possible, otherwise use a random column
+            let column = existingFireTileColumns.count > i ? existingFireTileColumns[i] : Int.random(in: 0..<columns)
+            let position = Position(row: row, column: column)
+            
+            // Only add a fire tile if one hasn't been placed in that position already
+            if !firePositions.contains(position) {
+                firePositions.insert(position)
+                var tile = grid[row][column]
+                tile.type = .fire // Convert to fire tile
+                // Keep the same letter if available
+                if existingFireTileLetters.count > i {
+                    tile.letter = existingFireTileLetters[i]
+                }
+                grid[row][column] = tile
+            }
+        }
+
+        // Then add additional fire tiles in the top 3 rows
+        var additionalFireTilesAdded = 0
+        while additionalFireTilesAdded < additionalFireTilesToAdd && firePositions.count < 3 * columns {
+            let randomRow = Int.random(in: 0..<3) // Restrict additional fire tiles to rows 0, 1, and 2
             let randomColumn = Int.random(in: 0..<columns)
             
             let position = Position(row: randomRow, column: randomColumn)
@@ -719,11 +747,74 @@ class TileManager: ObservableObject, Codable {
                 var tile = grid[randomRow][randomColumn]
                 tile.type = .fire // Convert to fire tile
                 grid[randomRow][randomColumn] = tile
+                additionalFireTilesAdded += 1
             }
         }
 
         fireTileChangeHandler?(true) // There will always be a fire tile after scrambling
-        // Notify that the grid has changed (optional)
+        
+        // Step 6: Animate tiles dropping down
+        animateScrambledTiles()
+    }
+    
+    /**
+     * Animates tiles dropping down after scrambling.
+     */
+    func animateScrambledTiles() {
+        // Create placeholder tiles above the grid
+        let rows = grid.count
+        let columns = grid[0].count
+        
+        // Store the current grid state
+        let currentGrid = grid
+        
+        // Create a temporary grid with placeholders
+        var tempGrid = Array(repeating: Array(repeating: Tile.placeholder(at: Position(row: 0, column: 0)), count: columns), count: rows)
+        
+        // Fill the temporary grid with placeholders
+        for row in 0..<rows {
+            for column in 0..<columns {
+                tempGrid[row][column] = Tile.placeholder(at: Position(row: row, column: column))
+            }
+        }
+        
+        // Replace the grid with placeholders
+        grid = tempGrid
+        
+        // Animate the tiles dropping down
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            // For each column, create tiles above the grid
+            for column in 0..<columns {
+                for row in 0..<rows {
+                    let position = Position(row: row, column: column)
+                    let positionAboveGrid = Position(row: -rows + row, column: column)
+                    
+                    var newTile = currentGrid[row][column]
+                    newTile.position = positionAboveGrid // Start above the grid
+                    
+                    self.grid[row][column] = newTile
+                }
+            }
+            
+            AudioManager.shared.playSoundEffect(named: "tile_drop")
+            
+            // Animate tiles falling down to their correct positions
+            for column in 0..<columns {
+                for row in 0..<rows {
+                    let targetPosition = Position(row: row, column: column)
+                    let startingRow = -rows + row
+                    
+                    // Calculate duration based on the distance
+                    let duration = self.animationDuration * (Double(targetPosition.row + 1) / Double(rows))
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now()) {
+                        withAnimation(.easeInOut(duration: duration)) {
+                            self.grid[row][column].position = targetPosition
+                        }
+                    }
+                }
+            }
+        }
     }
 
 
