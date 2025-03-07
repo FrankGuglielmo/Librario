@@ -12,58 +12,38 @@ struct TipView: View {
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     var body: some View {
-        GeometryReader { geometry in
-            let isCompact = horizontalSizeClass == .compact
-            let popupWidth = isCompact ? geometry.size.width * 0.9 : geometry.size.width * 0.6
-            let popupHeight = isCompact ? geometry.size.height * 0.9 : geometry.size.height * 0.8
-
-            ZStack {
-                // Background image filling the entire safe area
-                Image("Background_Image_2")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(minWidth: 0)
-                    .edgesIgnoringSafeArea(.all)
-
-                // Tip card container centered within the GeometryReader
-                ZStack {
-                    // Background Popup Image
-                    Image("TipPopup")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: popupWidth, height: popupHeight)
-
-                    // Content without ScrollView
-                    VStack(spacing: popupWidth * 0.04) {
-                        // Removed "Game Tips" heading
-
-                        VStack(alignment: .leading, spacing: popupWidth * 0.025) {
-                            ForEach(tipsData, id: \.id) { tip in
-                                TipRow(tip: tip, popupWidth: popupWidth)
-                            }
-                        }
-                        .padding(.horizontal, popupWidth * 0.08)
-                        .padding(.top, popupHeight * 0.05)
-
-                        // Back button using the BackButton image
-                        Button(action: {
-                            // AudioManager.shared.playSoundEffect(named: "switch_view_sound")
-                            navigationPath.removeLast()
-                        }) {
-                            Image("BackButton")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: popupWidth * 0.35)
-                                .padding(.top, popupHeight * 0.01)
-                        }
-                        
+        let tipCard = Card(
+            title: "Game Tips",
+            subtitle: "Helpful strategies to improve your gameplay",
+            cardColor: .sapphire,
+            buttons: [
+                CardButton(
+                    title: "Back",
+                    cardColor: .sapphire,
+                    action: { 
+                        AudioManager.shared.playSoundEffect(named: "switch_view_sound")
+                        navigationPath.removeLast() 
                     }
-                    .frame(width: popupWidth * 0.85, height: popupHeight * 0.85)
+                )
+            ]
+        ) {
+            VStack(alignment: .leading, spacing: 16) {
+                ForEach(tipsData, id: \.id) { tip in
+                    TipRow(tip: tip, popupWidth: horizontalSizeClass == .compact ? UIScreen.main.bounds.width * 0.9 : UIScreen.main.bounds.width * 0.6)
                 }
-                // Position the tip card container at the center of the GeometryReader
-                .frame(width: popupWidth, height: popupHeight)
-                .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
             }
+            .padding(.horizontal)
+        }
+        
+        ZStack {
+            // Background image filling the entire safe area
+            Image("Background_Image_2")
+                .resizable()
+                .scaledToFill()
+                .frame(minWidth: 0)
+                .edgesIgnoringSafeArea(.all)
+            
+            CardView(cards: [tipCard])
         }
     }
 }
@@ -153,9 +133,6 @@ struct TipRow: View {
         .padding(.vertical, popupWidth * 0.015)
     }
 }
-
-
-
 
 struct TipView_Previews: PreviewProvider {
     static var previews: some View {

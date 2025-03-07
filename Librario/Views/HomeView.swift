@@ -14,9 +14,6 @@ struct HomeView: View {
     @State var gameManager: GameManager
     @State private var gameCenterManager = GameCenterManager.shared
     @Bindable var userData: UserData
-    @State private var showingGameCenter = false
-    @State private var isParentalGatePassed = false
-
 
     // Getting screen size to calculate dynamic values
     let screenWidth = UIScreen.main.bounds.width
@@ -30,13 +27,32 @@ struct HomeView: View {
                     .edgesIgnoringSafeArea(.all)
                 
                 VStack {
-                    Spacer().frame(height: topSpacing) // Adjusted spacing based on screen size
-                    
-                    // Librario text as image
-                    Image("Librario_regular")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: imageWidth, height: imageHeight)
+                    ZStack {
+                        HStack {
+                            Spacer()
+                            
+                            // Settings gear icon in top right
+                            Button(action: {
+                                AudioManager.shared.playSoundEffect(named: "switch_view_sound")
+                                pathStore.path.append(ViewType.settings)
+                            }) {
+                                Image(systemName: "gear")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.white)
+                                    .padding()
+                            }
+                        }
+                        
+                        VStack {
+                            Spacer().frame(height: topSpacing) // Adjusted spacing based on screen size
+                            
+                            // Librario text as image
+                            Image("Librario_regular")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: imageWidth, height: imageHeight)
+                        }
+                    }
                     
                     
                     // Sprite and text bubble
@@ -113,10 +129,10 @@ struct HomeView: View {
                                 )
                             }
                             
-                            // Settings Button
+                            // Settings Button (action now blank)
                             Button(action: {
+                                // Action is now blank
                                 AudioManager.shared.playSoundEffect(named: "switch_view_sound")
-                                pathStore.path.append(ViewType.settings)
                             }, label: {
                                 ZStack {
                                     Image(bookImages[1])
@@ -155,24 +171,17 @@ struct HomeView: View {
                                     .frame(height: bookHeights[3])
                             })
                             
-                            // Leaderboard Button with Parental Gate
+                            // Leaderboard Button (without Parental Gate)
                             if gameCenterManager.isAuthenticated {
                                 Button(action: {
                                     AudioManager.shared.playSoundEffect(named: "switch_view_sound")
-                                    if isParentalGatePassed {
-                                        presentGameCenterDashboard()
-                                    } else {
-                                        showingGameCenter = true
-                                    }
+                                    presentGameCenterDashboard()
                                 }, label: {
                                     Image(bookImages[4])
                                         .resizable()
                                         .scaledToFit()
                                         .frame(height: bookHeights[4]) // Adjust height as needed
                                 })
-                                .sheet(isPresented: $showingGameCenter) {
-                                    ParentalGateView(isParentalGatePassed: $isParentalGatePassed, presentGameCenterDashboard: presentGameCenterDashboard)
-                                }
                             } else {
                                 Image(bookImages[5])
                                     .resizable()
@@ -313,6 +322,3 @@ enum ViewType: Hashable, Codable {
     case tips
     case leaderboard
 }
-
-
-

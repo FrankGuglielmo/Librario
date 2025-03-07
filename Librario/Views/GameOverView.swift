@@ -15,101 +15,77 @@ struct GameOverView: View {
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     
     var body: some View {
-        GeometryReader { geometry in
-            let isCompact = horizontalSizeClass == .compact
-            let popupWidth = isCompact ? geometry.size.width * 0.8 : geometry.size.width * 0.8
-            let popupHeight = isCompact ? geometry.size.height * 0.7 : geometry.size.height * 0.7
-            let dynamicFontSize: CGFloat = isCompact ? popupWidth * 0.1 : popupWidth * 0.07
-            
-            ZStack {
-                Image("GameOverPopup")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: popupWidth, height: popupHeight)
-                
-                VStack {
-                    Spacer()
-                    
-                    // Score display
-                    VStack(spacing: 5) {
-                        Text("Your score:")
-                            .font(.system(size: dynamicFontSize * 0.9, weight: .bold))
-                            .foregroundStyle(.white)
-                        Text("\(userData.userStatistics.highestScore)")
-                            .font(.system(size: dynamicFontSize * 0.9))
-                            .foregroundColor(.blue)
-                    }
-                    .padding(.top)
-                    
-                    Spacer()
-                    
-                    // Best Word display
-                    VStack(spacing: 5) {
-                        Text("Best Word:")
-                            .font(.system(size: dynamicFontSize * 0.9, weight: .bold))
-                            .foregroundColor(.white)
-                        Text(gameManager.sessionData.highestScoringWord.isEmpty ? "N/A" : gameManager.sessionData.highestScoringWord.uppercased())
-                            .font(.system(size: dynamicFontSize * 0.9))
-                            .foregroundColor(.blue)
-                    }
-                    
-                    Spacer()
-                    
-                    // Longest Word display
-                    VStack(spacing: 5) {
-                        Text("Longest Word:")
-                            .font(.system(size: dynamicFontSize * 0.9, weight: .bold))
-                            .foregroundColor(.white)
-                        Text(gameManager.sessionData.longestWord.isEmpty ? "N/A" : gameManager.sessionData.longestWord.uppercased())
-                            .font(.system(size: dynamicFontSize * 0.9))
-                            .foregroundColor(.blue)
-                    }
-                    
-                    Spacer()
-                    
-                    // Custom Restart Game button image
-                    Button(action: {
+        let gameOverCard = Card(
+            title: "Game Over",
+            subtitle: "Your game has ended. Here's how you did:",
+            cardColor: .crimson,
+            buttons: [
+                CardButton(
+                    title: "Restart",
+                    cardColor: .emerald,
+                    action: {
                         // Reset game logic
                         gameManager.startNewGame(userStatistics: userData.userStatistics)
                         // Set gameplay state back to active
                         gameManager.gameplayState = .active
                         print("Game restarted")
-                    }) {
-                        Image("RestartButton") // Replace with your custom image name
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: popupWidth * 0.5) // Adjust size to fit your needs
                     }
-                    
-                    // Custom Exit button image
-                    Button(action: {
+                ),
+                CardButton(
+                    title: "Exit",
+                    cardColor: .crimson,
+                    action: {
                         if !navigationPath.isEmpty {
                             AudioManager.shared.playSoundEffect(named: "switch_view_sound")
                             navigationPath.removeLast() // Simulate exit by removing the last item in the navigation path
                             print("Exit to main menu")
                         }
-                    }) {
-                        Image("ExitButton") // Replace with your custom image name
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: popupWidth * 0.5) // Adjust size to fit your needs
                     }
-                    
-                    Spacer()
+                )
+            ]
+        ) {
+            VStack(spacing: 16) {
+                // Score display
+                VStack(spacing: 5) {
+                    Text("Your score:")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                    Text("\(userData.userStatistics.highestScore)")
+                        .font(.title)
+                        .foregroundColor(.blue)
                 }
-                .frame(width: popupWidth * 0.85, height: popupHeight * 0.85)
+                
+                // Best Word display
+                VStack(spacing: 5) {
+                    Text("Best Word:")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    Text(gameManager.sessionData.highestScoringWord.isEmpty ? "N/A" : gameManager.sessionData.highestScoringWord.uppercased())
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                }
+                
+                // Longest Word display
+                VStack(spacing: 5) {
+                    Text("Longest Word:")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    Text(gameManager.sessionData.longestWord.isEmpty ? "N/A" : gameManager.sessionData.longestWord.uppercased())
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                }
             }
-            .frame(width: popupWidth, height: popupHeight)
-            .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
         }
-        .onAppear {
-            // Set gameplay state to game over
-            gameManager.gameplayState = .gameOver
-            // Stop the game timer and update statistics
-            gameManager.stopGameTimer()
-            // Update user statistics directly with the current userData
-            gameManager.updateUserLifetimeStatistics(userData: userData)
-        }
+        
+        CardView(cards: [gameOverCard])
+            .onAppear {
+                // Set gameplay state to game over
+                gameManager.gameplayState = .gameOver
+                // Stop the game timer and update statistics
+                gameManager.stopGameTimer()
+                // Update user statistics directly with the current userData
+                gameManager.updateUserLifetimeStatistics(userData: userData)
+            }
     }
 }
 

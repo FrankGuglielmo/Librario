@@ -17,6 +17,7 @@ struct GameView: View {
     @State private var showLevelUp = false // State to control LevelUpView visibility
     @State private var showPerformanceDebug = false // State to control performance debug visibility
     @State private var showTimerDebug = false // State to control timer debug visibility
+    @State private var showScrambleConfirmation = false // State to control scramble confirmation dialog
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     let praisePhrases = ["Nice word!", "Fantastic!", "Awesome!", "Well done!", "Impressive!"]
@@ -65,13 +66,27 @@ struct GameView: View {
                         ZStack {
                             // Sprite button that triggers the scramble function
                             Button(action: {
-                                gameManager.tileManager.scramble()
-                                showReminderBubble = false // Hide reminder bubble after scrambling
+                                // Show confirmation dialog instead of immediately scrambling
+                                showScrambleConfirmation = true
+                                showReminderBubble = false // Hide reminder bubble when showing confirmation
                             }) {
                                 Image(currentSprite)
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
                                     .frame(width: spriteSize)
+                            }
+                            .confirmationDialog(
+                                "Are you sure you want to scramble the board?",
+                                isPresented: $showScrambleConfirmation,
+                                titleVisibility: .visible
+                            ) {
+                                Button("Scramble", role: .destructive) {
+                                    gameManager.tileManager.scramble()
+                                    AudioManager.shared.playSoundEffect(named: "tile_drop")
+                                }
+                                Button("Cancel", role: .cancel) {}
+                            } message: {
+                                Text("This will rearrange all tiles and add more fire tiles.")
                             }
 
                             // Show the praise bubble or reminder bubble
@@ -101,7 +116,7 @@ struct GameView: View {
 
                     GameGridView(gameManager: gameManager, tileManager: gameManager.tileManager)
 
-                    GameStatusView(gameManager: gameManager, navigationPath: $navigationPath)
+                    GameToolBarView(gameManager: gameManager, navigationPath: $navigationPath)
                         
                     
                 }
