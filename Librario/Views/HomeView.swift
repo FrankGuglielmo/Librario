@@ -11,9 +11,30 @@ struct HomeView: View {
     @Environment(\.verticalSizeClass) var verticalSizeClass
     @State private var showActionSheet = false
     @State private var pathStore = PathStore() // Create PathStore instance
-    @State var gameManager: GameManager
-    @State private var gameCenterManager = GameCenterManager.shared
     @Bindable var userData: UserData
+    @State private var gameCenterManager = GameCenterManager.shared
+    @State private var inventoryManager: InventoryManager
+    @State private var gameManager: GameManager
+    
+    init() {
+        // Create user data
+        let loadedUserData = UserData.loadUserData()
+        self._userData = Bindable(wrappedValue: loadedUserData)
+        
+        // Create inventory manager
+        let invManager = InventoryManager(
+            inventory: loadedUserData.inventory,
+            saveCallback: { loadedUserData.saveUserData() }
+        )
+        self._inventoryManager = State(initialValue: invManager)
+        
+        // Create game manager with inventory manager
+        let gameMan = GameManager(
+            dictionaryManager: DictionaryManager(),
+            inventoryManager: invManager
+        )
+        self._gameManager = State(initialValue: gameMan)
+    }
     
     // Getting screen size to calculate dynamic values
     let screenWidth = UIScreen.main.bounds.width
@@ -192,7 +213,7 @@ struct HomeView: View {
                     TipView(navigationPath: $pathStore.path)
                         .navigationBarBackButtonHidden(true)
                 case .store:
-                    TipView(navigationPath: $pathStore.path)
+                    StoreView(inventoryManager: inventoryManager, navigationPath: $pathStore.path)
                         .navigationBarBackButtonHidden(true)
                 }
             }
@@ -279,7 +300,7 @@ struct HomeView: View {
 struct HomePage2_Previews: PreviewProvider {
     static var previews: some View {
         Group {
-            HomeView(gameManager: GameManager(dictionaryManager: DictionaryManager()), userData: UserData())
+            HomeView()
         }
     }
 }

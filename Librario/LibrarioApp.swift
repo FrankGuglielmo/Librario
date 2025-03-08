@@ -33,7 +33,7 @@ struct MyApp: App {
 
     var body: some Scene {
         WindowGroup {
-            HomeView(gameManager: gameManager, userData: userData)
+            HomeView()
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             switch newPhase {

@@ -10,6 +10,9 @@ import SwiftUI
 import Observation
 
 @Observable class GameManager: Codable {
+    // Private properties for inventory management
+    private var inventoryManager: InventoryManager?
+    
     // Game state enum to track the current state of gameplay
     enum GameplayState {
         case active
@@ -65,13 +68,37 @@ import Observation
     enum CodingKeys: String, CodingKey {
         case gameState, levelData, sessionData, levelSystem, tileManager
     }
+    
+    // MARK: - Powerup Methods
+    
+    func useSwapPowerup() -> Bool {
+        guard let inventoryManager = inventoryManager else { return false }
+        return inventoryManager.usePowerup(.swap)
+    }
+    
+    func useExtraLifePowerup() -> Bool {
+        guard let inventoryManager = inventoryManager else { return false }
+        return inventoryManager.usePowerup(.extraLife)
+    }
+    
+    func useWildcardPowerup() -> Bool {
+        guard let inventoryManager = inventoryManager else { return false }
+        return inventoryManager.usePowerup(.wildcard)
+    }
+    
+    func getPowerupCount(_ type: PowerupType) -> Int {
+        guard let inventoryManager = inventoryManager else { return 0 }
+        return inventoryManager.getPowerupCount(type)
+    }
 
     /**
-     * Initializes a new `GameManager` with the provided `DictionaryManager`.
+     * Initializes a new `GameManager` with the provided `DictionaryManager` and optional `InventoryManager`.
      *
      * @param dictionaryManager The `DictionaryManager` instance used to manage dictionary data.
+     * @param inventoryManager The optional `InventoryManager` instance for managing inventory.
      */
-    init(dictionaryManager: DictionaryManager) {
+    init(dictionaryManager: DictionaryManager, inventoryManager: InventoryManager? = nil) {
+        self.inventoryManager = inventoryManager
         self.dictionaryManager = dictionaryManager
         
         // Load GameState from disk if available, otherwise initialize a new GameState

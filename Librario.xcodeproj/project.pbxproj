@@ -30,6 +30,12 @@
 		7B4057C42D792B9D009E1D0F /* NotifcationNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B4057C32D792B9D009E1D0F /* NotifcationNames.swift */; };
 		7B63B2052D79665400015666 /* TimerDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B63B2042D79665400015666 /* TimerDebugView.swift */; };
 		7B64643C2CAF70FA00F7D950 /* WelcomeBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B64643B2CAF70FA00F7D950 /* WelcomeBubbleView.swift */; };
+		7B676B342D7C5E6D00B418BA /* StoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B676B332D7C5E6D00B418BA /* StoreManager.swift */; };
+		7B676B362D7C5E8400B418BA /* InventoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B676B352D7C5E8400B418BA /* InventoryManager.swift */; };
+		7B676B3A2D7C5EA900B418BA /* StoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B676B392D7C5EA900B418BA /* StoreView.swift */; };
+		7B676B3D2D7C5EE400B418BA /* Inventory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B676B3C2D7C5EE400B418BA /* Inventory.swift */; };
+		7B676B3F2D7C5EF800B418BA /* PowerupType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B676B3E2D7C5EF800B418BA /* PowerupType.swift */; };
+		7B676B412D7C5F0800B418BA /* StoreItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B676B402D7C5F0800B418BA /* StoreItem.swift */; };
 		7B68F9C02C9B3E54008578A2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B68F9BF2C9B3E54008578A2 /* SettingsView.swift */; };
 		7B68F9C42C9B530E008578A2 /* CustomSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B68F9C32C9B530E008578A2 /* CustomSlider.swift */; };
 		7B748ED72C9D2EAB00487796 /* TimeInterval.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B748ED62C9D2EAB00487796 /* TimeInterval.swift */; };
@@ -130,6 +136,12 @@
 		7B5F88742C9C07C00060545C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		7B63B2042D79665400015666 /* TimerDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerDebugView.swift; sourceTree = "<group>"; };
 		7B64643B2CAF70FA00F7D950 /* WelcomeBubbleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeBubbleView.swift; sourceTree = "<group>"; };
+		7B676B332D7C5E6D00B418BA /* StoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreManager.swift; sourceTree = "<group>"; };
+		7B676B352D7C5E8400B418BA /* InventoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryManager.swift; sourceTree = "<group>"; };
+		7B676B392D7C5EA900B418BA /* StoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreView.swift; sourceTree = "<group>"; };
+		7B676B3C2D7C5EE400B418BA /* Inventory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Inventory.swift; sourceTree = "<group>"; };
+		7B676B3E2D7C5EF800B418BA /* PowerupType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerupType.swift; sourceTree = "<group>"; };
+		7B676B402D7C5F0800B418BA /* StoreItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreItem.swift; sourceTree = "<group>"; };
 		7B68F9BF2C9B3E54008578A2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		7B68F9C32C9B530E008578A2 /* CustomSlider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomSlider.swift; sourceTree = "<group>"; };
 		7B748ED62C9D2EAB00487796 /* TimeInterval.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeInterval.swift; sourceTree = "<group>"; };
@@ -230,6 +242,8 @@
 		7B358FB92C71787C0041FBA9 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				7B676B352D7C5E8400B418BA /* InventoryManager.swift */,
+				7B676B332D7C5E6D00B418BA /* StoreManager.swift */,
 				7B358FBF2C728CD90041FBA9 /* TileManager.swift */,
 				7B8D1CDD2C902B5F001D2231 /* GameManager.swift */,
 				7B9B03D92CB7321900E7D5D8 /* GameCenterManager.swift */,
@@ -256,6 +270,16 @@
 				7B358FD92C77DFDD0041FBA9 /* DictionaryManager.swift */,
 			);
 			path = Words;
+			sourceTree = "<group>";
+		};
+		7B676B432D7C5F4300B418BA /* Inventory */ = {
+			isa = PBXGroup;
+			children = (
+				7B676B3C2D7C5EE400B418BA /* Inventory.swift */,
+				7B676B3E2D7C5EF800B418BA /* PowerupType.swift */,
+				7B676B402D7C5F0800B418BA /* StoreItem.swift */,
+			);
+			path = Inventory;
 			sourceTree = "<group>";
 		};
 		7B8D1CCE2C8E4FC5001D2231 /* Sounds */ = {
@@ -358,6 +382,7 @@
 		7B9F77FF2C69A7B5000A3CEE /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				7B676B392D7C5EA900B418BA /* StoreView.swift */,
 				7B3065F02D7A3D550027CF31 /* GameToolBarView.swift */,
 				7B63B2042D79665400015666 /* TimerDebugView.swift */,
 				7B4057BF2D792353009E1D0F /* PerformanceDebugView.swift */,
@@ -393,6 +418,7 @@
 		7BE0CF1F2C6EF71C00B272FE /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				7B676B432D7C5F4300B418BA /* Inventory */,
 				7B1328472D7B8DFC00001638 /* Button.swift */,
 				7B00B96A2C96496C000F9FD6 /* Statistics */,
 				7BE0CF242C6F016C00B272FE /* GameState.swift */,
@@ -569,6 +595,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				7B358FC22C72C8630041FBA9 /* GameStatusView.swift in Sources */,
+				7B676B342D7C5E6D00B418BA /* StoreManager.swift in Sources */,
+				7B676B3D2D7C5EE400B418BA /* Inventory.swift in Sources */,
 				7BE0CF232C6EFC9900B272FE /* TileView.swift in Sources */,
 				7B358FBE2C728CBF0041FBA9 /* TileConverter.swift in Sources */,
 				7B4057C42D792B9D009E1D0F /* NotifcationNames.swift in Sources */,
@@ -586,9 +614,11 @@
 				7B93794C2C7D598600834018 /* SubmitWordView.swift in Sources */,
 				7B00B9692C96253E000F9FD6 /* PerformanceEvaluator.swift in Sources */,
 				7B8D1CE02C9048A4001D2231 /* LevelUpView.swift in Sources */,
+				7B676B3F2D7C5EF800B418BA /* PowerupType.swift in Sources */,
 				7B8D1CDC2C900070001D2231 /* UserStatistics.swift in Sources */,
 				7B13284A2D7B8F4B00001638 /* CardView.swift in Sources */,
 				7B68F9C02C9B3E54008578A2 /* SettingsView.swift in Sources */,
+				7B676B412D7C5F0800B418BA /* StoreItem.swift in Sources */,
 				7BCE3B392CC00A37003F35A6 /* ParentalGateView.swift in Sources */,
 				7B68F9C42C9B530E008578A2 /* CustomSlider.swift in Sources */,
 				7BE0CF252C6F016C00B272FE /* GameState.swift in Sources */,
@@ -601,9 +631,11 @@
 				7B1328462D7B8DB900001638 /* Card.swift in Sources */,
 				7B8D1CD42C8E548D001D2231 /* AudioManager.swift in Sources */,
 				7B8D1CD22C8E53BA001D2231 /* Settings.swift in Sources */,
+				7B676B3A2D7C5EA900B418BA /* StoreView.swift in Sources */,
 				7B9F77D42C69A21E000A3CEE /* LibrarioApp.swift in Sources */,
 				7B83DEEA2C90F8C7008ACBF9 /* TipView.swift in Sources */,
 				7B64643C2CAF70FA00F7D950 /* WelcomeBubbleView.swift in Sources */,
+				7B676B362D7C5E8400B418BA /* InventoryManager.swift in Sources */,
 				7BE831FA2CAF69E600161EE6 /* HomeView.swift in Sources */,
 				7B358FB62C7166FE0041FBA9 /* TileTypeGenerator.swift in Sources */,
 				7B8D1CD62C8E8786001D2231 /* GameOverView.swift in Sources */,

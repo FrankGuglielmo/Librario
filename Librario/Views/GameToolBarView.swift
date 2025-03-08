@@ -164,16 +164,36 @@ struct GameToolBarView: View {
     // Swap button
     private func swapButton() -> some View {
         Button(action: {
-            
+            if gameManager.useSwapPowerup() {
+                // Swap functionality would be implemented here
+                print("Swap powerup used")
+            } else {
+                // Not enough powerups
+                AudioManager.shared.playSoundEffect(named: "incorrect_selection")
+            }
         }) {
-            VStack {
-                Image(systemName: "arrow.2.squarepath")
-                    .font(.title)
-                    .foregroundStyle(Color.darkGrey)
-                Text("Swap")
-                    .font(.title3)
-                    .foregroundStyle(Color.darkGrey)
-                    .fontWeight(.bold)
+            ZStack {
+                VStack {
+                    Image(systemName: "arrow.2.squarepath")
+                        .font(.title)
+                        .foregroundStyle(Color.darkGrey)
+                    Text("Swap")
+                        .font(.title3)
+                        .foregroundStyle(Color.darkGrey)
+                        .fontWeight(.bold)
+                }
+                
+                // Count indicator
+                if gameManager.getPowerupCount(.swap) > 0 {
+                    Text("\(gameManager.getPowerupCount(.swap))")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .frame(width: 20, height: 20)
+                        .background(Color.red)
+                        .clipShape(Circle())
+                        .offset(x: 20, y: -20)
+                }
             }
         }
         .frame(width: 70, height: 70) // Fixed size button
@@ -184,16 +204,36 @@ struct GameToolBarView: View {
     // Extra Life button
     private func extraLifeButton() -> some View {
         Button(action: {
-            // Placeholder for extra life action
+            if gameManager.useExtraLifePowerup() {
+                // Extra life functionality would be implemented here
+                print("Extra life powerup used")
+            } else {
+                // Not enough powerups
+                AudioManager.shared.playSoundEffect(named: "incorrect_selection")
+            }
         }) {
-            VStack {
-                Image(systemName: "heart.fill")
-                    .font(.title)
-                    .foregroundStyle(Color.darkGrey)
-                Text("Life")
-                    .font(.title3)
-                    .foregroundStyle(Color.darkGrey)
-                    .fontWeight(.bold)
+            ZStack {
+                VStack {
+                    Image(systemName: "heart.fill")
+                        .font(.title)
+                        .foregroundStyle(Color.darkGrey)
+                    Text("Life")
+                        .font(.title3)
+                        .foregroundStyle(Color.darkGrey)
+                        .fontWeight(.bold)
+                }
+                
+                // Count indicator
+                if gameManager.getPowerupCount(.extraLife) > 0 {
+                    Text("\(gameManager.getPowerupCount(.extraLife))")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .frame(width: 20, height: 20)
+                        .background(Color.red)
+                        .clipShape(Circle())
+                        .offset(x: 20, y: -20)
+                }
             }
         }
         .frame(width: 70, height: 70) // Fixed size button
@@ -204,16 +244,36 @@ struct GameToolBarView: View {
     // Wildcard button
     private func wildcardButton() -> some View {
         Button(action: {
-            // Placeholder for wildcard action
+            if gameManager.useWildcardPowerup() {
+                // Wildcard functionality would be implemented here
+                print("Wildcard powerup used")
+            } else {
+                // Not enough powerups
+                AudioManager.shared.playSoundEffect(named: "incorrect_selection")
+            }
         }) {
-            VStack {
-                Image(systemName: "sparkles")
-                    .font(.title)
-                    .foregroundStyle(Color.darkGrey)
-                Text("Wild")
-                    .font(.title3)
-                    .foregroundStyle(Color.darkGrey)
-                    .fontWeight(.bold)
+            ZStack {
+                VStack {
+                    Image(systemName: "sparkles")
+                        .font(.title)
+                        .foregroundStyle(Color.darkGrey)
+                    Text("Wild")
+                        .font(.title3)
+                        .foregroundStyle(Color.darkGrey)
+                        .fontWeight(.bold)
+                }
+                
+                // Count indicator
+                if gameManager.getPowerupCount(.wildcard) > 0 {
+                    Text("\(gameManager.getPowerupCount(.wildcard))")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .frame(width: 20, height: 20)
+                        .background(Color.red)
+                        .clipShape(Circle())
+                        .offset(x: 20, y: -20)
+                }
             }
         }
         .frame(width: 70, height: 70) // Fixed size button
