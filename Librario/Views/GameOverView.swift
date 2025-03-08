@@ -19,6 +19,7 @@ struct GameOverView: View {
             title: "Game Over",
             subtitle: "Your game has ended. Here's how you did:",
             cardColor: .crimson,
+            tabIcon: "flag.checkered", // Game over icon
             buttons: [
                 CardButton(
                     title: "Restart",

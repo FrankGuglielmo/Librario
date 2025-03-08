@@ -13,6 +13,7 @@ struct ColorTheme {
     let secondary: Color
     let text: Color
     let accent: Color
+    let icon: Color
     
     // Accessibility methods
     var isHighContrast: Bool {
@@ -49,37 +50,37 @@ enum CardColor: String, CaseIterable {
     var theme: ColorTheme {
         switch self {
             case .crimson:
-                return ColorTheme(primary: Color(hex: "#DC143C"), secondary: Color(hex: "#FFD700"), text: Color.white, accent: Color(hex: "#FF4500"))
+                return ColorTheme(primary: Color(hex: "#DC143C"), secondary: Color(hex: "#FFD700"), text: Color.white, accent: Color(hex: "#FF4500"), icon: Color(hex: "#000000"))
             case .ruby:
-                return ColorTheme(primary: Color(hex: "#E0115F"), secondary: Color(hex: "#7FFFD4"), text: Color.white, accent: Color(hex: "#20B2AA"))
+                return ColorTheme(primary: Color(hex: "#E0115F"), secondary: Color(hex: "#7FFFD4"), text: Color.white, accent: Color(hex: "#20B2AA"), icon: Color(hex: "#000000"))
             case .sapphire:
-                return ColorTheme(primary: Color(hex: "#0F52BA"), secondary: Color(hex: "#FFA500"), text: Color.white, accent: Color(hex: "#FF8C00"))
+                return ColorTheme(primary: Color(hex: "#0F52BA"), secondary: Color(hex: "#FFA500"), text: Color.white, accent: Color(hex: "#FF8C00"), icon: Color(hex: "#000000"))
             case .azure:
-                return ColorTheme(primary: Color(hex: "#007FFF"), secondary: Color(hex: "#FFFF00"), text: Color.white, accent: Color(hex: "#FFD700"))
+                return ColorTheme(primary: Color(hex: "#007FFF"), secondary: Color(hex: "#FFFF00"), text: Color.white, accent: Color(hex: "#FFD700"), icon: Color(hex: "#000000"))
             case .amethyst:
-                return ColorTheme(primary: Color(hex: "#9966CC"), secondary: Color(hex: "#FFDAB9"), text: Color.white, accent: Color(hex: "#FFA07A"))
+                return ColorTheme(primary: Color(hex: "#9966CC"), secondary: Color(hex: "#FFDAB9"), text: Color.white, accent: Color(hex: "#FFA07A"), icon: Color(hex: "#000000"))
             case .lavender:
-                return ColorTheme(primary: Color(hex: "#E6E6FA"), secondary: Color(hex: "#800080"), text: Color(hex: "#4B0082"), accent: Color(hex: "#9932CC"))
+                return ColorTheme(primary: Color(hex: "#E6E6FA"), secondary: Color(hex: "#800080"), text: Color(hex: "#4B0082"), accent: Color(hex: "#9932CC"), icon: Color(hex: "#FFFFFF"))
             case .tangerine:
-                return ColorTheme(primary: Color(hex: "#F28500"), secondary: Color(hex: "#4682B4"), text: Color.white, accent: Color(hex: "#1E90FF"))
+                return ColorTheme(primary: Color(hex: "#F28500"), secondary: Color(hex: "#4682B4"), text: Color.white, accent: Color(hex: "#1E90FF"), icon: Color(hex: "#FFFFFF"))
             case .amber:
-                return ColorTheme(primary: Color(hex: "#FFBF00"), secondary: Color(hex: "#800020"), text: Color(hex: "#4B0082"), accent: Color(hex: "#8B0000"))
+                return ColorTheme(primary: Color(hex: "#FFBF00"), secondary: Color(hex: "#800020"), text: Color(hex: "#4B0082"), accent: Color(hex: "#8B0000"), icon: Color(hex: "#FFFFFF"))
             case .emerald:
-                return ColorTheme(primary: Color(hex: "#50C878"), secondary: Color(hex: "#FF6347"), text: Color.black, accent: Color(hex: "#DC143C"))
+                return ColorTheme(primary: Color(hex: "#50C878"), secondary: Color(hex: "#FF6347"), text: Color.black, accent: Color(hex: "#DC143C"), icon: Color(hex: "#FFFFFF"))
             case .mint:
-                return ColorTheme(primary: Color(hex: "#98FF98"), secondary: Color(hex: "#8A2BE2"), text: Color.black, accent: Color(hex: "#4B0082"))
+                return ColorTheme(primary: Color(hex: "#98FF98"), secondary: Color(hex: "#8A2BE2"), text: Color.black, accent: Color(hex: "#4B0082"), icon: Color(hex: "#FFFFFF"))
             case .sunflower:
-                return ColorTheme(primary: Color(hex: "#FFDA03"), secondary: Color(hex: "#301934"), text: Color.black, accent: Color(hex: "#4B0082"))
+                return ColorTheme(primary: Color(hex: "#FFDA03"), secondary: Color(hex: "#301934"), text: Color.black, accent: Color(hex: "#4B0082"), icon: Color(hex: "#FFFFFF"))
             case .lemon:
-                return ColorTheme(primary: Color(hex: "#FFF44F"), secondary: Color(hex: "#6495ED"), text: Color.black, accent: Color(hex: "#0047AB"))
+                return ColorTheme(primary: Color(hex: "#FFF44F"), secondary: Color(hex: "#6495ED"), text: Color.black, accent: Color(hex: "#0047AB"), icon: Color(hex: "#FFFFFF"))
             case .charcoal:
-                return ColorTheme(primary: Color(hex: "#36454F"), secondary: Color(hex: "#FFD700"), text: Color.white, accent: Color(hex: "#FFA500"))
+                return ColorTheme(primary: Color(hex: "#36454F"), secondary: Color(hex: "#FFD700"), text: Color.white, accent: Color(hex: "#FFA500"), icon: Color(hex: "#000000"))
             case .slate:
-                return ColorTheme(primary: Color(hex: "#708090"), secondary: Color(hex: "#FFFF00"), text: Color.white, accent: Color(hex: "#FFD700"))
+                return ColorTheme(primary: Color(hex: "#708090"), secondary: Color(hex: "#FFFF00"), text: Color.white, accent: Color(hex: "#FFD700"), icon: Color(hex: "#000000"))
             case .coral:
-                return ColorTheme(primary: Color(hex: "#FF7F50"), secondary: Color(hex: "#40E0D0"), text: Color.black, accent: Color(hex: "#00CED1"))
+                return ColorTheme(primary: Color(hex: "#FF7F50"), secondary: Color(hex: "#40E0D0"), text: Color.black, accent: Color(hex: "#00CED1"), icon: Color(hex: "#000000"))
             case .teal:
-                return ColorTheme(primary: Color(hex: "#008080"), secondary: Color(hex: "#FFB6C1"), text: Color.white, accent: Color(hex: "#FF69B4"))
+                return ColorTheme(primary: Color(hex: "#008080"), secondary: Color(hex: "#FFB6C1"), text: Color.white, accent: Color(hex: "#FF69B4"), icon: Color(hex: "#000000"))
         }
     }
     
@@ -127,7 +128,7 @@ enum CardColor: String, CaseIterable {
     // Return dark mode adjusted colors
     func adaptForDarkMode(isDarkMode: Bool) -> ColorTheme {
         if isDarkMode {
-            var adjustedTheme = self.theme
+            let adjustedTheme = self.theme
             // Adjust colors for dark mode
             return adjustedTheme
         } else {
@@ -197,6 +198,7 @@ struct Card: Identifiable {
     let title: String
     let subtitle: String?
     let cardColor: CardColor
+    let tabIcon: String // SF Symbol name for the tab icon
     let content: AnyView // Using AnyView to allow any type of content
     let buttons: [CardButton]
     let isAccessible: Bool
@@ -206,6 +208,7 @@ struct Card: Identifiable {
         title: String,
         subtitle: String? = nil,
         cardColor: CardColor = .sapphire,
+        tabIcon: String = "star.fill", // Default icon
         isAccessible: Bool = true,
         buttons: [CardButton] = [],
         @ViewBuilder content: () -> Content
@@ -213,6 +216,7 @@ struct Card: Identifiable {
         self.title = title
         self.subtitle = subtitle
         self.cardColor = cardColor
+        self.tabIcon = tabIcon
         self.content = AnyView(content())
         self.buttons = buttons
         self.isAccessible = isAccessible

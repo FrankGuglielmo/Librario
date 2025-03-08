@@ -16,6 +16,7 @@ struct TipView: View {
             title: "Game Tips",
             subtitle: "Helpful strategies to improve your gameplay",
             cardColor: .sapphire,
+            tabIcon: "lightbulb.fill", // Lightbulb icon for tips
             buttons: [
                 CardButton(
                     title: "Back",
