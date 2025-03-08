@@ -17,6 +17,7 @@ struct SettingsView: View {
             title: "Settings",
             subtitle: "Adjust your game preferences",
             cardColor: .tangerine,
+            tabIcon: "gearshape.fill", // Settings icon
             buttons: [
                 CardButton(
                     title: "Back",

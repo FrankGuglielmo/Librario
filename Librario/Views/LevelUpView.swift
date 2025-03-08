@@ -20,6 +20,7 @@ struct LevelUpView: View {
             title: "Level Up!",
             subtitle: "Congratulations on completing the level",
             cardColor: .amethyst,
+            tabIcon: "arrow.up.circle.fill", // Level up icon
             buttons: [
                 CardButton(
                     title: "Continue",
