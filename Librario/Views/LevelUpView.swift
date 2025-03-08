@@ -18,13 +18,13 @@ struct LevelUpView: View {
     var body: some View {
         let levelUpCard = Card(
             title: "Level Up!",
-            subtitle: "Congratulations on completing the level",
-            cardColor: .amethyst,
-            tabIcon: "arrow.up.circle.fill", // Level up icon
+            subtitle: "Congratulations on completing level \(gameManager.gameState.level)!",
+            cardColor: .crimson,
+            isCloseDisabled: true,
             buttons: [
                 CardButton(
                     title: "Continue",
-                    cardColor: .amethyst,
+                    cardColor: .crimson,
                     action: {
                         gameManager.handleLevelCompletion()
                         gameManager.resetLevelStatistics()
@@ -48,7 +48,7 @@ struct LevelUpView: View {
                         .foregroundColor(.white)
                     Text("(\(gameManager.levelData.longestWordPoints))")
                         .font(.subheadline)
-                        .foregroundColor(.blue)
+                        .foregroundColor(CardColor.crimson.complementaryColor)
                 }
                 
                 // Highest Scoring Word Display
@@ -61,7 +61,7 @@ struct LevelUpView: View {
                         .foregroundColor(.white)
                     Text("(\(gameManager.levelData.highestScoringWordPoints))")
                         .font(.subheadline)
-                        .foregroundColor(.blue)
+                        .foregroundColor(CardColor.crimson.complementaryColor)
                 }
                 
                 // Words Submitted Display

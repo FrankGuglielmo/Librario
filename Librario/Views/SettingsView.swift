@@ -16,42 +16,31 @@ struct SettingsView: View {
         let settingsCard = Card(
             title: "Settings",
             subtitle: "Adjust your game preferences",
-            cardColor: .tangerine,
-            tabIcon: "gearshape.fill", // Settings icon
-            buttons: [
-                CardButton(
-                    title: "Back",
-                    cardColor: .tangerine,
-                    action: {
-                        AudioManager.shared.playSoundEffect(named: "switch_view_sound")
-                        navigationPath.removeLast() // Navigate back to the previous view
-                    }
-                )
-            ]
+            cardColor: .crimson
         ) {
-            VStack(spacing: 24) {
+            VStack(spacing: 48) {
                 // Music Slider
-                VStack(spacing: 8) {
+                VStack(spacing: 12) {
                     Text("Music Volume")
                         .font(.headline)
                         .foregroundColor(.white)
                     CustomSlider(value: $settings.musicVolume,
                                  range: 0...1,
-                                 borderColor: .yellow,
+                                 borderColor: CardColor.crimson.borderColor,
                                  emptyProgressColor: .brown,
-                                 fullProgressColor: .red)
+                                 fullProgressColor: CardColor.crimson.complementaryColor)
                 }
                 
                 // Sound Effects Slider
-                VStack(spacing: 8) {
+                VStack(spacing: 12) {
                     Text("Sound Effects Volume")
                         .font(.headline)
                         .foregroundColor(.white)
                     CustomSlider(value: $settings.soundEffectsVolume,
                                  range: 0...1,
-                                 borderColor: .yellow,
+                                 borderColor: CardColor.crimson.borderColor,
                                  emptyProgressColor: .brown,
-                                 fullProgressColor: .red)
+                                 fullProgressColor: CardColor.crimson.complementaryColor)
                 }
             }
             .padding(.horizontal)
@@ -61,8 +50,6 @@ struct SettingsView: View {
             // Background image filling the entire safe area
             Image("Background_Image_2")
                 .resizable()
-                .scaledToFill()
-                .frame(minWidth: 0)
                 .edgesIgnoringSafeArea(.all)
             
             CardView(cards: [settingsCard])

@@ -786,7 +786,7 @@ class TileManager: ObservableObject, Codable {
             // For each column, create tiles above the grid
             for column in 0..<columns {
                 for row in 0..<rows {
-                    let position = Position(row: row, column: column)
+                    _ = Position(row: row, column: column)
                     let positionAboveGrid = Position(row: -rows + row, column: column)
                     
                     var newTile = currentGrid[row][column]
@@ -802,7 +802,7 @@ class TileManager: ObservableObject, Codable {
             for column in 0..<columns {
                 for row in 0..<rows {
                     let targetPosition = Position(row: row, column: column)
-                    let startingRow = -rows + row
+                    _ = -rows + row
                     
                     // Calculate duration based on the distance
                     let duration = self.animationDuration * (Double(targetPosition.row + 1) / Double(rows))

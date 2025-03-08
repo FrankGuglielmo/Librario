@@ -14,21 +14,9 @@ struct TipView: View {
     var body: some View {
         let tipCard = Card(
             title: "Game Tips",
-            subtitle: "Helpful strategies to improve your gameplay",
-            cardColor: .sapphire,
-            tabIcon: "lightbulb.fill", // Lightbulb icon for tips
-            buttons: [
-                CardButton(
-                    title: "Back",
-                    cardColor: .sapphire,
-                    action: { 
-                        AudioManager.shared.playSoundEffect(named: "switch_view_sound")
-                        navigationPath.removeLast() 
-                    }
-                )
-            ]
+            cardColor: .crimson
         ) {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 6) {
                 ForEach(tipsData, id: \.id) { tip in
                     TipRow(tip: tip, popupWidth: horizontalSizeClass == .compact ? UIScreen.main.bounds.width * 0.9 : UIScreen.main.bounds.width * 0.6)
                 }
@@ -40,8 +28,6 @@ struct TipView: View {
             // Background image filling the entire safe area
             Image("Background_Image_2")
                 .resizable()
-                .scaledToFill()
-                .frame(minWidth: 0)
                 .edgesIgnoringSafeArea(.all)
             
             CardView(cards: [tipCard])

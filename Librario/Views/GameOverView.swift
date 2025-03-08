@@ -16,14 +16,14 @@ struct GameOverView: View {
     
     var body: some View {
         let gameOverCard = Card(
-            title: "Game Over",
+            title: "Game Over!",
             subtitle: "Your game has ended. Here's how you did:",
             cardColor: .crimson,
-            tabIcon: "flag.checkered", // Game over icon
+            isCloseDisabled: true,
             buttons: [
                 CardButton(
                     title: "Restart",
-                    cardColor: .emerald,
+                    cardColor: .crimson,
                     action: {
                         // Reset game logic
                         gameManager.startNewGame(userStatistics: userData.userStatistics)
@@ -38,6 +38,8 @@ struct GameOverView: View {
                     action: {
                         if !navigationPath.isEmpty {
                             AudioManager.shared.playSoundEffect(named: "switch_view_sound")
+                            gameManager.startNewGame(userStatistics: userData.userStatistics)
+                            gameManager.gameplayState = .active
                             navigationPath.removeLast() // Simulate exit by removing the last item in the navigation path
                             print("Exit to main menu")
                         }
@@ -53,7 +55,7 @@ struct GameOverView: View {
                         .foregroundStyle(.white)
                     Text("\(userData.userStatistics.highestScore)")
                         .font(.title)
-                        .foregroundColor(.blue)
+                        .foregroundColor(CardColor.crimson.complementaryColor)
                 }
                 
                 // Best Word display
@@ -63,7 +65,7 @@ struct GameOverView: View {
                         .foregroundColor(.white)
                     Text(gameManager.sessionData.highestScoringWord.isEmpty ? "N/A" : gameManager.sessionData.highestScoringWord.uppercased())
                         .font(.title2)
-                        .foregroundColor(.blue)
+                        .foregroundColor(CardColor.crimson.complementaryColor)
                 }
                 
                 // Longest Word display
@@ -73,7 +75,7 @@ struct GameOverView: View {
                         .foregroundColor(.white)
                     Text(gameManager.sessionData.longestWord.isEmpty ? "N/A" : gameManager.sessionData.longestWord.uppercased())
                         .font(.title2)
-                        .foregroundColor(.blue)
+                        .foregroundColor(CardColor.crimson.complementaryColor)
                 }
             }
         }

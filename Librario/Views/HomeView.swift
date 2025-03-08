@@ -14,11 +14,11 @@ struct HomeView: View {
     @State var gameManager: GameManager
     @State private var gameCenterManager = GameCenterManager.shared
     @Bindable var userData: UserData
-
+    
     // Getting screen size to calculate dynamic values
     let screenWidth = UIScreen.main.bounds.width
     let screenHeight = UIScreen.main.bounds.height
-
+    
     var body: some View {
         NavigationStack(path: $pathStore.path) {
             ZStack {
@@ -134,14 +134,10 @@ struct HomeView: View {
                                 // Action is now blank
                                 AudioManager.shared.playSoundEffect(named: "switch_view_sound")
                             }, label: {
-                                ZStack {
-                                    Image(bookImages[1])
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(height: bookHeights[1])
-                                    
-                                    
-                                }
+                                Image(bookImages[1])
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: bookHeights[1])
                             })
                             
                             // How to Play Button
@@ -149,21 +145,17 @@ struct HomeView: View {
                                 AudioManager.shared.playSoundEffect(named: "switch_view_sound")
                                 pathStore.path.append(ViewType.tips)
                             }, label: {
-                                ZStack {
-                                    Image(bookImages[2])
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(height: bookHeights[2])
-                                    
-                                    
-                                }
+                                Image(bookImages[2])
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: bookHeights[2])
                             })
                             
-                            // Stats Button
+                            // Stats Button (now includes leaderboards)
                             Button(action: {
                                 AudioManager.shared.playSoundEffect(named: "switch_view_sound")
                                 gameManager.updateUserStatistics(userData.userStatistics)
-                                pathStore.path.append(ViewType.stats)
+                                pathStore.path.append(ViewType.store)
                             }, label: {
                                 Image(bookImages[3])
                                     .resizable()
@@ -171,23 +163,16 @@ struct HomeView: View {
                                     .frame(height: bookHeights[3])
                             })
                             
-                            // Leaderboard Button (without Parental Gate)
-                            if gameCenterManager.isAuthenticated {
-                                Button(action: {
-                                    AudioManager.shared.playSoundEffect(named: "switch_view_sound")
-                                    presentGameCenterDashboard()
-                                }, label: {
-                                    Image(bookImages[4])
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(height: bookHeights[4]) // Adjust height as needed
-                                })
-                            } else {
-                                Image(bookImages[5])
+                            Button(action: {
+                                AudioManager.shared.playSoundEffect(named: "switch_view_sound")
+                                gameManager.updateUserStatistics(userData.userStatistics)
+                                pathStore.path.append(ViewType.stats)
+                            }, label: {
+                                Image(bookImages[4])
                                     .resizable()
                                     .scaledToFit()
-                                    .frame(height: bookHeights[5]) // Adjust height as needed
-                            }
+                                    .frame(height: bookHeights[4])
+                            })
                         }
                     }
                 }
@@ -206,15 +191,16 @@ struct HomeView: View {
                 case .tips:
                     TipView(navigationPath: $pathStore.path)
                         .navigationBarBackButtonHidden(true)
-                case .leaderboard:
-                    GameCenterView(viewState: .leaderboards)
+                case .store:
+                    TipView(navigationPath: $pathStore.path)
+                        .navigationBarBackButtonHidden(true)
                 }
             }
         }
     }
     
     // MARK: - Dynamic Size Variables
-
+    
     var topSpacing: CGFloat {
         screenHeight * (horizontalSizeClass == .compact ? 0.02 : 0.03)
     }
@@ -258,23 +244,23 @@ struct HomeView: View {
     var bookImages: [String] {
         // Append "_Large" for larger devices
         if horizontalSizeClass == .compact {
-            return ["Classic_Book", "Settings_Book", "HowTo_Book", "Stats_Book", "Leaderboard_Book", "Blank_Book"]
+            return ["Classic_Book", "Arcade_Book", "HowTo_Book", "Store_Book", "Leaderboard_Book"]
         } else {
-            return ["Classic_Book_Large", "Settings_Book_Large", "HowTo_Book_Large", "Stats_Book_Large", "Leaderboard_Book_Large", "Blank_Book_Large"]
+            return ["Classic_Book_Large", "Arcade_Book_Large", "HowTo_Book_Large", "Store_Book_Large", "Leaderboard_Book_Large"]
         }
     }
     
     var bookHeights: [CGFloat] {
         let isDynamicIsland = UIDevice.current.userInterfaceIdiom == .phone && screenHeight > 800 && screenHeight < 950
         let baseHeight: CGFloat
-
+        
         if isDynamicIsland {
             // Reduce book size for dynamic island devices (e.g., iPhone 14 Pro/Pro Max)
             baseHeight = screenHeight * 0.105
         } else {
             baseHeight = screenHeight * 0.12
         }
-
+        
         return [
             baseHeight * (95.0 / 90.0),
             baseHeight * (80.0 / 90.0),
@@ -284,26 +270,9 @@ struct HomeView: View {
             baseHeight * (80.0 / 90.0)
         ]
     }
-
+    
     var bookFontSize: CGFloat {
         screenHeight * 0.03
-    }
-    
-    
-    func presentGameCenterDashboard() {
-        // Get the active window scene
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let rootVC = windowScene.windows.first?.rootViewController {
-
-            // Initialize the Game Center dashboard view controller
-            let gameCenterVC = GKGameCenterViewController(state: .dashboard)
-            gameCenterVC.gameCenterDelegate = rootVC  // No need for a conditional cast
-
-            // Present the Game Center dashboard
-            rootVC.present(gameCenterVC, animated: true, completion: nil)
-        } else {
-            print("Failed to find the root view controller")
-        }
     }
 }
 
@@ -320,5 +289,5 @@ enum ViewType: Hashable, Codable {
     case settings
     case stats
     case tips
-    case leaderboard
+    case store
 }
