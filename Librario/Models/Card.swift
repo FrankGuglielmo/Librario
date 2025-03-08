@@ -202,6 +202,7 @@ struct Card: Identifiable {
     let content: AnyView // Using AnyView to allow any type of content
     let buttons: [CardButton]
     let isAccessible: Bool
+    let isCloseDisabled: Bool // Controls whether the close button is displayed
     
     // Convenience initializer with type-erased content
     init<Content: View>(
@@ -210,6 +211,7 @@ struct Card: Identifiable {
         cardColor: CardColor = .sapphire,
         tabIcon: String = "star.fill", // Default icon
         isAccessible: Bool = true,
+        isCloseDisabled: Bool = false, // Default to showing the close button
         buttons: [CardButton] = [],
         @ViewBuilder content: () -> Content
     ) {
@@ -220,6 +222,7 @@ struct Card: Identifiable {
         self.content = AnyView(content())
         self.buttons = buttons
         self.isAccessible = isAccessible
+        self.isCloseDisabled = isCloseDisabled
     }
     
     // Helper to create accessible buttons for this card

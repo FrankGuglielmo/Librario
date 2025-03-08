@@ -13,7 +13,7 @@ struct CustomSlider: View {
     let borderColor: Color
     let emptyProgressColor: Color
     let fullProgressColor: Color
-
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .leading) {

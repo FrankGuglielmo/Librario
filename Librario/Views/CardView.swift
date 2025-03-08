@@ -73,7 +73,7 @@ extension View {
 struct RoundedCorner: Shape {
     var radius: CGFloat = .infinity
     var corners: UIRectCorner = .allCorners
-
+    
     func path(in rect: CGRect) -> Path {
         let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
         return Path(path.cgPath)
@@ -156,18 +156,20 @@ struct SingleCardView: View {
                     .frame(width: width - 20, height: height - 20)
             }
             
-            // Close button
-            VStack {
-                HStack {
-                    Spacer()
-                    Button(action: onClose) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 32))
-                            .foregroundColor(card.cardColor.textColor)
-                            .padding(16)
+            // Close button (only if not disabled)
+            if !card.isCloseDisabled {
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button(action: onClose) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 32))
+                                .foregroundColor(card.cardColor.textColor)
+                                .padding(16)
+                        }
                     }
+                    Spacer()
                 }
-                Spacer()
             }
             
             // Card content
@@ -231,7 +233,7 @@ struct AdaptiveScrollView<Content: View>: View {
                         GeometryReader { geo in
                             Color.clear
                                 .preference(key: BottomDetectorKey.self,
-                                           value: geo.frame(in: .named("scrollView")).minY)
+                                            value: geo.frame(in: .named("scrollView")).minY)
                                 .frame(height: 1)
                                 .id("bottomAnchor")
                         }
@@ -347,68 +349,63 @@ struct CardView: View {
     var body: some View {
         GeometryReader { geometry in
             let isCompact = horizontalSizeClass == .compact
-            let cardWidth = isCompact ? geometry.size.width * 0.9 : geometry.size.width * 0.6
-            let cardHeight = isCompact ? geometry.size.height * 0.9 : geometry.size.height * 0.8
+            let cardWidth = isCompact ? geometry.size.width * 0.9 : geometry.size.width * 0.7
+            let cardHeight = isCompact ? geometry.size.height * 0.8 : geometry.size.height * 0.8
             
-            ZStack {
-                // Background
-                Color.black.opacity(0.5)
-                    .edgesIgnoringSafeArea(.all)
-                
-                VStack(spacing: 0) {
-                    // Tabs (only if there are multiple cards)
-                    if cards.count > 1 {
-                        // First pass to measure tab sizes
-                        ZStack {
-                            ForEach(0..<cards.count, id: \.self) { index in
-                                CardTabView(
-                                    card: cards[index],
-                                    isSelected: false,
-                                    tabSize: 0,
-                                    action: {}
-                                )
-                                .opacity(0)
-                            }
+            VStack(spacing: 0) {
+                // Tabs (only if there are multiple cards)
+                if cards.count > 1 {
+                    // First pass to measure tab sizes
+                    ZStack {
+                        ForEach(0..<cards.count, id: \.self) { index in
+                            CardTabView(
+                                card: cards[index],
+                                isSelected: false,
+                                tabSize: 0,
+                                action: {}
+                            )
+                            .opacity(0)
                         }
-                        .frame(height: 0)
-                        .onPreferenceChange(TabWidthPreferenceKey.self) { width in
-                            if width > self.tabSize {
-                                self.tabSize = width
-                            }
+                    }
+                    .frame(height: 0)
+                    .onPreferenceChange(TabWidthPreferenceKey.self) { width in
+                        if width > self.tabSize {
+                            self.tabSize = width
                         }
-                        
-                        // Second pass to display tabs with uniform size
-                        HStack(spacing: 24) {
-                            ForEach(0..<cards.count, id: \.self) { index in
-                                CardTabView(
-                                    card: cards[index],
-                                    isSelected: selectedCardIndex == index,
-                                    tabSize: tabSize,
-                                    action: { selectedCardIndex = index }
-                                )
-                            }
-                        }
-                        .padding(.horizontal)
-                        .zIndex(1) // Ensure tabs are above the card
                     }
                     
-                    // Current card content
-                    if !cards.isEmpty {
-                        SingleCardView(
-                            card: cards[selectedCardIndex],
-                            width: cardWidth,
-                            height: cardHeight,
-                            onClose: { dismiss() }
-                        )
-                        .zIndex(0) // Card is below the tabs
+                    // Second pass to display tabs with uniform size
+                    HStack(spacing: 24) {
+                        ForEach(0..<cards.count, id: \.self) { index in
+                            CardTabView(
+                                card: cards[index],
+                                isSelected: selectedCardIndex == index,
+                                tabSize: tabSize,
+                                action: { selectedCardIndex = index }
+                            )
+                        }
                     }
+                    .padding(.horizontal)
+                    .zIndex(1) // Ensure tabs are above the card
                 }
-                .frame(width: cardWidth, height: cards.count > 1 ? cardHeight + 8 : cardHeight)
-                .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                
+                // Current card content
+                if !cards.isEmpty {
+                    SingleCardView(
+                        card: cards[selectedCardIndex],
+                        width: cardWidth,
+                        height: cardHeight,
+                        onClose: { dismiss() }
+                    )
+                    .zIndex(0) // Card is below the tabs
+                }
             }
+            .frame(width: cardWidth, height: cards.count > 1 ? cardHeight + 8 : cardHeight)
+            .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
         }
     }
 }
+
 
 struct CardView_Previews: PreviewProvider {
     static var previews: some View {
@@ -443,6 +440,33 @@ struct CardView_Previews: PreviewProvider {
                 }
             ])
             .previewDisplayName("Light Mode")
+            
+            // Card with disabled close button
+            CardView(cards: [
+                Card(
+                    title: "No Close Button",
+                    subtitle: "This card has the close button disabled",
+                    cardColor: .crimson,
+                    tabIcon: "lock.fill",
+                    isCloseDisabled: true,
+                    buttons: [
+                        CardButton(
+                            title: "OK",
+                            cardColor: .crimson,
+                            action: {}
+                        )
+                    ]
+                ) {
+                    VStack(spacing: 16) {
+                        Text("This card cannot be closed with the X button")
+                            .foregroundColor(.white)
+                        Text("It must be dismissed programmatically")
+                            .foregroundColor(.white)
+                    }
+                    .padding()
+                }
+            ])
+            .previewDisplayName("Disabled Close Button")
             
             // Dark mode preview
             CardView(cards: [

@@ -6,173 +6,214 @@
 //
 
 import SwiftUI
+import GameKit
 
 struct StatsView: View {
     @Bindable var userData: UserData
     @Binding var navigationPath: NavigationPath
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
-
+    @State private var gameCenterManager = GameCenterManager.shared
+    @State private var showGameCenter = false
+    
     var body: some View {
-        GeometryReader { geometry in
-            let isCompact = horizontalSizeClass == .compact
-            let popupWidth = isCompact ? geometry.size.width * 0.9 : geometry.size.width * 0.8
-            let popupHeight = isCompact ? geometry.size.height * 0.75 : geometry.size.height * 0.9
+        // Statistics Card
+        let statsCard = Card(
+            title: "Statistics",
+            cardColor: .crimson,
+            tabIcon: "chart.bar.fill"
+        ) {
+            VStack(alignment: .leading, spacing: 16) {
+                // Longest Word
+                statView(
+                    title: "Longest Word",
+                    value: userData.userStatistics.longestWord.isEmpty ? "N/A" : userData.userStatistics.longestWord.uppercased(),
+                    iconName: "textformat",
+                    iconColor: .blue
+                )
 
-            ZStack {
-                // Background image filling the entire safe area
-                Image("Background_Image_2")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(minWidth: 0)
-                    .edgesIgnoringSafeArea(.all)
+                // Highest Scoring Word
+                statView(
+                    title: "Highest Scoring Word",
+                    value: userData.userStatistics.highestScoringWord.isEmpty ? "N/A" : userData.userStatistics.highestScoringWord.uppercased(),
+                    iconName: "star.fill",
+                    iconColor: .yellow
+                )
 
-                // Stats popup container centered within the GeometryReader
-                ZStack {
-                    // Background Popup Image
-                    Image("StatPopup")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: popupWidth, height: popupHeight)
+                // Total Words Submitted
+                statView(
+                    title: "Total Words Submitted",
+                    value: "\(userData.userStatistics.totalWordsSubmitted)",
+                    iconName: "checkmark.circle.fill",
+                    iconColor: .green
+                )
 
-                    VStack(spacing: popupWidth * 0.04) {
+                // Total Games Played
+                statView(
+                    title: "Total Games Played",
+                    value: "\(userData.userStatistics.totalGamesPlayed)",
+                    iconName: "gamecontroller.fill",
+                    iconColor: .purple
+                )
 
-                        let scrollViewHeight = popupHeight * 0.65 // Adjust as needed
+                // Highest Level
+                statView(
+                    title: "Highest Level",
+                    value: "\(userData.userStatistics.highestLevel)",
+                    iconName: "flag.fill",
+                    iconColor: .red
+                )
 
-                        ScrollView {
-                            VStack(alignment: .leading, spacing: popupWidth * 0.025) {
-                                // Longest Word
-                                statView(
-                                    title: "Longest Word",
-                                    value: userData.userStatistics.longestWord.isEmpty ? "N/A" : userData.userStatistics.longestWord.uppercased(),
-                                    iconName: "textformat",
-                                    iconColor: .blue,
-                                    popupWidth: popupWidth
-                                )
+                // Highest Score
+                statView(
+                    title: "Highest Score",
+                    value: "\(userData.userStatistics.highestScore)",
+                    iconName: "rosette",
+                    iconColor: .orange
+                )
 
-                                // Highest Scoring Word
-                                statView(
-                                    title: "Highest Scoring Word",
-                                    value: userData.userStatistics.highestScoringWord.isEmpty ? "N/A" : userData.userStatistics.highestScoringWord.uppercased(),
-                                    iconName: "star.fill",
-                                    iconColor: .yellow,
-                                    popupWidth: popupWidth
-                                )
+                // Total Time Played
+                statView(
+                    title: "Total Time Played",
+                    value: userData.userStatistics.timePlayed.formattedCompact,
+                    iconName: "clock",
+                    iconColor: .gray
+                )
 
-                                // Total Words Submitted
-                                statView(
-                                    title: "Total Words Submitted",
-                                    value: "\(userData.userStatistics.totalWordsSubmitted)",
-                                    iconName: "checkmark.circle.fill",
-                                    iconColor: .green,
-                                    popupWidth: popupWidth
-                                )
-
-                                // Total Games Played
-                                statView(
-                                    title: "Total Games Played",
-                                    value: "\(userData.userStatistics.totalGamesPlayed)",
-                                    iconName: "gamecontroller.fill",
-                                    iconColor: .purple,
-                                    popupWidth: popupWidth
-                                )
-
-                                // Highest Level
-                                statView(
-                                    title: "Highest Level",
-                                    value: "\(userData.userStatistics.highestLevel)",
-                                    iconName: "flag.fill",
-                                    iconColor: .red,
-                                    popupWidth: popupWidth
-                                )
-
-                                // Highest Score
-                                statView(
-                                    title: "Highest Score",
-                                    value: "\(userData.userStatistics.highestScore)",
-                                    iconName: "rosette",
-                                    iconColor: .orange,
-                                    popupWidth: popupWidth
-                                )
-
-                                // Total Time Played
-                                statView(
-                                    title: "Total Time Played",
-                                    value: userData.userStatistics.timePlayed.formattedCompact,
-                                    iconName: "clock",
-                                    iconColor: .gray,
-                                    popupWidth: popupWidth
-                                )
-
-                                // Lifetime Average Word Length
-                                statView(
-                                    title: "Avg Word Length",
-                                    value: String(format: "%.2f", userData.userStatistics.averageWordLength),
-                                    iconName: "text.alignleft",
-                                    iconColor: .orange,
-                                    popupWidth: popupWidth
-                                )
-                                
-                                // Last Played Date
-                                statView(
-                                    title: "Last Played",
-                                    value: userData.userStatistics.lastPlayedDate?.formatted(date: .abbreviated, time: .omitted) ?? "Today",
-                                    iconName: "calendar",
-                                    iconColor: .blue,
-                                    popupWidth: popupWidth
-                                )
-                                
-                                // Login Streak
-                                statView(
-                                    title: "Login Streak",
-                                    value: "\(userData.userStatistics.loginStreak) day\(userData.userStatistics.loginStreak == 1 ? "" : "s")",
-                                    iconName: "flame.fill",
-                                    iconColor: .orange,
-                                    popupWidth: popupWidth
-                                )
-                            }
-                            .padding(.horizontal, popupWidth * 0.05)
-                            .padding(.vertical, popupHeight * 0.02)
-                        }
-                        .frame(height: scrollViewHeight)
-
-                        // Back button using the BackButton image
+                // Lifetime Average Word Length
+                statView(
+                    title: "Avg Word Length",
+                    value: String(format: "%.2f", userData.userStatistics.averageWordLength),
+                    iconName: "text.alignleft",
+                    iconColor: .orange
+                )
+                
+                // Last Played Date
+                statView(
+                    title: "Last Played",
+                    value: userData.userStatistics.lastPlayedDate?.formatted(date: .abbreviated, time: .omitted) ?? "Today",
+                    iconName: "calendar",
+                    iconColor: .blue
+                )
+                
+                // Login Streak
+                statView(
+                    title: "Login Streak",
+                    value: "\(userData.userStatistics.loginStreak) day\(userData.userStatistics.loginStreak == 1 ? "" : "s")",
+                    iconName: "flame.fill",
+                    iconColor: .orange
+                )
+            }
+            .padding(.horizontal)
+        }
+        
+        // Game Center Leaderboards Card
+        let leaderboardsCard = Card(
+            title: "Game Center Leaderboards",
+            subtitle: "Compare your scores with players worldwide",
+            cardColor: .amethyst,
+            tabIcon: "trophy.fill"
+        ) {
+            VStack(spacing: 20) {
+                if gameCenterManager.isAuthenticated {
+                    // User is authenticated with Game Center
+                    VStack(spacing: 16) {
+                        Image(systemName: "trophy.fill")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 60, height: 60)
+                            .foregroundColor(.yellow)
+                        
+                        Text("View your rankings and compare scores with players around the world!")
+                            .font(.headline)
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.white)
+                        
                         Button(action: {
-                            AudioManager.shared.playSoundEffect(named: "switch_view_sound")
-                            navigationPath.removeLast()
+                            presentGameCenterDashboard()
                         }) {
-                            Image("BackButton")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: popupWidth * 0.5)
+                            Text("Open Game Center")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(CardColor.amethyst.accentColor)
+                                .cornerRadius(10)
                         }
                     }
-                    .frame(width: popupWidth * 0.85, height: popupHeight * 0.85)
+                    .padding()
+                } else {
+                    // User is not authenticated with Game Center
+                    VStack(spacing: 16) {
+                        Image(systemName: "person.crop.circle.badge.exclamationmark")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 60, height: 60)
+                            .foregroundColor(CardColor.amethyst.accentColor)
+                        
+                        Text("Authenticate with Game Center to add your scores to the leaderboard!")
+                            .font(.headline)
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.white)
+                        
+                        Text("Open Game Center in your device settings to sign in and enable leaderboards.")
+                            .font(.subheadline)
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                    .padding()
                 }
-                // Position the stats popup container at the center of the GeometryReader
-                .frame(width: popupWidth, height: popupHeight)
-                .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
             }
+        }
+        
+        ZStack {
+            // Background image filling the entire safe area
+            Image("Background_Image_2")
+                .resizable()
+                .edgesIgnoringSafeArea(.all)
+
+                CardView(cards: [statsCard, leaderboardsCard])
+                
+        }
+        .sheet(isPresented: $showGameCenter) {
+            GameCenterView(viewState: .leaderboards)
         }
     }
 
     // A reusable function to create a stat view with icons
-    private func statView(title: String, value: String, iconName: String, iconColor: Color, popupWidth: CGFloat) -> some View {
-        HStack(alignment: .center, spacing: popupWidth * 0.025) {
+    private func statView(title: String, value: String, iconName: String, iconColor: Color) -> some View {
+        HStack(alignment: .center, spacing: 16) {
             Image(systemName: iconName)
                 .resizable()
                 .foregroundColor(iconColor)
-                .frame(width: popupWidth * 0.12, height: popupWidth * 0.12)
+                .frame(width: 30, height: 30)
 
-            VStack(alignment: .leading, spacing: popupWidth * 0.005) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("\(title):")
-                    .font(.system(size: popupWidth * 0.045, weight: .semibold))
+                    .font(.headline)
                     .foregroundColor(.white)
                 Text(value)
-                    .font(.system(size: popupWidth * 0.050))
+                    .font(.title3)
                     .foregroundColor(.white)
             }
         }
-        .padding(.vertical, popupWidth * 0.015)
+        .padding(.vertical, 8)
+    }
+    
+    // Function to present Game Center dashboard
+    private func presentGameCenterDashboard() {
+        // Get the active window scene
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootVC = windowScene.windows.first?.rootViewController {
+            
+            // Initialize the Game Center dashboard view controller
+            let gameCenterVC = GKGameCenterViewController(state: .leaderboards)
+            gameCenterVC.gameCenterDelegate = rootVC as? GKGameCenterControllerDelegate
+            
+            // Present the Game Center dashboard
+            rootVC.present(gameCenterVC, animated: true, completion: nil)
+        } else {
+            print("Failed to find the root view controller")
+        }
     }
 }
 
