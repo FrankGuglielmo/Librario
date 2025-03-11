@@ -91,6 +91,10 @@
 		7BE0CF282C6F025F00B272FE /* GameGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE0CF272C6F025F00B272FE /* GameGridView.swift */; };
 		7BE0CF2A2C6F0CBC00B272FE /* UserData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE0CF292C6F0CBC00B272FE /* UserData.swift */; };
 		7BE831FA2CAF69E600161EE6 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE831F92CAF69E600161EE6 /* HomeView.swift */; };
+		7BF856632D7F918400E9D06C /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7BF856622D7F918400E9D06C /* StoreKit.framework */; };
+		7BF856662D7F923A00E9D06C /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 7BF856652D7F923A00E9D06C /* Products.storekit */; };
+		7BF856672D7F923A00E9D06C /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 7BF856652D7F923A00E9D06C /* Products.storekit */; };
+		7BF856682D7F923A00E9D06C /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 7BF856652D7F923A00E9D06C /* Products.storekit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -200,6 +204,8 @@
 		7BE0CF272C6F025F00B272FE /* GameGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameGridView.swift; sourceTree = "<group>"; };
 		7BE0CF292C6F0CBC00B272FE /* UserData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserData.swift; sourceTree = "<group>"; };
 		7BE831F92CAF69E600161EE6 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		7BF856622D7F918400E9D06C /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		7BF856652D7F923A00E9D06C /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -207,6 +213,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7BF856632D7F918400E9D06C /* StoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -336,6 +343,7 @@
 		7B9F77D22C69A21E000A3CEE /* Librario */ = {
 			isa = PBXGroup;
 			children = (
+				7BF856642D7F91D500E9D06C /* Configuration */,
 				7B22A4F22CB3D94200CB81FF /* Librario.entitlements */,
 				7B5F88742C9C07C00060545C /* Info.plist */,
 				7B8D1CCE2C8E4FC5001D2231 /* Sounds */,
@@ -411,6 +419,7 @@
 		7BA2BAD62CB07EB400E7B8C9 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				7BF856622D7F918400E9D06C /* StoreKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -432,6 +441,14 @@
 				7B1328452D7B8DB900001638 /* Card.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		7BF856642D7F91D500E9D06C /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				7BF856652D7F923A00E9D06C /* Products.storekit */,
+			);
+			path = Configuration;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -555,6 +572,7 @@
 				7B7822682C9A375F00040F44 /* tile_drop.mp3 in Resources */,
 				7B7822652C9A375F00040F44 /* incorrect_selection.mp3 in Resources */,
 				7B7822872C9A9ACA00040F44 /* valid_words.json in Resources */,
+				7BF856662D7F923A00E9D06C /* Products.storekit in Resources */,
 				7B7822612C9A375F00040F44 /* special_tile_click.mp3 in Resources */,
 				7B78226A2C9A375F00040F44 /* special_tile_valid_word4.mp3 in Resources */,
 				7BB39D3D2C953D7C006FE7F8 /* tile_click2.mp3 in Resources */,
@@ -577,6 +595,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7BF856672D7F923A00E9D06C /* Products.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -584,6 +603,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7BF856682D7F923A00E9D06C /* Products.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

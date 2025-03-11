@@ -6,6 +6,7 @@
 import SwiftUI
 import GameKit
 
+
 struct HomeView: View {
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @Environment(\.verticalSizeClass) var verticalSizeClass
@@ -13,27 +14,13 @@ struct HomeView: View {
     @State private var pathStore = PathStore() // Create PathStore instance
     @Bindable var userData: UserData
     @State private var gameCenterManager = GameCenterManager.shared
-    @State private var inventoryManager: InventoryManager
-    @State private var gameManager: GameManager
+    @Bindable var gameManager: GameManager
+    @State var storeManager: StoreManager
     
-    init() {
-        // Create user data
-        let loadedUserData = UserData.loadUserData()
-        self._userData = Bindable(wrappedValue: loadedUserData)
-        
-        // Create inventory manager
-        let invManager = InventoryManager(
-            inventory: loadedUserData.inventory,
-            saveCallback: { loadedUserData.saveUserData() }
-        )
-        self._inventoryManager = State(initialValue: invManager)
-        
-        // Create game manager with inventory manager
-        let gameMan = GameManager(
-            dictionaryManager: DictionaryManager(),
-            inventoryManager: invManager
-        )
-        self._gameManager = State(initialValue: gameMan)
+    init(userData: UserData, gameManager: GameManager) {
+        self.userData = userData
+        self.gameManager = gameManager
+        self.storeManager = StoreManager(inventoryManager: gameManager.inventoryManager!)
     }
     
     // Getting screen size to calculate dynamic values
@@ -213,7 +200,7 @@ struct HomeView: View {
                     TipView(navigationPath: $pathStore.path)
                         .navigationBarBackButtonHidden(true)
                 case .store:
-                    StoreView(inventoryManager: inventoryManager, navigationPath: $pathStore.path)
+                    StoreView(inventoryManager: gameManager.inventoryManager!, storeManager: storeManager, navigationPath: $pathStore.path)
                         .navigationBarBackButtonHidden(true)
                 }
             }
@@ -300,7 +287,16 @@ struct HomeView: View {
 struct HomePage2_Previews: PreviewProvider {
     static var previews: some View {
         Group {
-            HomeView()
+            let userData = UserData()
+            let inventoryManager = InventoryManager(
+                inventory: userData.inventory,
+                saveCallback: { userData.saveUserData() }
+            )
+            let gameManager = GameManager(
+                dictionaryManager: DictionaryManager(),
+                inventoryManager: inventoryManager
+            )
+            HomeView(userData: userData, gameManager: gameManager)
         }
     }
 }

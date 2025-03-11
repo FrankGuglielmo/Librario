@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 import Observation
 import GameKit
+import StoreKit
 
 @main
 struct MyApp: App {
@@ -22,7 +23,21 @@ struct MyApp: App {
     init() {
         let dictionaryManager = DictionaryManager()
         let userData = UserData.loadUserData()
-        let gameManager = GameManager(dictionaryManager: dictionaryManager)
+        
+        // Create inventory manager
+        let inventoryManager = InventoryManager(
+            inventory: userData.inventory,
+            saveCallback: { userData.saveUserData() }
+        )
+        
+        // Initialize IAP Manager
+        
+        // Create game manager with inventory manager
+        let gameManager = GameManager(
+            dictionaryManager: dictionaryManager,
+            inventoryManager: inventoryManager
+        )
+        
         self.dictionaryManager = dictionaryManager
         self.gameManager = gameManager
         self.userData = userData
@@ -33,7 +48,7 @@ struct MyApp: App {
 
     var body: some Scene {
         WindowGroup {
-            HomeView()
+            HomeView(userData: userData, gameManager: gameManager)
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             switch newPhase {

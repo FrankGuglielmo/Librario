@@ -1,0 +1,182 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "E810F493",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "FF1F22AD",
+      "localizations" : [
+        {
+          "description" : "A pack containing 500 coins.",
+          "displayName" : "500 Coins",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "COINS_500_UNITS",
+      "referenceName" : "Coins (500)",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "E7F95D8D",
+      "localizations" : [
+        {
+          "description" : "A pack containing 20,000 coins.",
+          "displayName" : "20,000 Coins",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "COINS_2000_UNITS",
+      "referenceName" : "Coins (2000)",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : false,
+      "internalID" : "3DDCE89F",
+      "localizations" : [
+        {
+          "description" : "A pack containing 50,000 coins.",
+          "displayName" : "50,000 Coins",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "COINS_5000_UNITS",
+      "referenceName" : "Coins (5000)",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "31DB6B51",
+      "localizations" : [
+        {
+          "description" : "A pack containing 5 diamonds.",
+          "displayName" : "5 Diamonds",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "DIAMONDS_5_UNITS",
+      "referenceName" : "Diamonds (5)",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "9870A852",
+      "localizations" : [
+        {
+          "description" : "A pack containing 20 diamonds.",
+          "displayName" : "20 Diamonds",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "DIAMONDS_20_UNITS",
+      "referenceName" : "Diamonds (20)",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : false,
+      "internalID" : "39E45AC6",
+      "localizations" : [
+        {
+          "description" : "A pack containing 50 diamonds.",
+          "displayName" : "50 Diamonds",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "DIAMONDS_50_UNITS",
+      "referenceName" : "Diamonds (50)",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "2.99",
+      "familyShareable" : false,
+      "internalID" : "E9C36F54",
+      "localizations" : [
+        {
+          "description" : "A pack of diamonds, coins, and powerups.",
+          "displayName" : "Welcome Pack",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "WELCOME_PACK",
+      "referenceName" : "Welcome Pack",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Load Products"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Purchase"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Verification"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Store Sync"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Subscription Status"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Transaction"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Manage Subscriptions Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Refund Request Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Offer Code Redeem Sheet"
+      }
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

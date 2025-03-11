@@ -11,7 +11,7 @@ import Observation
 
 @Observable class GameManager: Codable {
     // Private properties for inventory management
-    private var inventoryManager: InventoryManager?
+    var inventoryManager: InventoryManager?
     
     // Game state enum to track the current state of gameplay
     enum GameplayState {
@@ -67,6 +67,18 @@ import Observation
 
     enum CodingKeys: String, CodingKey {
         case gameState, levelData, sessionData, levelSystem, tileManager
+    }
+    
+    // MARK: - Inventory Methods
+    
+    func getCoins() -> Int {
+        guard let inventoryManager = inventoryManager else { return 0 }
+        return inventoryManager.getCoins()
+    }
+    
+    func getDiamonds() -> Int {
+        guard let inventoryManager = inventoryManager else { return 0 }
+        return inventoryManager.getDiamonds()
     }
     
     // MARK: - Powerup Methods
@@ -192,6 +204,7 @@ import Observation
 
     /**
      * Submits the currently selected word, updates scores, and processes word validation and tile submission.
+     * Also updates the user's inventory of coins and diamonds based on special tiles used.
      */
     func submitWord() {
         if self.gameOver || !tileManager.validateWord() {
@@ -212,7 +225,48 @@ import Observation
         let points = tileManager.getScore()
         gameState.score += points
         levelData.trackWord(word, score: points)
+        
+        // Update user's inventory based on special tiles
+        updateInventoryFromSubmittedWord(word: word)
+        
         tileManager.processWordSubmission(word: word, points: points, level: gameState.level)
+    }
+    
+    /**
+     * Updates the user's inventory based on the special tiles used in the submitted word.
+     * - Diamond tiles: Add 1 diamond per diamond tile used
+     * - Gold tiles: Add coins equal to the word length multiplied by the number of gold tiles used
+     *
+     * @param word The submitted word
+     */
+    private func updateInventoryFromSubmittedWord(word: String) {
+        guard let inventoryManager = inventoryManager else { return }
+        
+        // Count diamond and gold tiles
+        var diamondTileCount = 0
+        var goldTileCount = 0
+        
+        for tile in tileManager.selectedTiles {
+            if tile.type == .diamond {
+                diamondTileCount += 1
+            } else if tile.type == .gold {
+                goldTileCount += 1
+            }
+        }
+        
+        // Add diamonds (1 per diamond tile)
+        if diamondTileCount > 0 {
+            let diamondsToAdd = diamondTileCount
+            inventoryManager.addDiamonds(diamondsToAdd)
+            print("Added \(diamondsToAdd) diamonds from diamond tiles")
+        }
+        
+        // Add coins (word length × number of gold tiles)
+        if goldTileCount > 0 {
+            let coinsToAdd = word.count * goldTileCount
+            inventoryManager.addCoins(coinsToAdd)
+            print("Added \(coinsToAdd) coins from gold tiles (word length \(word.count) × \(goldTileCount) gold tiles)")
+        }
     }
 
 
