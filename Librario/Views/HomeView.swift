@@ -6,14 +6,22 @@
 import SwiftUI
 import GameKit
 
+
 struct HomeView: View {
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @Environment(\.verticalSizeClass) var verticalSizeClass
     @State private var showActionSheet = false
     @State private var pathStore = PathStore() // Create PathStore instance
-    @State var gameManager: GameManager
-    @State private var gameCenterManager = GameCenterManager.shared
     @Bindable var userData: UserData
+    @State private var gameCenterManager = GameCenterManager.shared
+    @Bindable var gameManager: GameManager
+    @State var storeManager: StoreManager
+    
+    init(userData: UserData, gameManager: GameManager) {
+        self.userData = userData
+        self.gameManager = gameManager
+        self.storeManager = StoreManager(inventoryManager: gameManager.inventoryManager!)
+    }
     
     // Getting screen size to calculate dynamic values
     let screenWidth = UIScreen.main.bounds.width
@@ -192,7 +200,7 @@ struct HomeView: View {
                     TipView(navigationPath: $pathStore.path)
                         .navigationBarBackButtonHidden(true)
                 case .store:
-                    TipView(navigationPath: $pathStore.path)
+                    StoreView(inventoryManager: gameManager.inventoryManager!, storeManager: storeManager, navigationPath: $pathStore.path)
                         .navigationBarBackButtonHidden(true)
                 }
             }
@@ -279,7 +287,16 @@ struct HomeView: View {
 struct HomePage2_Previews: PreviewProvider {
     static var previews: some View {
         Group {
-            HomeView(gameManager: GameManager(dictionaryManager: DictionaryManager()), userData: UserData())
+            let userData = UserData()
+            let inventoryManager = InventoryManager(
+                inventory: userData.inventory,
+                saveCallback: { userData.saveUserData() }
+            )
+            let gameManager = GameManager(
+                dictionaryManager: DictionaryManager(),
+                inventoryManager: inventoryManager
+            )
+            HomeView(userData: userData, gameManager: gameManager)
         }
     }
 }

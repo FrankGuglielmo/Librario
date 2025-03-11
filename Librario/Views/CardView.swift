@@ -133,12 +133,13 @@ struct SingleCardView: View {
     // Calculate available content height based on card dimensions
     private var contentAreaHeight: CGFloat {
         // Allocate space for title, subtitle, buttons and padding
-        let titleHeight: CGFloat = width * 0.09 + 40 // Font size + padding
+        let titleHeight: CGFloat = (width * 0.09) + 40 // Font size + padding
         let subtitleHeight: CGFloat = card.subtitle != nil ? (width * 0.05 + 20) : 0
         let buttonAreaHeight: CGFloat = CGFloat(card.buttons.count) * 60 + 40 // Approx button height + spacing + padding
         
         // Allocate remaining space to content area (with some margin)
-        return height * 0.9 - titleHeight - subtitleHeight - buttonAreaHeight
+        // Use max to ensure we never return a negative value
+        return max(10, height * 0.9 - titleHeight - subtitleHeight - buttonAreaHeight)
     }
     
     var body: some View {
@@ -148,12 +149,12 @@ struct SingleCardView: View {
                 // Outer rectangle (border)
                 RoundedRectangle(cornerRadius: 20)
                     .fill(card.cardColor.borderColor)
-                    .frame(width: width, height: height)
+                    .frame(width: max(20, width), height: max(20, height))
                 
                 // Inner rectangle (main color)
                 RoundedRectangle(cornerRadius: 20)
                     .fill(card.cardColor.primaryColor)
-                    .frame(width: width - 20, height: height - 20)
+                    .frame(width: max(10, width - 20), height: max(10, height - 20))
             }
             
             // Close button (only if not disabled)
@@ -192,7 +193,7 @@ struct SingleCardView: View {
                 // Content area with adaptive scrolling
                 AdaptiveScrollView {
                     card.content
-                        .frame(width: width * 0.85)
+                        .frame(width: max(10, width * 0.85))
                 }
                 .frame(maxHeight: contentAreaHeight)
                 
@@ -204,9 +205,9 @@ struct SingleCardView: View {
                 }
                 .padding(.bottom, 32)
             }
-            .frame(width: width * 0.9, height: height * 0.9)
+            .frame(width: max(10, width * 0.9), height: max(10, height * 0.9))
         }
-        .frame(width: width, height: height)
+        .frame(width: max(20, width), height: max(20, height))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(card.title) card")
     }

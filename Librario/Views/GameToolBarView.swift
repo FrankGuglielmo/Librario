@@ -38,12 +38,28 @@ struct GameToolBarView: View {
         
         return false
     }
+    
+    // Format numbers to ensure they're no more than 5 characters
+    private func formatCurrency(_ value: Int) -> String {
+        if value < 10000 {
+            return "\(value)"
+        } else if value < 1000000 {
+            let thousands = Double(value) / 1000.0
+            return String(format: "%.1fK", thousands).prefix(5).description
+        } else if value < 1000000000 {
+            let millions = Double(value) / 1000000.0
+            return String(format: "%.1fM", millions).prefix(5).description
+        } else {
+            let billions = Double(value) / 1000000000.0
+            return String(format: "%.1fB", billions).prefix(5).description
+        }
+    }
 
     var body: some View {
         // Use the compact layout for smaller devices or biometric devices like iPhones/iPads with Touch ID or Face ID
         if horizontalSizeClass == .compact && !isDeviceiPhoneSE() {
             // Layout for smaller devices (compact size class without Touch ID/Face ID)
-            VStack(spacing: 10) {
+            VStack(spacing: 8) {
                 // Progress bar above the buttons
                 progressBarView()
                     .cornerRadius(10)
@@ -52,17 +68,22 @@ struct GameToolBarView: View {
                     // Back Button
                     backButton()
                     
-                    Spacer()
                     
-                    // Swap Button
-                    swapButton()
+                    HStack(spacing: 0) {
+                        // Swap Button
+                        swapButton()
+                        
+                        // Wildcard Button
+                        wildcardButton()
+                        
+                        // Extra Life Button
+                        extraLifeButton()
+                    }
                     
-                    // Extra Life Button
-                    extraLifeButton()
                     
-                    // Wildcard Button
-                    wildcardButton()
-
+                    // Currency display
+                    currencyDisplay()
+                    
                     Spacer()
                     
                     // Level display
@@ -75,7 +96,7 @@ struct GameToolBarView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity, maxHeight: 140, alignment: .top)
+            .frame(maxWidth: .infinity, maxHeight: 125, alignment: .top)
         } else {
             // Layout for larger devices (regular size class or biometric devices)
             HStack(spacing: 0) {
@@ -84,28 +105,65 @@ struct GameToolBarView: View {
 
                 // Progress Bar (takes up as much space as possible)
                 progressBarView()
-                    .frame(maxWidth: .infinity, maxHeight: 70)
+                    .frame(maxWidth: .infinity, maxHeight: 60)
                     .layoutPriority(2)
                 
-                // Swap Button
-                swapButton()
                 
-                // Extra Life Button
-                extraLifeButton()
-                
-                // Wildcard Button
-                wildcardButton()
+                HStack(spacing: 0) {
+                    // Swap Button
+                    swapButton()
+                    
+                    // Wildcard Button
+                    wildcardButton()
+                    
+                    // Extra Life Button
+                    extraLifeButton()
 
+                    // Currency display
+                    currencyDisplay()
+                        .padding(.trailing, 30)
+                }
+    
                 // Level display
                 levelView()
             }
             .background(
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.clear)
+                    .fill(Color.cream)
             )
             .clipShape(RoundedRectangle(cornerRadius: 10))
-            .frame(maxWidth: .infinity, maxHeight: 70, alignment: .top)
+            .frame(maxWidth: .infinity, maxHeight: 60, alignment: .top)
         }
+    }
+
+    // Combined currency display (coins and diamonds)
+    private func currencyDisplay() -> some View {
+        VStack(spacing: 2) {
+            // Coins
+            HStack(spacing: 4) {
+                Image(systemName: "dollarsign.circle.fill")
+                    .font(.callout)
+                    .foregroundStyle(Color.yellow)
+                Text(formatCurrency(gameManager.getCoins()))
+                    .font(.callout)
+                    .foregroundStyle(Color.darkGrey)
+                    .fontWeight(.bold)
+            }
+            
+            // Diamonds
+            HStack(spacing: 4) {
+                Image("diamond_icon")
+                    .resizable()
+                    .frame(width: 20, height: 20)
+                    
+                Text(formatCurrency(gameManager.getDiamonds()))
+                    .font(.callout)
+                    .foregroundStyle(Color.darkGrey)
+                    .fontWeight(.bold)
+            }
+        }
+        .frame(width: 60, height: 60) // Reduced size
+        .background(Color.cream)
     }
 
     // Progress bar view
@@ -115,29 +173,29 @@ struct GameToolBarView: View {
                 // Background (faded) progress bar
                 Image("faded_progress_bar")
                     .resizable()
-                    .frame(height: 70)
+                    .frame(height: 60)
                     .frame(width: geometry.size.width)
 
                 // Foreground (progress) bar, showing only part of the image based on progress
                 Image("progress_bar")
                     .resizable()
-                    .frame(height: 70)
+                    .frame(height: 60)
                     .frame(width: geometry.size.width)
                     .clipShape(
                         Rectangle()
-                            .size(width: progress * geometry.size.width, height: 70)
+                            .size(width: progress * geometry.size.width, height: 60)
                     )
 
                 // Score text in the center of the progress bar
                 Text("\(gameManager.gameState.score)")
-                    .font(.largeTitle)
+                    .font(.title)
                     .bold()
                     .foregroundColor(.yellow)
                     .shadow(radius: 5)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
         }
-        .frame(height: 70)
+        .frame(height: 60)
     }
 
     // Back button
@@ -148,15 +206,15 @@ struct GameToolBarView: View {
         }) {
             VStack {
                 Image(systemName: "arrowshape.left")
-                    .font(.title)
+                    .font(.title3)
                     .foregroundStyle(Color.cream)
                 Text("Back")
-                    .font(.title3)
+                    .font(.footnote)
                     .foregroundStyle(Color.cream)
                     .fontWeight(.bold)
             }
         }
-        .frame(width: 70, height: 70) // Fixed size button
+        .frame(width: 60, height: 60) // Reduced size button
         .background(Color.forestGreen)
         .contentShape(Rectangle()) // Ensure entire button area is tappable
     }
@@ -164,19 +222,39 @@ struct GameToolBarView: View {
     // Swap button
     private func swapButton() -> some View {
         Button(action: {
-            
+            if gameManager.useSwapPowerup() {
+                // Swap functionality would be implemented here
+                print("Swap powerup used")
+            } else {
+                // Not enough powerups
+                AudioManager.shared.playSoundEffect(named: "incorrect_selection")
+            }
         }) {
-            VStack {
-                Image(systemName: "arrow.2.squarepath")
-                    .font(.title)
-                    .foregroundStyle(Color.darkGrey)
-                Text("Swap")
-                    .font(.title3)
-                    .foregroundStyle(Color.darkGrey)
-                    .fontWeight(.bold)
+            ZStack {
+                VStack {
+                    Image(systemName: "arrow.2.squarepath")
+                        .font(.title3)
+                        .foregroundStyle(Color.darkGrey)
+                    Text("Swap")
+                        .font(.footnote)
+                        .foregroundStyle(Color.darkGrey)
+                        .fontWeight(.bold)
+                }
+                
+                // Count indicator
+                if gameManager.getPowerupCount(.swap) > 0 {
+                    Text("\(gameManager.getPowerupCount(.swap))")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .frame(width: 18, height: 18)
+                        .background(Color.red)
+                        .clipShape(Circle())
+                        .offset(x: 18, y: -18)
+                }
             }
         }
-        .frame(width: 70, height: 70) // Fixed size button
+        .frame(width: 60, height: 60) // Reduced size button
         .background(Color.cream)
         .contentShape(Rectangle()) // Ensure entire button area is tappable
     }
@@ -184,19 +262,39 @@ struct GameToolBarView: View {
     // Extra Life button
     private func extraLifeButton() -> some View {
         Button(action: {
-            // Placeholder for extra life action
+            if gameManager.useExtraLifePowerup() {
+                // Extra life functionality would be implemented here
+                print("Extra life powerup used")
+            } else {
+                // Not enough powerups
+                AudioManager.shared.playSoundEffect(named: "incorrect_selection")
+            }
         }) {
-            VStack {
-                Image(systemName: "heart.fill")
-                    .font(.title)
-                    .foregroundStyle(Color.darkGrey)
-                Text("Life")
-                    .font(.title3)
-                    .foregroundStyle(Color.darkGrey)
-                    .fontWeight(.bold)
+            ZStack {
+                VStack {
+                    Image(systemName: "heart.fill")
+                        .font(.title3)
+                        .foregroundStyle(Color.darkGrey)
+                    Text("Life")
+                        .font(.footnote)
+                        .foregroundStyle(Color.darkGrey)
+                        .fontWeight(.bold)
+                }
+                
+                // Count indicator
+                if gameManager.getPowerupCount(.extraLife) > 0 {
+                    Text("\(gameManager.getPowerupCount(.extraLife))")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .frame(width: 18, height: 18)
+                        .background(Color.red)
+                        .clipShape(Circle())
+                        .offset(x: 18, y: -18)
+                }
             }
         }
-        .frame(width: 70, height: 70) // Fixed size button
+        .frame(width: 60, height: 60) // Reduced size button
         .background(Color.cream)
         .contentShape(Rectangle()) // Ensure entire button area is tappable
     }
@@ -204,19 +302,39 @@ struct GameToolBarView: View {
     // Wildcard button
     private func wildcardButton() -> some View {
         Button(action: {
-            // Placeholder for wildcard action
+            if gameManager.useWildcardPowerup() {
+                // Wildcard functionality would be implemented here
+                print("Wildcard powerup used")
+            } else {
+                // Not enough powerups
+                AudioManager.shared.playSoundEffect(named: "incorrect_selection")
+            }
         }) {
-            VStack {
-                Image(systemName: "sparkles")
-                    .font(.title)
-                    .foregroundStyle(Color.darkGrey)
-                Text("Wild")
-                    .font(.title3)
-                    .foregroundStyle(Color.darkGrey)
-                    .fontWeight(.bold)
+            ZStack {
+                VStack {
+                    Image(systemName: "sparkles")
+                        .font(.title3)
+                        .foregroundStyle(Color.darkGrey)
+                    Text("Wild")
+                        .font(.footnote)
+                        .foregroundStyle(Color.darkGrey)
+                        .fontWeight(.bold)
+                }
+                
+                // Count indicator
+                if gameManager.getPowerupCount(.wildcard) > 0 {
+                    Text("\(gameManager.getPowerupCount(.wildcard))")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .frame(width: 18, height: 18)
+                        .background(Color.red)
+                        .clipShape(Circle())
+                        .offset(x: 18, y: -18)
+                }
             }
         }
-        .frame(width: 70, height: 70) // Fixed size button
+        .frame(width: 60, height: 60) // Reduced size button
         .background(Color.cream)
         .contentShape(Rectangle()) // Ensure entire button area is tappable
     }
@@ -225,7 +343,7 @@ struct GameToolBarView: View {
     private func levelView() -> some View {
         VStack(alignment: .center) {
             Text("LVL")
-                .font(.title3)
+                .font(.footnote)
                 .fontWeight(.bold)
                 .foregroundStyle(Color.cream)
             Text("\(gameManager.gameState.level)")
@@ -233,7 +351,7 @@ struct GameToolBarView: View {
                 .fontWeight(.bold)
                 .foregroundStyle(Color.cream)
         }
-        .frame(width: 70, height: 70) // Fixed size for the level indicator
+        .frame(width: 60, height: 60) // Reduced size
         .background(Color.forestGreen)
     }
 }
