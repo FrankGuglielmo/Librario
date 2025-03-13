@@ -1,4 +1,5 @@
 {
+  "originHash" : "e32f00434fd04b709c3bb56833df593981979c4e31200ce0a7c02415416afe50",
   "pins" : [
     {
       "identity" : "bluesocket",
@@ -17,7 +18,16 @@
         "revision" : "bdb603ac7aa662f522a4e4671908497e2dd152c0",
         "version" : "2.1.200"
       }
+    },
+    {
+      "identity" : "purchases-ios-spm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/RevenueCat/purchases-ios-spm.git",
+      "state" : {
+        "revision" : "a037a1fa19548b6ebc778b8d425df914d16b96e3",
+        "version" : "5.19.0"
+      }
     }
   ],
-  "version" : 2
+  "version" : 3
 }

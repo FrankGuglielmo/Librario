@@ -17,10 +17,10 @@ struct HomeView: View {
     @Bindable var gameManager: GameManager
     @State var storeManager: StoreManager
     
-    init(userData: UserData, gameManager: GameManager) {
+    init(userData: UserData, gameManager: GameManager, storeManager: StoreManager) {
         self.userData = userData
         self.gameManager = gameManager
-        self.storeManager = StoreManager(inventoryManager: gameManager.inventoryManager!)
+        self.storeManager = storeManager
     }
     
     // Getting screen size to calculate dynamic values
@@ -200,7 +200,7 @@ struct HomeView: View {
                     TipView(navigationPath: $pathStore.path)
                         .navigationBarBackButtonHidden(true)
                 case .store:
-                    StoreView(inventoryManager: gameManager.inventoryManager!, storeManager: storeManager, navigationPath: $pathStore.path)
+                    StoreView(userData: userData, storeManager: storeManager, navigationPath: $pathStore.path)
                         .navigationBarBackButtonHidden(true)
                 }
             }
@@ -288,15 +288,12 @@ struct HomePage2_Previews: PreviewProvider {
     static var previews: some View {
         Group {
             let userData = UserData()
-            let inventoryManager = InventoryManager(
-                inventory: userData.inventory,
-                saveCallback: { userData.saveUserData() }
-            )
+            let storeManager = StoreManager(userData: userData)
             let gameManager = GameManager(
                 dictionaryManager: DictionaryManager(),
-                inventoryManager: inventoryManager
+                userData: userData
             )
-            HomeView(userData: userData, gameManager: gameManager)
+            HomeView(userData: userData, gameManager: gameManager, storeManager: storeManager)
         }
     }
 }

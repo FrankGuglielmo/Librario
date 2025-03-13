@@ -11,7 +11,8 @@ import Observation
 
 @Observable class GameManager: Codable {
     // Private properties for inventory management
-    var inventoryManager: InventoryManager?
+    private var userData: UserData?
+    private var userInventory: Inventory? // Reference to userData?.inventory for readability
     
     // Game state enum to track the current state of gameplay
     enum GameplayState {
@@ -72,45 +73,54 @@ import Observation
     // MARK: - Inventory Methods
     
     func getCoins() -> Int {
-        guard let inventoryManager = inventoryManager else { return 0 }
-        return inventoryManager.getCoins()
+        guard let userInventory = userInventory else { return 0 }
+        return userInventory.coins
     }
     
     func getDiamonds() -> Int {
-        guard let inventoryManager = inventoryManager else { return 0 }
-        return inventoryManager.getDiamonds()
+        guard let userInventory = userInventory else { return 0 }
+        return userInventory.diamonds
     }
     
     // MARK: - Powerup Methods
     
     func useSwapPowerup() -> Bool {
-        guard let inventoryManager = inventoryManager else { return false }
-        return inventoryManager.usePowerup(.swap)
+        return usePowerup(.swap)
     }
     
     func useExtraLifePowerup() -> Bool {
-        guard let inventoryManager = inventoryManager else { return false }
-        return inventoryManager.usePowerup(.extraLife)
+        return usePowerup(.extraLife)
     }
     
     func useWildcardPowerup() -> Bool {
-        guard let inventoryManager = inventoryManager else { return false }
-        return inventoryManager.usePowerup(.wildcard)
+        return usePowerup(.wildcard)
+    }
+    
+    func usePowerup(_ type: PowerupType) -> Bool {
+        guard let userInventory = userInventory, let userData = userData else { return false }
+        guard let count = userInventory.powerups[type], count > 0 else { return false }
+        
+        userInventory.powerups[type]! -= 1
+        userData.saveUserData()
+        return true
     }
     
     func getPowerupCount(_ type: PowerupType) -> Int {
-        guard let inventoryManager = inventoryManager else { return 0 }
-        return inventoryManager.getPowerupCount(type)
+        guard let userInventory = userInventory else { return 0 }
+        return userInventory.powerups[type] ?? 0
     }
 
     /**
-     * Initializes a new `GameManager` with the provided `DictionaryManager` and optional `InventoryManager`.
+     * Initializes a new `GameManager` with the provided `DictionaryManager` and optional `UserData`.
      *
      * @param dictionaryManager The `DictionaryManager` instance used to manage dictionary data.
-     * @param inventoryManager The optional `InventoryManager` instance for managing inventory.
+     * @param userData The optional `UserData` instance for accessing user's inventory and statistics.
      */
-    init(dictionaryManager: DictionaryManager, inventoryManager: InventoryManager? = nil) {
-        self.inventoryManager = inventoryManager
+    init(dictionaryManager: DictionaryManager, userData: UserData? = nil) {
+        self.userData = userData
+        if let userData = userData {
+            self.userInventory = userData.inventory
+        }
         self.dictionaryManager = dictionaryManager
         
         // Load GameState from disk if available, otherwise initialize a new GameState
@@ -240,7 +250,7 @@ import Observation
      * @param word The submitted word
      */
     private func updateInventoryFromSubmittedWord(word: String) {
-        guard let inventoryManager = inventoryManager else { return }
+        guard let userInventory = userInventory, let userData = userData else { return }
         
         // Count diamond and gold tiles
         var diamondTileCount = 0
@@ -257,14 +267,16 @@ import Observation
         // Add diamonds (1 per diamond tile)
         if diamondTileCount > 0 {
             let diamondsToAdd = diamondTileCount
-            inventoryManager.addDiamonds(diamondsToAdd)
+            userInventory.diamonds += diamondsToAdd
+            userData.saveUserData()
             print("Added \(diamondsToAdd) diamonds from diamond tiles")
         }
         
         // Add coins (word length × number of gold tiles)
         if goldTileCount > 0 {
             let coinsToAdd = word.count * goldTileCount
-            inventoryManager.addCoins(coinsToAdd)
+            userInventory.coins += coinsToAdd
+            userData.saveUserData()
             print("Added \(coinsToAdd) coins from gold tiles (word length \(word.count) × \(goldTileCount) gold tiles)")
         }
     }
