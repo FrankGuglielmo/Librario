@@ -16,31 +16,32 @@ struct MyApp: App {
     let dictionaryManager: DictionaryManager
     let userData: UserData
     let gameManager: GameManager
+    let storeManager: StoreManager
     let gameCenterManager = GameCenterManager.shared
     @Environment(\.scenePhase) var scenePhase
+    
+    // Task to store the Transaction.updates listener
+    @State private var transactionListenerTask: Task<Void, Error>?
 
 
     init() {
+        // Initialize StoreKit transaction listener at app launch
         let dictionaryManager = DictionaryManager()
         let userData = UserData.loadUserData()
         
-        // Create inventory manager
-        let inventoryManager = InventoryManager(
-            inventory: userData.inventory,
-            saveCallback: { userData.saveUserData() }
-        )
+        // Create store manager with direct access to userData
+        let storeManager = StoreManager(userData: userData)
         
-        // Initialize IAP Manager
-        
-        // Create game manager with inventory manager
+        // Create game manager with direct access to userData
         let gameManager = GameManager(
             dictionaryManager: dictionaryManager,
-            inventoryManager: inventoryManager
+            userData: userData
         )
         
         self.dictionaryManager = dictionaryManager
         self.gameManager = gameManager
         self.userData = userData
+        self.storeManager = storeManager
         AudioManager.shared.playMusic(named: "gameLoop1", loop: true)
         
         gameCenterManager.userStatistics = userData.userStatistics
@@ -48,7 +49,25 @@ struct MyApp: App {
 
     var body: some Scene {
         WindowGroup {
-            HomeView(userData: userData, gameManager: gameManager)
+            HomeView(userData: userData, gameManager: gameManager, storeManager: storeManager)
+                .onAppear {
+                    // Set up a transaction listener when the app appears
+                    // This is a backup in case the listener in StoreManager fails
+                    transactionListenerTask = Task {
+                        // Iterate through any transactions that don't come from a direct call to `purchase()`
+                        for await result in Transaction.updates {
+                            // Handle transaction here if needed
+                            if case .verified(let transaction) = result {
+                                await transaction.finish()
+                            }
+                        }
+                    }
+                }
+                .onDisappear {
+                    // Cancel the transaction listener when the app disappears
+                    transactionListenerTask?.cancel()
+                    transactionListenerTask = nil
+                }
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             switch newPhase {

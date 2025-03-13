@@ -7,13 +7,20 @@
 
 import Foundation
 import Observation
+import StoreKit
 
 @Observable class StoreManager {
-    private var inventoryManager: InventoryManager
+    private var userData: UserData
+    private var userInventory: Inventory // Reference to userData.inventory for readability
+    
     // Store items
     var dailyDeals: [StoreItem] = []
     var generalItems: [StoreItem] = []
     var specialOffers: [StoreItem] = []
+    
+    // StoreKit products
+    var storeProducts: [Product] = []
+    var productsLoaded = false
     
     // Promo codes dictionary (code, isUsed)
     var promoCodes: [String: Bool] = [
@@ -25,9 +32,18 @@ import Observation
     ]
     
     // Initializer
-    init(inventoryManager: InventoryManager) {
-        self.inventoryManager = inventoryManager
+    init(userData: UserData) {
+        self.userData = userData
+        self.userInventory = userData.inventory
         setupStoreItems()
+        
+        // Load StoreKit products
+        Task {
+            await fetchStoreKitProducts()
+        }
+        
+        // Start listening for StoreKit transactions
+        listenForTransactions()
     }
     
     // Setup store items
@@ -39,21 +55,24 @@ import Observation
                 description: "Get a swap powerup for free by watching a video",
                 iconName: PowerupType.swap.iconName,
                 price: .video,
-                itemType: .powerup(.swap)
+                itemType: .powerup(.swap),
+                accentColor: .orange
             ),
             StoreItem(
                 name: "Discounted Coins",
                 description: "Get 100 coins at a discounted price",
                 iconName: "dollarsign.circle.fill",
                 price: .diamonds(1),
-                itemType: .currency(.coins, amount: 100)
+                itemType: .currency(.coins, amount: 100),
+                accentColor: .blue
             ),
             StoreItem(
                 name: "Flash Sale - Extra Life",
                 description: "Get an extra life at 30% off today only!",
                 iconName: PowerupType.extraLife.iconName,
                 price: .coins(150),
-                itemType: .powerup(.extraLife)
+                itemType: .powerup(.extraLife),
+                accentColor: .red
             )
         ]
         
@@ -67,21 +86,24 @@ import Observation
                 description: "1x Swap tiles on the board",
                 iconName: PowerupType.swap.iconName,
                 price: .coins(100), // As requested, 100 coins
-                itemType: .powerup(.swap)
+                itemType: .powerup(.swap),
+                accentColor: .orange
             ),
             StoreItem(
                 name: "Wildcard Pack",
                 description: "1x Use any letter you want",
                 iconName: PowerupType.wildcard.iconName,
                 price: .coins(150), // As requested, 150 coins
-                itemType: .powerup(.wildcard)
+                itemType: .powerup(.wildcard),
+                accentColor: .purple
             ),
             StoreItem(
                 name: "Extra Life Pack",
                 description: "1x Continue playing after game over",
                 iconName: PowerupType.extraLife.iconName,
                 price: .coins(300), // As requested, 300 coins
-                itemType: .powerup(.extraLife)
+                itemType: .powerup(.extraLife),
+                accentColor: .red
             ),
             // 10 packs
             StoreItem(
@@ -89,21 +111,24 @@ import Observation
                 description: "Get 10 swap powerups",
                 iconName: PowerupType.swap.iconName,
                 price: .coins(900), // 10% discount on buying 10
-                itemType: .bundle([.swap], amounts: [10])
+                itemType: .bundle([.swap], amounts: [10]),
+                accentColor: .orange
             ),
             StoreItem(
                 name: "10 Wildcards",
                 description: "Get 10 wildcard powerups",
                 iconName: PowerupType.wildcard.iconName,
                 price: .coins(1350), // 10% discount on buying 10
-                itemType: .bundle([.wildcard], amounts: [10])
+                itemType: .bundle([.wildcard], amounts: [10]),
+                accentColor: .purple
             ),
             StoreItem(
                 name: "10 Extra Lives",
                 description: "Get 10 extra life powerups",
                 iconName: PowerupType.extraLife.iconName,
                 price: .coins(2700), // 10% discount on buying 10
-                itemType: .bundle([.extraLife], amounts: [10])
+                itemType: .bundle([.extraLife], amounts: [10]),
+                accentColor: .red
             )
         ]
         
@@ -114,21 +139,24 @@ import Observation
                 description: "Add 500 coins to your wallet",
                 iconName: "dollarsign.circle.fill",
                 price: .realMoney(0.99),
-                itemType: .currency(.coins, amount: 500)
+                itemType: .currency(.coins, amount: 500),
+                accentColor: .yellow
             ),
             StoreItem(
                 name: "2000 Coins",
                 description: "Add 2000 coins to your wallet",
                 iconName: "dollarsign.circle.fill",
                 price: .realMoney(4.99),
-                itemType: .currency(.coins, amount: 2000)
+                itemType: .currency(.coins, amount: 2000),
+                accentColor: .yellow
             ),
             StoreItem(
                 name: "5000 Coins",
                 description: "Add 5000 coins to your wallet",
                 iconName: "dollarsign.circle.fill",
                 price: .realMoney(9.99),
-                itemType: .currency(.coins, amount: 5000)
+                itemType: .currency(.coins, amount: 5000),
+                accentColor: .yellow
             )
         ]
         
@@ -139,21 +167,24 @@ import Observation
                 description: "Add 5 diamonds to your wallet",
                 iconName: "diamond_icon",
                 price: .realMoney(0.99),
-                itemType: .currency(.diamonds, amount: 5)
+                itemType: .currency(.diamonds, amount: 5),
+                accentColor: .cyan
             ),
             StoreItem(
                 name: "20 Diamonds",
                 description: "Add 20 diamonds to your wallet",
                 iconName: "diamond_icon",
                 price: .realMoney(4.99),
-                itemType: .currency(.diamonds, amount: 20)
+                itemType: .currency(.diamonds, amount: 20),
+                accentColor: .cyan
             ),
             StoreItem(
                 name: "50 Diamonds",
                 description: "Add 50 diamonds to your wallet",
                 iconName: "diamond_icon",
                 price: .realMoney(9.99),
-                itemType: .currency(.diamonds, amount: 50)
+                itemType: .currency(.diamonds, amount: 50),
+                accentColor: .cyan
             )
         ]
         
@@ -170,24 +201,368 @@ import Observation
                 description: "Get 1 of each powerup plus 200 coins",
                 iconName: "gift.fill",
                 price: .realMoney(2.99), // As requested
-                itemType: .bundle([.swap, .extraLife, .wildcard], amounts: [1, 1, 1], currencies: [.coins: 200])
+                itemType: .bundle([.swap, .extraLife, .wildcard], amounts: [1, 1, 1], currencies: [.coins: 200]),
+                accentColor: .green
             ),
             StoreItem(
                 name: "Premium Bundle",
                 description: "Get 3 of each powerup plus 500 coins",
                 iconName: "star.fill",
                 price: .diamonds(10),
-                itemType: .bundle([.swap, .extraLife, .wildcard], amounts: [3, 3, 3], currencies: [.coins: 500])
+                itemType: .bundle([.swap, .extraLife, .wildcard], amounts: [3, 3, 3], currencies: [.coins: 500]),
+                accentColor: .pink
             ),
             StoreItem(
                 name: "Video Reward",
                 description: "Watch a video to get a random powerup",
                 iconName: "play.rectangle.fill",
                 price: .video,
-                itemType: .random([.swap, .extraLife, .wildcard])
+                itemType: .random([.swap, .extraLife, .wildcard]),
+                accentColor: .indigo
             )
         ]
     }
+    
+    // Listen for StoreKit transaction updates
+    private func listenForTransactions() {
+        // Start a task that will run for the lifetime of the app
+        Task.detached(priority: .background) {
+            // Iterate through any transactions that don't come from a direct call to `purchase()`
+            for await verificationResult in Transaction.updates {
+                // Check if the transaction is verified
+                switch verificationResult {
+                case .verified(let transaction):
+                    // Handle the transaction on the main thread
+                    await self.handleVerifiedTransaction(transaction)
+                    // Always finish a transaction after handling it
+                    await transaction.finish()
+                case .unverified:
+                    // Handle unverified transactions (e.g., log for investigation)
+                    print("Unverified transaction received")
+                }
+            }
+        }
+    }
+    
+    // Handle a verified transaction
+    @MainActor
+    private func handleVerifiedTransaction(_ transaction: Transaction) async {
+        // Find the matching product
+        guard let product = storeProducts.first(where: { $0.id == transaction.productID }) else {
+            print("No matching product found for transaction: \(transaction.productID)")
+            return
+        }
+        
+        // Find the matching store item
+        if let matchingItem = findStoreItemForProduct(product) {
+            // Deliver the purchased item
+            deliverPurchasedItem(matchingItem)
+            print("Transaction completed for product: \(product.id)")
+        } else {
+            // Create a temporary store item if no matching one is found
+            let currencyType: CurrencyType = product.id.contains("COINS") ? .coins : .diamonds
+            let amount: Int
+            
+            if product.id.contains("500") {
+                amount = 500
+            } else if product.id.contains("2000") {
+                amount = 2000
+            } else if product.id.contains("5000") {
+                amount = 5000
+            } else if product.id.contains("5") {
+                amount = 5
+            } else if product.id.contains("20") {
+                amount = 20
+            } else if product.id.contains("50") {
+                amount = 50
+            } else {
+                amount = 0
+            }
+            
+            if amount > 0 {
+                let tempItem = StoreItem(
+                    name: product.displayName,
+                    description: product.description,
+                    iconName: currencyType == .coins ? "dollarsign.circle.fill" : "diamond_icon",
+                    price: .realMoney(product.price),
+                    itemType: .currency(currencyType, amount: amount),
+                    accentColor: currencyType == .coins ? .yellow : .cyan,
+                    storeKitProduct: product
+                )
+                
+                deliverPurchasedItem(tempItem)
+                print("Transaction completed for product: \(product.id) using temporary item")
+            } else if product.id == "WELCOME_PACK" {
+                // Handle welcome pack
+                let tempItem = StoreItem(
+                    name: "Welcome Pack",
+                    description: "Get 1 of each powerup plus 200 coins",
+                    iconName: "gift.fill",
+                    price: .realMoney(product.price),
+                    itemType: .bundle([.swap, .extraLife, .wildcard], amounts: [1, 1, 1], currencies: [.coins: 200]),
+                    accentColor: .green,
+                    storeKitProduct: product
+                )
+                
+                deliverPurchasedItem(tempItem)
+                print("Transaction completed for Welcome Pack using temporary item")
+            }
+        }
+    }
+    
+    // MARK: - StoreKit Integration
+    
+    // Fetch StoreKit products from the store
+    @MainActor
+    func fetchStoreKitProducts() async {
+        do {
+            // Get product IDs from Products.storekit
+            let productIDs = [
+                "COINS_500_UNITS",
+                "COINS_2000_UNITS",
+                "COINS_5000_UNITS",
+                "DIAMONDS_5_UNITS",
+                "DIAMONDS_20_UNITS",
+                "DIAMONDS_50_UNITS",
+                "WELCOME_PACK"
+            ]
+            
+            // Request products from StoreKit
+            let products = try await Product.products(for: productIDs)
+            self.storeProducts = products
+            self.productsLoaded = true
+            
+            // Update store items with actual StoreKit products
+            updateStoreItemsWithStoreKitProducts()
+            
+            print("Successfully loaded \(products.count) StoreKit products")
+        } catch {
+            print("Failed to load StoreKit products: \(error)")
+        }
+    }
+    
+    // Update store items with actual StoreKit products
+    private func updateStoreItemsWithStoreKitProducts() {
+        // Map StoreKit products to existing store items
+        for product in storeProducts {
+            updateStoreItemWithProduct(product)
+        }
+    }
+    
+    // Update a specific store item with a StoreKit product
+    private func updateStoreItemWithProduct(_ product: Product) {
+        // Find matching store items based on product ID
+        switch product.id {
+        case "COINS_500_UNITS":
+            updateCoinItem(product, amount: 500)
+        case "COINS_2000_UNITS":
+            updateCoinItem(product, amount: 2000)
+        case "COINS_5000_UNITS":
+            updateCoinItem(product, amount: 5000)
+        case "DIAMONDS_5_UNITS":
+            updateDiamondItem(product, amount: 5)
+        case "DIAMONDS_20_UNITS":
+            updateDiamondItem(product, amount: 20)
+        case "DIAMONDS_50_UNITS":
+            updateDiamondItem(product, amount: 50)
+        case "WELCOME_PACK":
+            updateSpecialOfferItem(product, name: "Welcome Pack")
+        default:
+            break
+        }
+    }
+    
+    // Update coin items with StoreKit product
+    private func updateCoinItem(_ product: Product, amount: Int) {
+        for i in 0..<generalItems.count {
+            if case .currency(.coins, let itemAmount) = generalItems[i].itemType, itemAmount == amount,
+               case .realMoney = generalItems[i].price {
+                let updatedItem = StoreItem(
+                    id: generalItems[i].id,
+                    name: product.displayName,
+                    description: product.description,
+                    iconName: generalItems[i].iconName,
+                    price: .realMoney(product.price),
+                    itemType: generalItems[i].itemType,
+                    accentColor: generalItems[i].accentColor,
+                    storeKitProduct: product
+                )
+                generalItems[i] = updatedItem
+            }
+        }
+    }
+    
+    // Update diamond items with StoreKit product
+    private func updateDiamondItem(_ product: Product, amount: Int) {
+        for i in 0..<generalItems.count {
+            if case .currency(.diamonds, let itemAmount) = generalItems[i].itemType, itemAmount == amount,
+               case .realMoney = generalItems[i].price {
+                let updatedItem = StoreItem(
+                    id: generalItems[i].id,
+                    name: product.displayName,
+                    description: product.description,
+                    iconName: generalItems[i].iconName,
+                    price: .realMoney(product.price),
+                    itemType: generalItems[i].itemType,
+                    accentColor: generalItems[i].accentColor,
+                    storeKitProduct: product
+                )
+                generalItems[i] = updatedItem
+            }
+        }
+    }
+    
+    // Update special offer items with StoreKit product
+    private func updateSpecialOfferItem(_ product: Product, name: String) {
+        for i in 0..<specialOffers.count {
+            if specialOffers[i].name == name, case .realMoney = specialOffers[i].price {
+                let updatedItem = StoreItem(
+                    id: specialOffers[i].id,
+                    name: product.displayName,
+                    description: product.description,
+                    iconName: specialOffers[i].iconName,
+                    price: .realMoney(product.price),
+                    itemType: specialOffers[i].itemType,
+                    accentColor: specialOffers[i].accentColor,
+                    storeKitProduct: product
+                )
+                specialOffers[i] = updatedItem
+            }
+        }
+    }
+    
+    // Handle a StoreKit purchase transaction
+    @MainActor
+    func handlePurchase(for product: Product) async -> Bool {
+        do {
+            let result = try await product.purchase()
+            
+            switch result {
+            case .success(let verification):
+                // Check if the transaction is verified
+                switch verification {
+                case .verified(let transaction):
+                    // Handle the verified transaction
+                    print("Transaction verified for product: \(product.id)")
+                    
+                    // Find matching store item and deliver it
+                    if let matchingItem = findStoreItemForProduct(product) {
+                        deliverPurchasedItem(matchingItem)
+                    }
+                    
+                    // Finish the transaction
+                    await transaction.finish()
+                    return true
+                    
+                case .unverified:
+                    print("Transaction unverified for product: \(product.id)")
+                    return false
+                }
+                
+            case .userCancelled:
+                print("User cancelled purchase for product: \(product.id)")
+                return false
+                
+            case .pending:
+                print("Purchase pending for product: \(product.id)")
+                return false
+                
+            @unknown default:
+                print("Unknown purchase result for product: \(product.id)")
+                return false
+            }
+        } catch {
+            print("Error purchasing product \(product.id): \(error)")
+            return false
+        }
+    }
+    
+    // Find a store item that matches a StoreKit product
+    private func findStoreItemForProduct(_ product: Product) -> StoreItem? {
+        // Look in general items
+        for item in generalItems {
+            if item.storeKitProduct?.id == product.id {
+                return item
+            }
+        }
+        
+        // Look in special offers
+        for item in specialOffers {
+            if item.storeKitProduct?.id == product.id {
+                return item
+            }
+        }
+        
+        // Look in daily deals
+        for item in dailyDeals {
+            if item.storeKitProduct?.id == product.id {
+                return item
+            }
+        }
+        
+        return nil
+    }
+    
+    // MARK: - Inventory Methods
+    
+    // Get coins
+    func getCoins() -> Int {
+        return userInventory.coins
+    }
+    
+    // Get diamonds
+    func getDiamonds() -> Int {
+        return userInventory.diamonds
+    }
+    
+    // Add coins
+    func addCoins(_ amount: Int) {
+        userInventory.coins += amount
+        userData.saveUserData()
+    }
+    
+    // Use coins
+    func useCoins(_ amount: Int) -> Bool {
+        guard userInventory.coins >= amount else { return false }
+        userInventory.coins -= amount
+        userData.saveUserData()
+        return true
+    }
+    
+    // Add diamonds
+    func addDiamonds(_ amount: Int) {
+        userInventory.diamonds += amount
+        userData.saveUserData()
+    }
+    
+    // Use diamonds
+    func useDiamonds(_ amount: Int) -> Bool {
+        guard userInventory.diamonds >= amount else { return false }
+        userInventory.diamonds -= amount
+        userData.saveUserData()
+        return true
+    }
+    
+    // Add powerup
+    func addPowerup(_ type: PowerupType, amount: Int = 1) {
+        userInventory.powerups[type, default: 0] += amount
+        userData.saveUserData()
+    }
+    
+    // Use powerup
+    func usePowerup(_ type: PowerupType) -> Bool {
+        guard getPowerupCount(type) > 0 else { return false }
+        userInventory.powerups[type]! -= 1
+        userData.saveUserData()
+        return true
+    }
+    
+    // Get powerup count
+    func getPowerupCount(_ type: PowerupType) -> Int {
+        return userInventory.powerups[type] ?? 0
+    }
+    
+    // MARK: - Promo Codes
     
     // Validate promo code and grant reward if valid
     func validatePromoCode(_ code: String) -> (isValid: Bool, message: String) {
@@ -209,26 +584,26 @@ import Observation
         // Grant reward based on the code
         switch uppercaseCode {
         case "WELCOME2025":
-            inventoryManager.addCoins(500)
-            inventoryManager.addPowerup(.swap, amount: 1)
+            addCoins(500)
+            addPowerup(.swap, amount: 1)
             return (true, "You received 500 coins and 1 swap powerup!")
             
         case "LIBRARIOFUN":
-            inventoryManager.addDiamonds(5)
+            addDiamonds(5)
             return (true, "You received 5 diamonds!")
             
         case "BOOKWORM":
-            inventoryManager.addPowerup(.extraLife, amount: 2)
+            addPowerup(.extraLife, amount: 2)
             return (true, "You received 2 extra lives!")
             
         case "WORDMASTER":
-            inventoryManager.addPowerup(.wildcard, amount: 2)
+            addPowerup(.wildcard, amount: 2)
             return (true, "You received 2 wildcards!")
             
         case "POWERUP50":
-            inventoryManager.addPowerup(.swap, amount: 1)
-            inventoryManager.addPowerup(.extraLife, amount: 1)
-            inventoryManager.addPowerup(.wildcard, amount: 1)
+            addPowerup(.swap, amount: 1)
+            addPowerup(.extraLife, amount: 1)
+            addPowerup(.wildcard, amount: 1)
             return (true, "You received 1 of each powerup!")
             
         default:
@@ -236,18 +611,57 @@ import Observation
         }
     }
     
+    // MARK: - Purchase Methods
+    
     // Purchase an item
-    func purchaseItem(_ item: StoreItem) -> Bool {
+    func purchaseItem(_ item: StoreItem) async -> Bool {
+        // For StoreKit products, use the StoreKit purchase flow
+        if let storeKitProduct = item.storeKitProduct {
+            return await handlePurchase(for: storeKitProduct)
+        }
+        
+        // For non-StoreKit purchases, use the regular flow
         // Check if the user can afford the item
         switch item.price {
         case .coins(let amount):
-            guard inventoryManager.useCoins(amount) else { return false }
+            guard useCoins(amount) else { return false }
         case .diamonds(let amount):
-            guard inventoryManager.useDiamonds(amount) else { return false }
+            guard useDiamonds(amount) else { return false }
         case .realMoney:
-            // Handle in-app purchase
-            // This would be implemented in a real app
-            // For now, show an alert
+            // This should not happen for non-StoreKit items
+            return false
+        case .video:
+            // Video ad would be handled here
+            // For now, just grant the item as requested
+            break
+        }
+        
+        // Grant the item
+        deliverPurchasedItem(item)
+        return true
+    }
+    
+    // Synchronous version for backward compatibility
+    func purchaseItem(_ item: StoreItem) -> Bool {
+        // For StoreKit products, defer to async method
+        if item.storeKitProduct != nil {
+            Task {
+                let success = await purchaseItem(item)
+                // This won't be used immediately, but provides feedback in the UI
+                return success
+            }
+            return true // Return optimistically for UI feedback
+        }
+        
+        // For non-StoreKit purchases, use the regular flow
+        // Check if the user can afford the item
+        switch item.price {
+        case .coins(let amount):
+            guard useCoins(amount) else { return false }
+        case .diamonds(let amount):
+            guard useDiamonds(amount) else { return false }
+        case .realMoney:
+            // This should not happen for non-StoreKit items
             return false
         case .video:
             // Video ad would be handled here
@@ -264,34 +678,34 @@ import Observation
     private func deliverPurchasedItem(_ item: StoreItem) {
         switch item.itemType {
         case .powerup(let powerupType):
-            inventoryManager.addPowerup(powerupType)
+            addPowerup(powerupType)
         case .currency(let currencyType, let amount):
             switch currencyType {
             case .coins:
-                inventoryManager.addCoins(amount)
+                addCoins(amount)
             case .diamonds:
-                inventoryManager.addDiamonds(amount)
+                addDiamonds(amount)
             }
         case .bundle(let powerups, let amounts, let currencies):
             // Add powerups
             for (index, powerup) in powerups.enumerated() {
                 let amount = index < amounts.count ? amounts[index] : 1
-                inventoryManager.addPowerup(powerup, amount: amount)
+                addPowerup(powerup, amount: amount)
             }
             
             // Add currencies
             for (currency, amount) in currencies {
                 switch currency {
                 case .coins:
-                    inventoryManager.addCoins(amount)
+                    addCoins(amount)
                 case .diamonds:
-                    inventoryManager.addDiamonds(amount)
+                    addDiamonds(amount)
                 }
             }
         case .random(let possiblePowerups):
             // Select a random powerup
             if let randomPowerup = possiblePowerups.randomElement() {
-                inventoryManager.addPowerup(randomPowerup)
+                addPowerup(randomPowerup)
             }
         }
     }
@@ -300,7 +714,7 @@ import Observation
     func watchVideoForPowerup(_ type: PowerupType) {
         // In a real implementation, this would show a video ad
         // For now, just grant the powerup
-        inventoryManager.addPowerup(type)
+        addPowerup(type)
     }
     
     // Refresh daily deals
