@@ -24,6 +24,13 @@ import StoreKit
     // Daily deal tracking
     private var lastDailyDealsRefreshDate: Date?
     private var allPossibleDailyDeals: [StoreItem] = []
+    private var dailyDealsForToday: [StoreItem] = [] // Store the selected deals for today
+    
+    // Track purchased daily deals for the current day
+    private var purchasedDailyDeals: Set<UUID> = []
+    
+    // Debug flag for testing
+    var showDebugOptions = false
     
     // StoreKit products
     var storeProducts: [Product] = []
@@ -41,6 +48,8 @@ import StoreKit
     // Keys for UserDefaults
     private let purchasedItemsKey = "purchasedItems"
     private let lastDailyDealsRefreshKey = "lastDailyDealsRefresh"
+    private let purchasedDailyDealsKey = "purchasedDailyDeals"
+    private let dailyDealsForTodayKey = "dailyDealsForToday"
     
     // Initializer
     init(userData: UserData) {
@@ -59,14 +68,20 @@ import StoreKit
             self.lastDailyDealsRefreshDate = refreshDate
         }
         
+        // Load purchased daily deals from UserDefaults
+        if let purchasedDailyDealsData = UserDefaults.standard.data(forKey: purchasedDailyDealsKey),
+           let decodedItems = try? JSONDecoder().decode(Set<UUID>.self, from: purchasedDailyDealsData) {
+            self.purchasedDailyDeals = decodedItems
+        }
+        
         // Create possible daily deals pool
         createDailyDealsPool()
         
-        // Setup store items
+        // Setup store items (general items and special offers)
         setupStoreItems()
         
-        // Check if daily deals need to be refreshed
-        checkAndRefreshDailyDeals()
+        // Load or generate daily deals
+        loadOrGenerateDailyDeals()
         
         // Load StoreKit products
         Task {
@@ -82,6 +97,11 @@ import StoreKit
         return purchasedItems.contains(item.id)
     }
     
+    // Check if a daily deal has been purchased today
+    func isDailyDealPurchasedToday(_ item: StoreItem) -> Bool {
+        return purchasedDailyDeals.contains(item.id)
+    }
+    
     // Mark an item as purchased
     private func markItemAsPurchased(_ item: StoreItem) {
         purchasedItems.insert(item.id)
@@ -92,6 +112,13 @@ import StoreKit
     private func savePurchasedItems() {
         if let encodedData = try? JSONEncoder().encode(purchasedItems) {
             UserDefaults.standard.set(encodedData, forKey: purchasedItemsKey)
+        }
+    }
+    
+    // Save purchased daily deals to UserDefaults
+    private func savePurchasedDailyDeals() {
+        if let encodedData = try? JSONEncoder().encode(purchasedDailyDeals) {
+            UserDefaults.standard.set(encodedData, forKey: purchasedDailyDealsKey)
         }
     }
     
@@ -274,23 +301,44 @@ import StoreKit
         ]
     }
     
-    // Check if daily deals need to be refreshed
-    private func checkAndRefreshDailyDeals() {
+    // Load existing daily deals or generate new ones if needed
+    private func loadOrGenerateDailyDeals() {
         let calendar = Calendar.current
         let now = Date()
         
-        // Check if we have a refresh date
-        if let lastRefreshDate = lastDailyDealsRefreshDate {
-            // Check if it's a different day
-            if !calendar.isDate(lastRefreshDate, inSameDayAs: now) {
-                // It's a new day, refresh the deals
-                refreshDailyDeals()
-                saveLastRefreshDate(now)
+        // Check if we have saved daily deals
+        if let dailyDealsData = UserDefaults.standard.data(forKey: dailyDealsForTodayKey),
+           let decodedDeals = try? JSONDecoder().decode([StoreItem].self, from: dailyDealsData) {
+            
+            // Check if they're from today
+            if let lastRefreshDate = lastDailyDealsRefreshDate, calendar.isDate(lastRefreshDate, inSameDayAs: now) {
+                // Use the stored deals from today
+                self.dailyDealsForToday = decodedDeals
+                self.dailyDeals = decodedDeals
+                return
             }
-        } else {
-            // No refresh date saved, so this is first run
-            refreshDailyDeals()
+        }
+        
+        // If we don't have deals for today or it's a new day, generate new ones
+        if let lastRefreshDate = lastDailyDealsRefreshDate, !calendar.isDate(lastRefreshDate, inSameDayAs: now) {
+            // It's a new day, refresh the deals
+            generateDailyDeals()
             saveLastRefreshDate(now)
+            
+            // Clear purchased daily deals for the new day
+            purchasedDailyDeals.removeAll()
+            savePurchasedDailyDeals()
+        } else if lastDailyDealsRefreshDate == nil {
+            // No refresh date saved, so this is first run
+            generateDailyDeals()
+            saveLastRefreshDate(now)
+        }
+    }
+    
+    // Save daily deals to UserDefaults
+    private func saveDailyDeals() {
+        if let encodedData = try? JSONEncoder().encode(dailyDealsForToday) {
+            UserDefaults.standard.set(encodedData, forKey: dailyDealsForTodayKey)
         }
     }
     
@@ -302,35 +350,8 @@ import StoreKit
         }
     }
     
-    // Setup store items
+    // Setup general store items and special offers
     private func setupStoreItems() {
-        // Setup daily deals - 3 items as requested
-        dailyDeals = [
-            StoreItem(
-                name: "Daily Swap",
-                description: "Get a swap powerup for free by watching a video",
-                iconName: PowerupType.swap.iconName,
-                price: .video,
-                itemType: .powerup(.swap),
-                accentColor: .orange
-            ),
-            StoreItem(
-                name: "Discounted Coins",
-                description: "Get 100 coins at a discounted price",
-                iconName: "dollarsign.circle.fill",
-                price: .diamonds(1),
-                itemType: .currency(.coins, amount: 100),
-                accentColor: .blue
-            ),
-            StoreItem(
-                name: "Flash Sale - Extra Life",
-                description: "Get an extra life at 50% off!",
-                iconName: PowerupType.extraLife.iconName,
-                price: .coins(150),
-                itemType: .powerup(.extraLife),
-                accentColor: .red
-            )
-        ]
         
         // Setup general store items - organize by categories
         
@@ -1021,6 +1042,12 @@ import StoreKit
             }
         }
         
+        // Check if this is a daily deal
+        if dailyDeals.contains(where: { $0.id == item.id }) {
+            purchasedDailyDeals.insert(item.id)
+            savePurchasedDailyDeals()
+        }
+        
         // Mark special offers and daily deals as purchased (one-time only items)
         // General store items can be purchased multiple times
         let isGeneralStoreItem = generalItems.contains { $0.id == item.id }
@@ -1036,8 +1063,8 @@ import StoreKit
         addPowerup(type)
     }
     
-    // Refresh daily deals by randomly selecting 3 new deals from the entire pool
-    func refreshDailyDeals() {
+    // Generate new daily deals by randomly selecting 3 new deals from the entire pool
+    private func generateDailyDeals() {
         // Make sure we have deals in the pool
         guard !allPossibleDailyDeals.isEmpty else { return }
         
@@ -1057,13 +1084,21 @@ import StoreKit
             }
         }
         
-        // Update the daily deals
+        // Update the daily deals both in memory and for persistence
+        dailyDealsForToday = randomDeals
         dailyDeals = randomDeals
+        
+        // Save the daily deals to persist across app sessions
+        saveDailyDeals()
     }
     
     // Public method for manually refreshing deals (for testing/debugging)
     func forceRefreshDailyDeals() {
-        refreshDailyDeals()
+        generateDailyDeals()
         saveLastRefreshDate(Date())
+        
+        // Clear purchased daily deals for the new deals
+        purchasedDailyDeals.removeAll()
+        savePurchasedDailyDeals()
     }
 }

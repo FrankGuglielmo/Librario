@@ -126,19 +126,45 @@ struct TodaysDealsView: View {
     var theme: CardColor
     @State private var showingPurchaseError = false
     
+    // Filter out daily deals that have been purchased today
+    private var availableDailyDeals: [StoreItem] {
+        storeManager.dailyDeals.filter { !storeManager.isDailyDealPurchasedToday($0) }
+    }
+    
     var body: some View {
         VStack(spacing: 20) {
-            ForEach(storeManager.dailyDeals) { item in
+            // Debug refresh button for testing
+            if storeManager.showDebugOptions {
+                Button(action: {
+                    storeManager.forceRefreshDailyDeals()
+                }) {
+                    Text("Debug: Refresh Deals")
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color.gray)
+                        .cornerRadius(8)
+                }
+                .padding(.bottom, 10)
+            }
+            
+            ForEach(availableDailyDeals) { item in
                 StoreItemView(item: item, cardColor: theme, storeManager: storeManager) {
                     handlePurchase(item)
                 }
             }
             
-            if storeManager.dailyDeals.isEmpty {
-                Text("No deals available today. Check back tomorrow!")
+            if availableDailyDeals.isEmpty {
+                Text(storeManager.dailyDeals.isEmpty ? 
+                     "No deals available today. Check back tomorrow!" : 
+                     "You've purchased all of today's deals. Check back tomorrow!")
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.black.opacity(0.5))
+                    .cornerRadius(10)
+                    .padding(.vertical, 10)
             }
         }
         .padding()
@@ -458,11 +484,27 @@ struct SpecialOffersView: View {
     @State private var showPromoMessage: Bool = false
     @State private var showingPurchaseError = false
     
+    // Filter out purchased special offers
+    private var filteredSpecialOffers: [StoreItem] {
+        storeManager.specialOffers.filter { !storeManager.isItemPurchased($0) }
+    }
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 // Special offers section
-                ForEach(storeManager.specialOffers) { item in
+                if filteredSpecialOffers.isEmpty {
+                    Text("No special offers available at the moment. Check back later!")
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.black.opacity(0.5))
+                        .cornerRadius(10)
+                        .padding(.vertical, 10)
+                }
+                
+                ForEach(filteredSpecialOffers) { item in
                     StoreItemView(item: item, cardColor: theme, storeManager: storeManager) {
                         handlePurchase(item)
                     }
@@ -743,10 +785,29 @@ struct StoreItemView: View {
                             }
                         }
                     )
-                    .presentationDetents([.medium, .large])
+                    .presentationDetents([.height(detentHeight())])
                 }
             }
         }
+    }
+}
+
+// Helper method to calculate the appropriate detent height
+extension StoreItemView {
+    private func detentHeight() -> CGFloat {
+        // Base height for all item types
+        var height: CGFloat = 450
+        
+        // Add additional height for bundle items based on their content
+        if case .bundle(let powerups, _, let currencies) = customItem.itemType {
+            // Add height for each powerup
+            height += CGFloat(powerups.count * 35)
+            
+            // Add height for each currency
+            height += CGFloat(currencies.count * 35)
+        }
+        
+        return height
     }
 }
 
