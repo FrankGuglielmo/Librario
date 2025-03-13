@@ -1,10 +1,3 @@
-//
-//  GameToolBarView.swift
-//  Librario
-//
-//  Created by Frank Guglielmo on 3/6/25.
-//
-
 import SwiftUI
 
 struct GameToolBarView: View {
@@ -68,7 +61,6 @@ struct GameToolBarView: View {
                     // Back Button
                     backButton()
                     
-                    
                     HStack(spacing: 0) {
                         // Swap Button
                         swapButton()
@@ -80,11 +72,9 @@ struct GameToolBarView: View {
                         extraLifeButton()
                     }
                     
-                    
-                    // Currency display
+                    // Currency display - now with flexible width
                     currencyDisplay()
-                    
-                    Spacer()
+                        .layoutPriority(1)
                     
                     // Level display
                     levelView()
@@ -108,7 +98,6 @@ struct GameToolBarView: View {
                     .frame(maxWidth: .infinity, maxHeight: 60)
                     .layoutPriority(2)
                 
-                
                 HStack(spacing: 0) {
                     // Swap Button
                     swapButton()
@@ -118,12 +107,13 @@ struct GameToolBarView: View {
                     
                     // Extra Life Button
                     extraLifeButton()
-
-                    // Currency display
-                    currencyDisplay()
-                        .padding(.trailing, 30)
                 }
     
+                // Currency display - now with flexible width
+                currencyDisplay()
+                    .layoutPriority(1)
+                    .padding(.horizontal, 8)
+
                 // Level display
                 levelView()
             }
@@ -148,6 +138,7 @@ struct GameToolBarView: View {
                     .font(.callout)
                     .foregroundStyle(Color.darkGrey)
                     .fontWeight(.bold)
+                    .lineLimit(1)
             }
             
             // Diamonds
@@ -160,9 +151,10 @@ struct GameToolBarView: View {
                     .font(.callout)
                     .foregroundStyle(Color.darkGrey)
                     .fontWeight(.bold)
+                    .lineLimit(1)
             }
         }
-        .frame(width: 60, height: 60) // Reduced size
+        .frame(minWidth: 60, idealWidth: 80, maxWidth: .infinity, maxHeight: 60)
         .background(Color.cream)
     }
 
@@ -214,7 +206,7 @@ struct GameToolBarView: View {
                     .fontWeight(.bold)
             }
         }
-        .frame(width: 60, height: 60) // Reduced size button
+        .frame(width: 60, height: 60)
         .background(Color.forestGreen)
         .contentShape(Rectangle()) // Ensure entire button area is tappable
     }
@@ -254,9 +246,9 @@ struct GameToolBarView: View {
                 }
             }
         }
-        .frame(width: 60, height: 60) // Reduced size button
+        .frame(width: 60, height: 60)
         .background(Color.cream)
-        .contentShape(Rectangle()) // Ensure entire button area is tappable
+        .contentShape(Rectangle())
     }
     
     // Extra Life button
@@ -294,9 +286,9 @@ struct GameToolBarView: View {
                 }
             }
         }
-        .frame(width: 60, height: 60) // Reduced size button
+        .frame(width: 60, height: 60)
         .background(Color.cream)
-        .contentShape(Rectangle()) // Ensure entire button area is tappable
+        .contentShape(Rectangle())
     }
     
     // Wildcard button
@@ -334,9 +326,9 @@ struct GameToolBarView: View {
                 }
             }
         }
-        .frame(width: 60, height: 60) // Reduced size button
+        .frame(width: 60, height: 60)
         .background(Color.cream)
-        .contentShape(Rectangle()) // Ensure entire button area is tappable
+        .contentShape(Rectangle())
     }
 
     // Level display
@@ -351,7 +343,7 @@ struct GameToolBarView: View {
                 .fontWeight(.bold)
                 .foregroundStyle(Color.cream)
         }
-        .frame(width: 60, height: 60) // Reduced size
+        .frame(width: 60, height: 60)
         .background(Color.forestGreen)
     }
 }

@@ -18,6 +18,9 @@ import StoreKit
     var generalItems: [StoreItem] = []
     var specialOffers: [StoreItem] = []
     
+    // Track purchased one-time items
+    var purchasedItems: Set<UUID> = []
+    
     // StoreKit products
     var storeProducts: [Product] = []
     var productsLoaded = false
@@ -35,6 +38,13 @@ import StoreKit
     init(userData: UserData) {
         self.userData = userData
         self.userInventory = userData.inventory
+        
+        // Load purchased items from UserDefaults if available
+        if let purchasedItemsData = UserDefaults.standard.data(forKey: "purchasedItems"),
+           let decodedItems = try? JSONDecoder().decode(Set<UUID>.self, from: purchasedItemsData) {
+            self.purchasedItems = decodedItems
+        }
+        
         setupStoreItems()
         
         // Load StoreKit products
@@ -44,6 +54,24 @@ import StoreKit
         
         // Start listening for StoreKit transactions
         listenForTransactions()
+    }
+    
+    // Check if an item has been purchased
+    func isItemPurchased(_ item: StoreItem) -> Bool {
+        return purchasedItems.contains(item.id)
+    }
+    
+    // Mark an item as purchased
+    private func markItemAsPurchased(_ item: StoreItem) {
+        purchasedItems.insert(item.id)
+        savePurchasedItems()
+    }
+    
+    // Save purchased items to UserDefaults
+    private func savePurchasedItems() {
+        if let encodedData = try? JSONEncoder().encode(purchasedItems) {
+            UserDefaults.standard.set(encodedData, forKey: "purchasedItems")
+        }
     }
     
     // Setup store items
@@ -312,11 +340,11 @@ import StoreKit
     
     // MARK: - StoreKit Integration
     
-    // Fetch StoreKit products from the store
+    // Fetch StoreKit products using RevenueCat
     @MainActor
     func fetchStoreKitProducts() async {
         do {
-            // Get product IDs from Products.storekit
+            // Request products directly from StoreKit
             let productIDs = [
                 "COINS_500_UNITS",
                 "COINS_2000_UNITS",
@@ -435,6 +463,7 @@ import StoreKit
     @MainActor
     func handlePurchase(for product: Product) async -> Bool {
         do {
+            // Direct StoreKit purchase
             let result = try await product.purchase()
             
             switch result {
@@ -448,6 +477,9 @@ import StoreKit
                     // Find matching store item and deliver it
                     if let matchingItem = findStoreItemForProduct(product) {
                         deliverPurchasedItem(matchingItem)
+                    } else {
+                        // Handle the case when no matching item is found
+                        deliverProductContent(product.id)
                     }
                     
                     // Finish the transaction
@@ -473,6 +505,57 @@ import StoreKit
             }
         } catch {
             print("Error purchasing product \(product.id): \(error)")
+            return false
+        }
+    }
+    
+    // Helper method to deliver content based on product ID
+    private func deliverProductContent(_ productId: String) {
+        switch productId {
+        case "COINS_500_UNITS":
+            addCoins(500)
+        case "COINS_2000_UNITS":
+            addCoins(2000)
+        case "COINS_5000_UNITS":
+            addCoins(5000)
+        case "DIAMONDS_5_UNITS":
+            addDiamonds(5)
+        case "DIAMONDS_20_UNITS":
+            addDiamonds(20)
+        case "DIAMONDS_50_UNITS":
+            addDiamonds(50)
+        case "WELCOME_PACK":
+            addCoins(200)
+            addPowerup(.swap, amount: 1)
+            addPowerup(.extraLife, amount: 1)
+            addPowerup(.wildcard, amount: 1)
+        default:
+            print("Unknown product ID: \(productId)")
+        }
+        
+        // Save user data after delivering content
+        userData.saveUserData()
+    }
+    
+    // Restore purchases
+    func restorePurchases() async -> Bool {
+        do {
+            // Direct StoreKit restore
+            for await result in Transaction.currentEntitlements {
+                if case .verified(let transaction) = result {
+                    // Process the transaction
+                    print("Restored transaction: \(transaction.productID)")
+                    deliverProductContent(transaction.productID)
+                    
+                    // Finish the transaction
+                    await transaction.finish()
+                }
+            }
+            
+            print("Purchases restored successfully")
+            return true
+        } catch {
+            print("Failed to restore purchases: \(error)")
             return false
         }
     }
@@ -676,6 +759,7 @@ import StoreKit
     
     // Deliver a purchased item to the user's inventory
     private func deliverPurchasedItem(_ item: StoreItem) {
+        // Add item to user's inventory
         switch item.itemType {
         case .powerup(let powerupType):
             addPowerup(powerupType)
@@ -707,6 +791,13 @@ import StoreKit
             if let randomPowerup = possiblePowerups.randomElement() {
                 addPowerup(randomPowerup)
             }
+        }
+        
+        // Mark special offers and daily deals as purchased (one-time only items)
+        // General store items can be purchased multiple times
+        let isGeneralStoreItem = generalItems.contains { $0.id == item.id }
+        if !isGeneralStoreItem {
+            markItemAsPurchased(item)
         }
     }
     

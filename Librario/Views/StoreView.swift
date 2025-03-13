@@ -250,6 +250,7 @@ struct GeneralStoreView: View {
 struct InventoryCardView: View {
     var storeManager: StoreManager
     var theme: CardColor
+    @State private var showingRestoreSuccess = false
     
     var body: some View {
         ScrollView {
@@ -368,6 +369,39 @@ struct InventoryCardView: View {
                     }
                 }
                 .padding(.vertical, 8)
+                
+                Spacer()
+                
+                // Restore Purchases Button
+                Button(action: {
+                    Task {
+                        let success = await storeManager.restorePurchases()
+                        DispatchQueue.main.async {
+                            showingRestoreSuccess = success
+                        }
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "arrow.clockwise.circle")
+                            .foregroundColor(theme.accentColor)
+                        Text("Restore Purchases")
+                            .foregroundColor(theme.accentColor)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(theme.accentColor.opacity(0.5))
+                    .cornerRadius(20)
+                    .frame(maxWidth: .infinity)
+                }
+                .padding(.top, 20)
+                .padding(.bottom, 12)
+                .alert("Restore Completed", isPresented: $showingRestoreSuccess) {
+                    Button("OK", role: .cancel) { }
+                } message: {
+                    Text("Your purchases have been restored.")
+                }
             }
             .padding(.horizontal)
         }
@@ -498,6 +532,45 @@ struct SpecialOffersView: View {
     }
 }
 
+// MARK: - Purchased Item View
+struct PurchasedItemView: View {
+    let item: StoreItem
+    let cardColor: CardColor
+    
+    var body: some View {
+        ZStack {
+            Rectangle()
+                .fill(Color.white)
+                .frame(height: 120)
+                .frame(maxWidth: .infinity)
+                .cornerRadius(10)
+            Rectangle()
+                .fill(cardColor.primaryColor.opacity(0.4))
+                .blur(radius: 4)
+                .frame(height: 120)
+                .frame(maxWidth: .infinity)
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.clear)
+                .frame(height: 120)
+                .frame(maxWidth: .infinity)
+                .border(cardColor.borderColor, width: 6)
+                .cornerRadius(10)
+            
+            VStack(spacing: 10) {
+                FlexibleImageView(iconName: "checkmark.seal.fill",
+                             foregroundColor: cardColor.textColor,
+                             fontSize: .largeTitle)
+                    .frame(width: 50, height: 50)
+                
+                Text("Purchased")
+                    .font(.headline)
+                    .foregroundColor(cardColor.textColor)
+                    .fontWeight(.bold)
+            }
+        }
+    }
+}
+
 // MARK: - Store Item View
 struct StoreItemView: View {
     let item: StoreItem
@@ -506,6 +579,16 @@ struct StoreItemView: View {
     let onPurchase: () -> Void
     @State private var isPurchasing = false
     @State private var showingDetail = false
+    
+    // Check if item is a one-time purchase and has been purchased
+    private var isPurchased: Bool {
+        // Check if the item is a one-time purchase (not in general store)
+        let isGeneralStoreItem = storeManager.generalItems.contains { $0.id == item.id }
+        if !isGeneralStoreItem {
+            return storeManager.isItemPurchased(item)
+        }
+        return false
+    }
     
     // Create a custom item with accent color from card color if not provided
     private var customItem: StoreItem {
@@ -539,122 +622,130 @@ struct StoreItemView: View {
     }
     
     var body: some View {
-        Button(action: {
-            showingDetail = true
-        }) {
-            ZStack {
-                Rectangle()
-                    .fill(Color.white)
-                    .frame(height: 120)
-                    .frame(maxWidth: .infinity)
-                    .cornerRadius(10)
-                Rectangle()
-                    .fill(cardColor.primaryColor.opacity(0.4))
-                    .blur(radius: 4)
-                    .frame(height: 120)
-                    .frame(maxWidth: .infinity)
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.clear)
-                    .frame(height: 120)
-                    .frame(maxWidth: .infinity)
-                    .border(cardColor.borderColor, width: 6)
-                    .cornerRadius(10)
-                
-                
-                HStack {
-                    HStack(alignment: .center, spacing: 10) {
-                        FlexibleImageView(iconName: item.iconName,
-                                                 foregroundColor: cardColor.textColor,
-                                                 fontSize: .largeTitle)
+        Group {
+            if isPurchased {
+                // Show purchased view for one-time items that have already been purchased
+                PurchasedItemView(item: item, cardColor: cardColor)
+            } else {
+                // Show normal store item view for items that haven't been purchased
+                Button(action: {
+                    showingDetail = true
+                }) {
+                    ZStack {
+                        Rectangle()
+                            .fill(Color.white)
+                            .frame(height: 120)
+                            .frame(maxWidth: .infinity)
+                            .cornerRadius(10)
+                        Rectangle()
+                            .fill(cardColor.primaryColor.opacity(0.4))
+                            .blur(radius: 4)
+                            .frame(height: 120)
+                            .frame(maxWidth: .infinity)
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.clear)
+                            .frame(height: 120)
+                            .frame(maxWidth: .infinity)
+                            .border(cardColor.borderColor, width: 6)
+                            .cornerRadius(10)
+                        
+                        
+                        HStack {
+                            HStack(alignment: .center, spacing: 10) {
+                                FlexibleImageView(iconName: item.iconName,
+                                         foregroundColor: cardColor.textColor,
+                                         fontSize: .largeTitle)
                                     .frame(width: 50, height: 50)
                                     .background(cardColor.primaryColor.opacity(0.6))
                                     .cornerRadius(5)
-                        
-                        
-                        Text(item.name)
-                            .font(.headline)
-                            .foregroundColor(cardColor.textColor)
-                    }
-                    .padding(.leading)
-                    Spacer()
-                    
-                    // Price display
-                    Group {
-                        switch item.price {
-                        case .coins(let amount):
-                            HStack {
-                                Text("\(amount)")
-                                    .foregroundColor(cardColor.textColor)
-                                Image(systemName: "dollarsign.circle.fill")
-                                    .foregroundColor(.yellow)
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(cardColor.accentColor)
-                            .cornerRadius(20)
-                            
-                        case .diamonds(let amount):
-                            HStack {
-                                Text("\(amount)")
-                                    .foregroundColor(cardColor.textColor)
-                                Image("diamond_icon")
-                                    .resizable()
-                                    .frame(width: 20, height: 20)
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(cardColor.complementaryColor)
-                            .cornerRadius(20)
-                            
-                        case .realMoney(let amount):
-                            Text(item.storeKitProduct?.displayPrice ?? "$\(String(format: "%.2f", NSDecimalNumber(decimal: amount).doubleValue))")
-                                .foregroundColor(cardColor.textColor)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-                                .background(cardColor.accentColor)
-                                .cornerRadius(20)
-                            
-                        case .video:
-                            HStack {
-                                Text("Watch")
-                                    .foregroundColor(cardColor.textColor)
-                                Image(systemName: "movieclapper")
+                                
+                                
+                                Text(item.name)
+                                    .font(.headline)
                                     .foregroundColor(cardColor.textColor)
                             }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(cardColor.primaryColor)
-                            .cornerRadius(20)
+                            .padding(.leading)
+                            Spacer()
+                            
+                            // Price display
+                            Group {
+                                switch item.price {
+                                case .coins(let amount):
+                                    HStack {
+                                        Text("\(amount)")
+                                            .foregroundColor(cardColor.textColor)
+                                        Image(systemName: "dollarsign.circle.fill")
+                                            .foregroundColor(.yellow)
+                                    }
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .background(cardColor.accentColor)
+                                    .cornerRadius(20)
+                                    
+                                case .diamonds(let amount):
+                                    HStack {
+                                        Text("\(amount)")
+                                            .foregroundColor(cardColor.textColor)
+                                        Image("diamond_icon")
+                                            .resizable()
+                                            .frame(width: 20, height: 20)
+                                    }
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .background(cardColor.complementaryColor)
+                                    .cornerRadius(20)
+                                    
+                                case .realMoney(let amount):
+                                    Text(item.storeKitProduct?.displayPrice ?? "$\(String(format: "%.2f", NSDecimalNumber(decimal: amount).doubleValue))")
+                                        .foregroundColor(cardColor.textColor)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 8)
+                                        .background(cardColor.accentColor)
+                                        .cornerRadius(20)
+                                    
+                                case .video:
+                                    HStack {
+                                        Text("Watch")
+                                            .foregroundColor(cardColor.textColor)
+                                        Image(systemName: "movieclapper")
+                                            .foregroundColor(cardColor.textColor)
+                                    }
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .background(cardColor.primaryColor)
+                                    .cornerRadius(20)
+                                }
+                            }
                         }
+                        .padding(.trailing)
                     }
                 }
-                .padding(.trailing)
+                .buttonStyle(PlainButtonStyle())
+                .disabled(isPurchasing)
+                .sheet(isPresented: $showingDetail) {
+                    StoreItemDetailView(
+                        item: customItem,
+                        storeManager: storeManager,
+                        onPurchase: {
+                            // Set purchasing state for real money items
+                            if case .realMoney = item.price {
+                                isPurchasing = true
+                            }
+                            
+                            // Try to purchase the item
+                            onPurchase()
+                            
+                            // For non-real money purchases, immediately reset the state
+                            if case .realMoney = item.price { } else {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                    isPurchasing = false
+                                }
+                            }
+                        }
+                    )
+                    .presentationDetents([.medium, .large])
+                }
             }
-        }
-        .buttonStyle(PlainButtonStyle())
-        .disabled(isPurchasing)
-        .sheet(isPresented: $showingDetail) {
-            StoreItemDetailView(
-                item: customItem,
-                storeManager: storeManager,
-                onPurchase: {
-                    // Set purchasing state for real money items
-                    if case .realMoney = item.price {
-                        isPurchasing = true
-                    }
-                    
-                    // Try to purchase the item
-                    onPurchase()
-                    
-                    // For non-real money purchases, immediately reset the state
-                    if case .realMoney = item.price { } else {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            isPurchasing = false
-                        }
-                    }
-                }
-            )
-            .presentationDetents([.medium, .large])
         }
     }
 }

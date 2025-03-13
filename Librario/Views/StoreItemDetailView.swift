@@ -27,7 +27,7 @@ struct StoreItemDetailView: View {
                     RoundedRectangle(cornerRadius: 15)
                         .fill((item.accentColor ?? .blue).opacity(0.2))
                 )
-                .padding(.top, 20)
+                .padding(.top, 30)
                 .padding(.bottom, 10)
             
             // Item name and description
@@ -41,7 +41,7 @@ struct StoreItemDetailView: View {
                 .font(.body)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
-                .foregroundColor(.gray)
+                .foregroundColor(Color(UIColor.secondaryLabel))
             
             // Current inventory status
             CurrentInventoryView(item: item, storeManager: storeManager)
@@ -52,11 +52,9 @@ struct StoreItemDetailView: View {
                 isPurchasing = true
                 onPurchase()
                 
-                // For non-real money purchases, dismiss after a brief delay
-                if case .realMoney = item.price { } else {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        dismiss()
-                    }
+                // Dismiss after a brief delay for all purchase types
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    dismiss()
                 }
             }) {
                 HStack {
@@ -81,7 +79,7 @@ struct StoreItemDetailView: View {
             Spacer()
         }
         .frame(minWidth: 300, minHeight: 450)
-        .background(Color.white)
+        .background(Color(UIColor.systemBackground))
         .cornerRadius(20)
         .shadow(radius: 10)
     }
@@ -96,7 +94,7 @@ struct CurrentInventoryView: View {
         VStack(spacing: 12) {
             Text("Inventory Status")
                 .font(.headline)
-                .foregroundColor(.gray)
+                .foregroundColor(Color(UIColor.secondaryLabel))
             
             switch item.itemType {
             case .powerup(let powerupType):
@@ -109,7 +107,7 @@ struct CurrentInventoryView: View {
                     )
                     
                     Image(systemName: "arrow.right")
-                        .foregroundColor(.gray)
+                        .foregroundColor(Color(UIColor.secondaryLabel))
                     
                     InventoryStatusItem(
                         label: "After Purchase",
@@ -130,7 +128,7 @@ struct CurrentInventoryView: View {
                     )
                     
                     Image(systemName: "arrow.right")
-                        .foregroundColor(.gray)
+                        .foregroundColor(Color(UIColor.secondaryLabel))
                     
                     InventoryStatusItem(
                         label: "After Purchase",
@@ -159,7 +157,7 @@ struct CurrentInventoryView: View {
                                 )
                                 
                                 Image(systemName: "arrow.right")
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(Color(UIColor.secondaryLabel))
                                 
                                 InventoryStatusItem(
                                     label: "After",
@@ -182,7 +180,7 @@ struct CurrentInventoryView: View {
                             )
                             
                             Image(systemName: "arrow.right")
-                                .foregroundColor(.gray)
+                                .foregroundColor(Color(UIColor.secondaryLabel))
                             
                             InventoryStatusItem(
                                 label: "After",
@@ -222,7 +220,7 @@ struct InventoryStatusItem: View {
         VStack(spacing: 5) {
             Text(label)
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundColor(Color(UIColor.secondaryLabel))
             
             HStack(spacing: 5) {
                 FlexibleImageView(iconName: icon,
