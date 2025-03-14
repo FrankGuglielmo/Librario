@@ -94,8 +94,6 @@ struct StoreItemDetailView: View {
         }
         .frame(minWidth: 300)
         .background(Color(UIColor.systemBackground))
-        .cornerRadius(20)
-        .shadow(radius: 10)
     }
 }
 

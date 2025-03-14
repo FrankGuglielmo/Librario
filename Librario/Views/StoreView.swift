@@ -492,6 +492,22 @@ struct SpecialOffersView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                // Debug reset button for testing
+                if storeManager.showDebugOptions {
+                    Button(action: {
+                        storeManager.resetSpecialOffers()
+                    }) {
+                        Text("Debug: Reset Special Offers")
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.gray)
+                            .cornerRadius(8)
+                    }
+                    .padding(.bottom, 10)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                }
+                
                 // Special offers section
                 if filteredSpecialOffers.isEmpty {
                     Text("No special offers available at the moment. Check back later!")
@@ -769,23 +785,25 @@ struct StoreItemView: View {
                         item: customItem,
                         storeManager: storeManager,
                         onPurchase: {
-                            // Set purchasing state for real money items
-                            if case .realMoney = item.price {
-                                isPurchasing = true
-                            }
+                            // Set purchasing state for all items
+                            isPurchasing = true
                             
                             // Try to purchase the item
                             onPurchase()
                             
-                            // For non-real money purchases, immediately reset the state
-                            if case .realMoney = item.price { } else {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                    isPurchasing = false
-                                }
+                            // Reset purchasing state after a delay for ALL item types
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                isPurchasing = false
                             }
                         }
                     )
                     .presentationDetents([.height(detentHeight())])
+                }
+                .onChange(of: showingDetail) { isShowing in
+                    // Reset the purchasing state when detail view is dismissed
+                    if !isShowing {
+                        isPurchasing = false
+                    }
                 }
             }
         }
