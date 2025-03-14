@@ -21,6 +21,17 @@ import StoreKit
     // Track purchased one-time items
     var purchasedItems: Set<UUID> = []
     
+    // Daily deal tracking
+    private var lastDailyDealsRefreshDate: Date?
+    private var allPossibleDailyDeals: [StoreItem] = []
+    private var dailyDealsForToday: [StoreItem] = [] // Store the selected deals for today
+    
+    // Track purchased daily deals for the current day
+    private var purchasedDailyDeals: Set<UUID> = []
+    
+    // Debug flag for testing
+    var showDebugOptions = false
+    
     // StoreKit products
     var storeProducts: [Product] = []
     var productsLoaded = false
@@ -34,18 +45,47 @@ import StoreKit
         "POWERUP50": false
     ]
     
+    // Keys for UserDefaults
+    private let purchasedItemsKey = "purchasedItems"
+    private let lastDailyDealsRefreshKey = "lastDailyDealsRefresh"
+    private let purchasedDailyDealsKey = "purchasedDailyDeals"
+    private let dailyDealsForTodayKey = "dailyDealsForToday"
+    private let specialOffersKey = "specialOffers"
+    
     // Initializer
     init(userData: UserData) {
         self.userData = userData
         self.userInventory = userData.inventory
         
         // Load purchased items from UserDefaults if available
-        if let purchasedItemsData = UserDefaults.standard.data(forKey: "purchasedItems"),
+        if let purchasedItemsData = UserDefaults.standard.data(forKey: purchasedItemsKey),
            let decodedItems = try? JSONDecoder().decode(Set<UUID>.self, from: purchasedItemsData) {
             self.purchasedItems = decodedItems
         }
         
-        setupStoreItems()
+        // Load last refresh date
+        if let refreshDateData = UserDefaults.standard.data(forKey: lastDailyDealsRefreshKey),
+           let refreshDate = try? JSONDecoder().decode(Date.self, from: refreshDateData) {
+            self.lastDailyDealsRefreshDate = refreshDate
+        }
+        
+        // Load purchased daily deals from UserDefaults
+        if let purchasedDailyDealsData = UserDefaults.standard.data(forKey: purchasedDailyDealsKey),
+           let decodedItems = try? JSONDecoder().decode(Set<UUID>.self, from: purchasedDailyDealsData) {
+            self.purchasedDailyDeals = decodedItems
+        }
+        
+        // Create possible daily deals pool
+        createDailyDealsPool()
+        
+        // Setup general store items
+        setupGeneralStoreItems()
+        
+        // Load or setup special offers
+        loadOrSetupSpecialOffers()
+        
+        // Load or generate daily deals
+        loadOrGenerateDailyDeals()
         
         // Load StoreKit products
         Task {
@@ -61,6 +101,11 @@ import StoreKit
         return purchasedItems.contains(item.id)
     }
     
+    // Check if a daily deal has been purchased today
+    func isDailyDealPurchasedToday(_ item: StoreItem) -> Bool {
+        return purchasedDailyDeals.contains(item.id)
+    }
+    
     // Mark an item as purchased
     private func markItemAsPurchased(_ item: StoreItem) {
         purchasedItems.insert(item.id)
@@ -70,16 +115,127 @@ import StoreKit
     // Save purchased items to UserDefaults
     private func savePurchasedItems() {
         if let encodedData = try? JSONEncoder().encode(purchasedItems) {
-            UserDefaults.standard.set(encodedData, forKey: "purchasedItems")
+            UserDefaults.standard.set(encodedData, forKey: purchasedItemsKey)
         }
     }
     
-    // Setup store items
-    private func setupStoreItems() {
-        // Setup daily deals - 3 items as requested
-        dailyDeals = [
+    // Save purchased daily deals to UserDefaults
+    private func savePurchasedDailyDeals() {
+        if let encodedData = try? JSONEncoder().encode(purchasedDailyDeals) {
+            UserDefaults.standard.set(encodedData, forKey: purchasedDailyDealsKey)
+        }
+    }
+    
+    // Create pool of possible daily deals (20 different items)
+    private func createDailyDealsPool() {
+        allPossibleDailyDeals = [
+            // Powerup deals - discounted from general store prices
             StoreItem(
-                name: "Daily Swap",
+                name: "Daily Swap Special",
+                description: "Get a swap powerup at 50% off!",
+                iconName: PowerupType.swap.iconName,
+                price: .coins(50),
+                itemType: .powerup(.swap),
+                accentColor: .orange
+            ),
+            StoreItem(
+                name: "Daily Wildcard Special",
+                description: "Get a wildcard powerup at 50% off!",
+                iconName: PowerupType.wildcard.iconName,
+                price: .coins(75), // 50% off normal price
+                itemType: .powerup(.wildcard),
+                accentColor: .purple
+            ),
+            StoreItem(
+                name: "Daily Extra Life Special",
+                description: "Get an extra life at 50% off!",
+                iconName: PowerupType.extraLife.iconName,
+                price: .coins(150), // 50% off normal price
+                itemType: .powerup(.extraLife),
+                accentColor: .red
+            ),
+            
+            // Coin deals
+            StoreItem(
+                name: "Small Coin Pack",
+                description: "Get 50 coins at a discounted price",
+                iconName: "dollarsign.circle.fill",
+                price: .diamonds(1),
+                itemType: .currency(.coins, amount: 50),
+                accentColor: .yellow
+            ),
+            StoreItem(
+                name: "Medium Coin Pack",
+                description: "Get 100 coins at a discounted price",
+                iconName: "dollarsign.circle.fill", 
+                price: .diamonds(2),
+                itemType: .currency(.coins, amount: 100),
+                accentColor: .yellow
+            ),
+            StoreItem(
+                name: "Large Coin Pack",
+                description: "Get 200 coins at a discounted price",
+                iconName: "dollarsign.circle.fill",
+                price: .diamonds(3),
+                itemType: .currency(.coins, amount: 200),
+                accentColor: .yellow
+            ),
+            
+            // Diamond deals
+            StoreItem(
+                name: "Free Diamond",
+                description: "Get 1 diamond by watching a video",
+                iconName: "diamond_icon",
+                price: .video,
+                itemType: .currency(.diamonds, amount: 1),
+                accentColor: .cyan
+            ),
+            StoreItem(
+                name: "Diamond Trio",
+                description: "Get 3 diamonds for the price of 2",
+                iconName: "diamond_icon",
+                price: .coins(300),
+                itemType: .currency(.diamonds, amount: 3),
+                accentColor: .cyan
+            ),
+            
+            // Bundle deals
+            StoreItem(
+                name: "Daily Starter Pack",
+                description: "Get 1 of each powerup at a special price",
+                iconName: "gift.fill",
+                price: .coins(300), // Discounted bundle
+                itemType: .bundle([.swap, .extraLife, .wildcard], amounts: [1, 1, 1]),
+                accentColor: .green
+            ),
+            StoreItem(
+                name: "Swap Bundle",
+                description: "Get 3 swap powerups at a special price",
+                iconName: PowerupType.swap.iconName,
+                price: .coins(200), // Discounted from 300 regular price
+                itemType: .bundle([.swap], amounts: [3]),
+                accentColor: .orange
+            ),
+            StoreItem(
+                name: "Wildcard Bundle",
+                description: "Get 3 wildcard powerups at a special price",
+                iconName: PowerupType.wildcard.iconName,
+                price: .coins(300), // Discounted from 450 regular price
+                itemType: .bundle([.wildcard], amounts: [3]),
+                accentColor: .purple
+            ),
+            StoreItem(
+                name: "Life Bundle",
+                description: "Get 3 extra lives at a special price",
+                iconName: PowerupType.extraLife.iconName,
+                price: .coins(600), // Discounted from 900 regular price
+                itemType: .bundle([.extraLife], amounts: [3]),
+                accentColor: .red
+            ),
+            
+            // Video offers
+            StoreItem(
+                name: "Free Swap",
                 description: "Get a swap powerup for free by watching a video",
                 iconName: PowerupType.swap.iconName,
                 price: .video,
@@ -87,22 +243,119 @@ import StoreKit
                 accentColor: .orange
             ),
             StoreItem(
-                name: "Discounted Coins",
-                description: "Get 100 coins at a discounted price",
-                iconName: "dollarsign.circle.fill",
-                price: .diamonds(1),
-                itemType: .currency(.coins, amount: 100),
-                accentColor: .blue
+                name: "Free Wildcard",
+                description: "Get a wildcard powerup for free by watching a video",
+                iconName: PowerupType.wildcard.iconName,
+                price: .video,
+                itemType: .powerup(.wildcard),
+                accentColor: .purple
             ),
             StoreItem(
-                name: "Flash Sale - Extra Life",
-                description: "Get an extra life at 30% off today only!",
+                name: "Free Extra Life",
+                description: "Get an extra life for free by watching a video",
                 iconName: PowerupType.extraLife.iconName,
-                price: .coins(150),
+                price: .video,
                 itemType: .powerup(.extraLife),
                 accentColor: .red
+            ),
+            
+            // Coins for video
+            StoreItem(
+                name: "Video Coins",
+                description: "Get 25 coins by watching a video",
+                iconName: "dollarsign.circle.fill",
+                price: .video,
+                itemType: .currency(.coins, amount: 25),
+                accentColor: .yellow
+            ),
+            
+            // Special mixed bundles
+            StoreItem(
+                name: "Swap & Coins Bundle",
+                description: "Get 2 swaps and 50 coins at a special price",
+                iconName: "gift.fill",
+                price: .coins(180), // Discounted
+                itemType: .bundle([.swap], amounts: [2], currencies: [.coins: 50]),
+                accentColor: .orange
+            ),
+            StoreItem(
+                name: "Wildcard & Coins Bundle",
+                description: "Get 2 wildcards and 50 coins at a special price",
+                iconName: "gift.fill",
+                price: .coins(280), // Discounted
+                itemType: .bundle([.wildcard], amounts: [2], currencies: [.coins: 50]),
+                accentColor: .purple
+            ),
+            StoreItem(
+                name: "Extra Life & Coins Bundle",
+                description: "Get 2 extra lives and 50 coins at a special price",
+                iconName: "gift.fill",
+                price: .coins(550), // Discounted
+                itemType: .bundle([.extraLife], amounts: [2], currencies: [.coins: 50]),
+                accentColor: .red
+            ),
+            StoreItem(
+                name: "Diamond & Powerup Bundle",
+                description: "Get 1 diamond and 1 of each powerup",
+                iconName: "gift.fill",
+                price: .coins(500), // Special bundle
+                itemType: .bundle([.swap, .extraLife, .wildcard], amounts: [1, 1, 1], currencies: [.diamonds: 1]),
+                accentColor: .cyan
             )
         ]
+    }
+    
+    // Load existing daily deals or generate new ones if needed
+    private func loadOrGenerateDailyDeals() {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        // Check if we have saved daily deals
+        if let dailyDealsData = UserDefaults.standard.data(forKey: dailyDealsForTodayKey),
+           let decodedDeals = try? JSONDecoder().decode([StoreItem].self, from: dailyDealsData) {
+            
+            // Check if they're from today
+            if let lastRefreshDate = lastDailyDealsRefreshDate, calendar.isDate(lastRefreshDate, inSameDayAs: now) {
+                // Use the stored deals from today
+                self.dailyDealsForToday = decodedDeals
+                self.dailyDeals = decodedDeals
+                return
+            }
+        }
+        
+        // If we don't have deals for today or it's a new day, generate new ones
+        if let lastRefreshDate = lastDailyDealsRefreshDate, !calendar.isDate(lastRefreshDate, inSameDayAs: now) {
+            // It's a new day, refresh the deals
+            generateDailyDeals()
+            saveLastRefreshDate(now)
+            
+            // Clear purchased daily deals for the new day
+            purchasedDailyDeals.removeAll()
+            savePurchasedDailyDeals()
+        } else if lastDailyDealsRefreshDate == nil {
+            // No refresh date saved, so this is first run
+            generateDailyDeals()
+            saveLastRefreshDate(now)
+        }
+    }
+    
+    // Save daily deals to UserDefaults
+    private func saveDailyDeals() {
+        if let encodedData = try? JSONEncoder().encode(dailyDealsForToday) {
+            UserDefaults.standard.set(encodedData, forKey: dailyDealsForTodayKey)
+        }
+    }
+    
+    // Save the last refresh date to UserDefaults
+    private func saveLastRefreshDate(_ date: Date) {
+        lastDailyDealsRefreshDate = date
+        if let encodedData = try? JSONEncoder().encode(date) {
+            UserDefaults.standard.set(encodedData, forKey: lastDailyDealsRefreshKey)
+        }
+    }
+    
+    // Setup general store items
+    private func setupGeneralStoreItems() {
         
         // Setup general store items - organize by categories
         
@@ -119,7 +372,7 @@ import StoreKit
             ),
             StoreItem(
                 name: "Wildcard Pack",
-                description: "1x Use any letter you want",
+                description: "1x Change any tile on the board",
                 iconName: PowerupType.wildcard.iconName,
                 price: .coins(150), // As requested, 150 coins
                 itemType: .powerup(.wildcard),
@@ -146,7 +399,7 @@ import StoreKit
                 name: "10 Wildcards",
                 description: "Get 10 wildcard powerups",
                 iconName: PowerupType.wildcard.iconName,
-                price: .coins(1350), // 10% discount on buying 10
+                price: .coins(1350),
                 itemType: .bundle([.wildcard], amounts: [10]),
                 accentColor: .purple
             ),
@@ -154,7 +407,7 @@ import StoreKit
                 name: "10 Extra Lives",
                 description: "Get 10 extra life powerups",
                 iconName: PowerupType.extraLife.iconName,
-                price: .coins(2700), // 10% discount on buying 10
+                price: .coins(2700), 
                 itemType: .bundle([.extraLife], amounts: [10]),
                 accentColor: .red
             )
@@ -222,7 +475,19 @@ import StoreKit
         generalItems.append(contentsOf: coinItems)
         generalItems.append(contentsOf: diamondItems)
         
-        // Setup special offers
+    }
+    
+    // Load existing special offers or create new ones
+    private func loadOrSetupSpecialOffers() {
+        // Try to load existing special offers from UserDefaults
+        if let specialOffersData = UserDefaults.standard.data(forKey: specialOffersKey),
+           let decodedOffers = try? JSONDecoder().decode([StoreItem].self, from: specialOffersData) {
+            // Use the stored special offers
+            self.specialOffers = decodedOffers
+            return
+        }
+        
+        // If no stored offers, create default ones
         specialOffers = [
             StoreItem(
                 name: "Welcome Pack",
@@ -249,6 +514,9 @@ import StoreKit
                 accentColor: .indigo
             )
         ]
+        
+        // Save the special offers to persist across app sessions
+        saveSpecialOffers()
     }
     
     // Listen for StoreKit transaction updates
@@ -440,6 +708,13 @@ import StoreKit
         }
     }
     
+    // Save special offers to UserDefaults
+    private func saveSpecialOffers() {
+        if let encodedData = try? JSONEncoder().encode(specialOffers) {
+            UserDefaults.standard.set(encodedData, forKey: specialOffersKey)
+        }
+    }
+    
     // Update special offer items with StoreKit product
     private func updateSpecialOfferItem(_ product: Product, name: String) {
         for i in 0..<specialOffers.count {
@@ -457,6 +732,9 @@ import StoreKit
                 specialOffers[i] = updatedItem
             }
         }
+        
+        // Save updated special offers
+        saveSpecialOffers()
     }
     
     // Handle a StoreKit purchase transaction
@@ -793,11 +1071,28 @@ import StoreKit
             }
         }
         
+        // Check if this is a daily deal
+        if dailyDeals.contains(where: { $0.id == item.id }) {
+            purchasedDailyDeals.insert(item.id)
+            savePurchasedDailyDeals()
+        }
+        
+        // Check if this is a daily deal
+        if dailyDeals.contains(where: { $0.id == item.id }) {
+            purchasedDailyDeals.insert(item.id)
+            savePurchasedDailyDeals()
+        }
+        
         // Mark special offers and daily deals as purchased (one-time only items)
         // General store items can be purchased multiple times
         let isGeneralStoreItem = generalItems.contains { $0.id == item.id }
         if !isGeneralStoreItem {
             markItemAsPurchased(item)
+            
+            // If this is a special offer, save the updated special offers
+            if specialOffers.contains(where: { $0.id == item.id }) {
+                saveSpecialOffers()
+            }
         }
     }
     
@@ -808,9 +1103,54 @@ import StoreKit
         addPowerup(type)
     }
     
-    // Refresh daily deals
-    func refreshDailyDeals() {
-        // In a real implementation, this would generate new daily deals
-        // For now, just keep the existing ones
+    // Generate new daily deals by randomly selecting 3 new deals from the entire pool
+    private func generateDailyDeals() {
+        // Make sure we have deals in the pool
+        guard !allPossibleDailyDeals.isEmpty else { return }
+        
+        // Get 3 random deals from the complete pool
+        var randomDeals: [StoreItem] = []
+        var selectedIndices = Set<Int>()
+        
+        // Try to select 3 unique deals
+        let numDealsToSelect = min(3, allPossibleDailyDeals.count)
+        while randomDeals.count < numDealsToSelect {
+            let randomIndex = Int.random(in: 0..<allPossibleDailyDeals.count)
+            
+            // Only add if not already selected for today
+            if !selectedIndices.contains(randomIndex) {
+                selectedIndices.insert(randomIndex)
+                randomDeals.append(allPossibleDailyDeals[randomIndex])
+            }
+        }
+        
+        // Update the daily deals both in memory and for persistence
+        dailyDealsForToday = randomDeals
+        dailyDeals = randomDeals
+        
+        // Save the daily deals to persist across app sessions
+        saveDailyDeals()
+    }
+    
+    // Public method for manually refreshing deals (for testing/debugging)
+    func forceRefreshDailyDeals() {
+        generateDailyDeals()
+        saveLastRefreshDate(Date())
+        
+        // Clear purchased daily deals for the new deals
+        purchasedDailyDeals.removeAll()
+        savePurchasedDailyDeals()
+    }
+    
+    // Public method for resetting purchased special offers (for testing/debugging)
+    func resetSpecialOffers() {
+        // Remove special offers from purchasedItems
+        for offer in specialOffers {
+            purchasedItems.remove(offer.id)
+        }
+        savePurchasedItems()
+        
+        // Reload special offers
+        loadOrSetupSpecialOffers()
     }
 }

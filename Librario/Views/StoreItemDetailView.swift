@@ -16,6 +16,18 @@ struct StoreItemDetailView: View {
     
     @State private var isPurchasing = false
     
+    // Check if this is a consumable item
+    private var isConsumable: Bool {
+        switch item.itemType {
+        case .currency:
+            // Currency items are always consumable
+            return true
+        case .powerup, .bundle, .random:
+            // These could be consumable if they're in the general store
+            return storeManager.generalItems.contains { $0.id == item.id }
+        }
+    }
+    
     var body: some View {
         VStack(spacing: 20) {
             // Item icon
@@ -52,8 +64,11 @@ struct StoreItemDetailView: View {
                 isPurchasing = true
                 onPurchase()
                 
-                // Dismiss after a brief delay for all purchase types
+                // Always dismiss after a brief delay, but keep the purchasing state reset for consumables
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    if isConsumable {
+                        isPurchasing = false
+                    }
                     dismiss()
                 }
             }) {
@@ -75,13 +90,10 @@ struct StoreItemDetailView: View {
             .disabled(isPurchasing)
             .padding(.horizontal, 30)
             .padding(.top, 10)
-            
-            Spacer()
+            .padding(.bottom, 20)
         }
-        .frame(minWidth: 300, minHeight: 450)
+        .frame(minWidth: 300)
         .background(Color(UIColor.systemBackground))
-        .cornerRadius(20)
-        .shadow(radius: 10)
     }
 }
 
@@ -141,15 +153,14 @@ struct CurrentInventoryView: View {
                 
             case .bundle(let powerups, let amounts, let currencies):
                 // Display detailed inventory impact for bundle items
-                ScrollView {
-                    VStack(spacing: 15) {
+                VStack(spacing: 12) {
                     // Show powerups
                     if !powerups.isEmpty {
                         ForEach(0..<powerups.count, id: \.self) { index in
                             let powerupType = powerups[index]
                             let amount = index < amounts.count ? amounts[index] : 1
                             
-                            HStack(spacing: 25) {
+                            HStack(spacing: 20) {
                                 InventoryStatusItem(
                                     label: powerupType.displayName,
                                     value: "\(storeManager.getPowerupCount(powerupType))",
@@ -158,6 +169,7 @@ struct CurrentInventoryView: View {
                                 
                                 Image(systemName: "arrow.right")
                                     .foregroundColor(Color(UIColor.secondaryLabel))
+                                    .font(.caption)
                                 
                                 InventoryStatusItem(
                                     label: "After",
@@ -171,7 +183,7 @@ struct CurrentInventoryView: View {
                     
                     // Show currencies
                     ForEach(currencies.sorted(by: { $0.key.rawValue < $1.key.rawValue }), id: \.key) { currency, amount in
-                        HStack(spacing: 25) {
+                        HStack(spacing: 20) {
                             InventoryStatusItem(
                                 label: currency == .coins ? "Coins" : "Diamonds",
                                 value: currency == .coins ? 
@@ -181,6 +193,7 @@ struct CurrentInventoryView: View {
                             
                             Image(systemName: "arrow.right")
                                 .foregroundColor(Color(UIColor.secondaryLabel))
+                                .font(.caption)
                             
                             InventoryStatusItem(
                                 label: "After",
@@ -191,10 +204,8 @@ struct CurrentInventoryView: View {
                             )
                         }
                     }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 5)
                 }
+                .frame(maxWidth: .infinity)
                 
             case .random:
                 Text("Receive a random powerup")
@@ -217,26 +228,26 @@ struct InventoryStatusItem: View {
     var highlight: Bool = false
     
     var body: some View {
-        VStack(spacing: 5) {
+        VStack(spacing: 3) {
             Text(label)
-                .font(.caption)
+                .font(.caption2)
                 .foregroundColor(Color(UIColor.secondaryLabel))
             
-            HStack(spacing: 5) {
+            HStack(spacing: 3) {
                 FlexibleImageView(iconName: icon,
                                  foregroundColor: highlight ? .blue : .gray,
-                                 fontSize: .caption)
-                    .frame(width: 20, height: 20)
+                                 fontSize: .caption2)
+                    .frame(width: 16, height: 16)
                 
                 Text(value)
-                    .font(.title3)
+                    .font(.subheadline)
                     .fontWeight(highlight ? .bold : .regular)
                     .foregroundColor(highlight ? .blue : .primary)
             }
         }
-        .padding(8)
+        .padding(5)
         .background(highlight ? Color.blue.opacity(0.1) : Color.clear)
-        .cornerRadius(8)
+        .cornerRadius(5)
     }
 }
 
@@ -296,5 +307,5 @@ struct PriceView: View {
         storeManager: storeManager,
         onPurchase: {}
     )
-    .frame(width: 350, height: 600)
+    .frame(width: 350)
 }
