@@ -89,8 +89,16 @@ struct GameView: View {
                                 Text("This will rearrange all tiles and add more fire tiles.")
                             }
 
-                            // Show the praise bubble or reminder bubble
-                            if currentSprite == "happy_sprite" && !bubbleText.isEmpty {
+                            // Show the praise bubble, reminder bubble, or swap mode instructions
+                            if gameManager.isInSwapMode {
+                                let message = gameManager.selectedSwapTile == nil ? 
+                                            "Select a tile to swap" : 
+                                            "Select an adjacent tile"
+                                TextBubbleView(text: message)
+                                    .offset(x: 75, y: -50) // Position the bubble above the sprite
+                                    .transition(.opacity)
+                                    .animation(.easeInOut(duration: 0.5), value: gameManager.isInSwapMode)
+                            } else if currentSprite == "happy_sprite" && !bubbleText.isEmpty {
                                 TextBubbleView(text: bubbleText)
                                     .offset(x: 75, y: -50) // Position the bubble above the sprite
                                     .transition(.opacity)
@@ -141,6 +149,68 @@ struct GameView: View {
                 Spacer()
             }
             .zIndex(2)
+            
+            // Remove the duplicate swap mode text bubble - we already added it to the sprite
+            
+            // Swap confirmation card
+            if gameManager.showSwapConfirmation, 
+               let fromTile = gameManager.selectedSwapTile,
+               let toTile = gameManager.targetSwapTile {
+                CardView(cards: [
+                    Card(
+                        title: "Confirm Swap",
+                        subtitle: "Swap these two tiles?",
+                        cardColor: .sapphire,
+                        tabIcon: "arrow.2.squarepath",
+                        isCloseDisabled: true,
+                        buttons: [
+                            CardButton(
+                                title: "Confirm",
+                                cardColor: .sapphire,
+                                action: {
+                                    gameManager.confirmSwap(from: fromTile.position, to: toTile.position)
+                                }
+                            ),
+                            CardButton(
+                                title: "Cancel",
+                                cardColor: .sapphire,
+                                action: {
+                                    gameManager.exitSwapMode()
+                                }
+                            )
+                        ]
+                    ) {
+                        VStack(spacing: 20) {
+                            HStack(spacing: 40) {
+                                VStack {
+                                    Text("From")
+                                        .foregroundColor(.white)
+                                    Image(fromTile.imageName)
+                                        .resizable()
+                                        .frame(width: 60, height: 60)
+                                }
+                                
+                                Image(systemName: "arrow.right")
+                                    .font(.system(size: 30))
+                                    .foregroundColor(.white)
+                                
+                                VStack {
+                                    Text("To")
+                                        .foregroundColor(.white)
+                                    Image(toTile.imageName)
+                                        .resizable()
+                                        .frame(width: 60, height: 60)
+                                }
+                            }
+                            
+                            Text("This will use 1 Swap powerup")
+                                .foregroundColor(.white)
+                                .padding(.top)
+                        }
+                    }
+                ])
+                .zIndex(3)
+            }
 
             // Show LevelUpView based on showLevelUp state
             if showLevelUp {
