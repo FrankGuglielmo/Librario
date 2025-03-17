@@ -10,9 +10,16 @@ import SwiftUI
 import Observation
 
 @Observable class GameManager: Codable {
-    // Private properties for inventory management
-    private var userData: UserData?
-    private var userInventory: Inventory? // Reference to userData?.inventory for readability
+// Private properties for inventory management
+private var userData: UserData?
+private var userInventory: Inventory? // Reference to userData?.inventory for readability
+
+// Swap mode properties
+var isInSwapMode: Bool = false
+var selectedSwapTile: Tile? = nil
+var adjacentTiles: [Position] = []
+var showSwapConfirmation: Bool = false
+var targetSwapTile: Tile? = nil
     
     // Game state enum to track the current state of gameplay
     enum GameplayState {
@@ -108,6 +115,161 @@ import Observation
     func getPowerupCount(_ type: PowerupType) -> Int {
         guard let userInventory = userInventory else { return 0 }
         return userInventory.powerups[type] ?? 0
+    }
+    
+    // MARK: - Swap Mode Methods
+    
+    /**
+     * Enters swap mode if the user has swap powerups available.
+     * 
+     * @return `true` if swap mode was entered successfully; otherwise, `false`.
+     */
+    func enterSwapMode() -> Bool {
+        // Check if user has swap powerups
+        if getPowerupCount(.swap) > 0 {
+            isInSwapMode = true
+            tileManager.clearSelection() // Clear any selected tiles
+            selectedSwapTile = nil
+            targetSwapTile = nil
+            adjacentTiles = []
+            showSwapConfirmation = false
+            return true
+        }
+        return false
+    }
+    
+    /**
+     * Exits swap mode and resets all swap-related state.
+     */
+    func exitSwapMode() {
+        isInSwapMode = false
+        selectedSwapTile = nil
+        targetSwapTile = nil
+        adjacentTiles = []
+        showSwapConfirmation = false
+    }
+    
+    /**
+     * Selects a tile for swapping. If this is the first tile selected,
+     * it will calculate and store adjacent tiles. If this is the second tile,
+     * it will check if it's adjacent and show the confirmation dialog.
+     * If the selected tile is already selected, it will deselect it.
+     * 
+     * @param position The position of the tile to select.
+     * @return `true` if the selection was valid; otherwise, `false`.
+     */
+    func selectTileForSwap(at position: Position) -> Bool {
+        guard isInSwapMode else { return false }
+        
+        if selectedSwapTile == nil {
+            // First selection - store the tile and calculate adjacent tiles
+            if let tile = tileManager.getTile(at: position) {
+                selectedSwapTile = tile
+                adjacentTiles = getAdjacentTiles(to: position)
+                return true
+            }
+        } else if selectedSwapTile!.position == position {
+            // Tapped the same tile again - deselect it
+            selectedSwapTile = nil
+            adjacentTiles = []
+            return true
+        } else {
+            // Second selection - check if it's adjacent
+            if canSwapTiles(from: selectedSwapTile!.position, to: position) {
+                // Store the target tile and show confirmation
+                if let tile = tileManager.getTile(at: position) {
+                    targetSwapTile = tile
+                    showSwapConfirmation = true
+                    return true
+                }
+            }
+        }
+        return false
+    }
+    
+    /**
+     * Gets all valid adjacent tile positions for a given position.
+     * 
+     * @param position The position to get adjacent tiles for.
+     * @return An array of adjacent positions.
+     */
+    func getAdjacentTiles(to position: Position) -> [Position] {
+        let isEvenColumn = position.column % 2 == 0
+        var adjacentPositions: [Position] = []
+        
+        // Same column
+        adjacentPositions.append(Position(row: position.row - 1, column: position.column)) // Up
+        adjacentPositions.append(Position(row: position.row + 1, column: position.column)) // Down
+        
+        // Adjacent columns
+        if isEvenColumn {
+            // Even column
+            adjacentPositions.append(Position(row: position.row, column: position.column - 1)) // Left
+            adjacentPositions.append(Position(row: position.row, column: position.column + 1)) // Right
+            adjacentPositions.append(Position(row: position.row - 1, column: position.column - 1)) // Up-Left
+            adjacentPositions.append(Position(row: position.row - 1, column: position.column + 1)) // Up-Right
+        } else {
+            // Odd column
+            adjacentPositions.append(Position(row: position.row, column: position.column - 1)) // Left
+            adjacentPositions.append(Position(row: position.row, column: position.column + 1)) // Right
+            adjacentPositions.append(Position(row: position.row + 1, column: position.column - 1)) // Down-Left
+            adjacentPositions.append(Position(row: position.row + 1, column: position.column + 1)) // Down-Right
+        }
+        
+        // Filter out invalid positions
+        return adjacentPositions.filter { 
+            $0.row >= 0 && $0.row < tileManager.grid.count && 
+            $0.column >= 0 && $0.column < tileManager.grid[0].count 
+        }
+    }
+    
+    /**
+     * Checks if two tiles can be swapped.
+     * 
+     * @param from The position of the first tile.
+     * @param to The position of the second tile.
+     * @return `true` if the tiles can be swapped; otherwise, `false`.
+     */
+    func canSwapTiles(from: Position, to: Position) -> Bool {
+        return adjacentTiles.contains(to)
+    }
+    
+    /**
+     * Swaps the tiles at the given positions.
+     * 
+     * @param from The position of the first tile.
+     * @param to The position of the second tile.
+     */
+    func swapTiles(from: Position, to: Position) {
+        guard let fromTile = tileManager.getTile(at: from),
+              let toTile = tileManager.getTile(at: to) else { return }
+        
+        // Create copies with swapped positions
+        var newFromTile = fromTile
+        var newToTile = toTile
+        
+        newFromTile.position = to
+        newToTile.position = from
+        
+        // Update the grid
+        tileManager.updateTile(at: from, with: newToTile)
+        tileManager.updateTile(at: to, with: newFromTile)
+        
+        // Play a sound effect for the swap
+        AudioManager.shared.playSoundEffect(named: "tile_click2")
+    }
+    
+    /**
+     * Confirms the swap, performs the swap operation, decrements the powerup count,
+     * and exits swap mode.
+     * 
+     * @param from The position of the first tile.
+     * @param to The position of the second tile.
+     */
+    func confirmSwap(from: Position, to: Position) {
+        swapTiles(from: from, to: to)
+        usePowerup(.swap) // Decrement the powerup count
+        exitSwapMode()
     }
 
     /**

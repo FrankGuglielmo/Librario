@@ -214,22 +214,28 @@ struct GameToolBarView: View {
     // Swap button
     private func swapButton() -> some View {
         Button(action: {
-            if gameManager.useSwapPowerup() {
-                // Swap functionality would be implemented here
-                print("Swap powerup used")
+            if gameManager.isInSwapMode {
+                // If already in swap mode, exit it
+                gameManager.exitSwapMode()
             } else {
-                // Not enough powerups
-                AudioManager.shared.playSoundEffect(named: "incorrect_selection")
+                // Try to enter swap mode
+                if !gameManager.enterSwapMode() {
+                    // Not enough powerups
+                    AudioManager.shared.playSoundEffect(named: "incorrect_selection")
+                } else {
+                    // Successfully entered swap mode
+                    gameManager.changeSprite(to: "happy_sprite")
+                }
             }
         }) {
             ZStack {
                 VStack {
                     Image(systemName: "arrow.2.squarepath")
                         .font(.title3)
-                        .foregroundStyle(Color.darkGrey)
+                        .foregroundStyle(gameManager.isInSwapMode ? Color.white : Color.darkGrey)
                     Text("Swap")
                         .font(.footnote)
-                        .foregroundStyle(Color.darkGrey)
+                        .foregroundStyle(gameManager.isInSwapMode ? Color.white : Color.darkGrey)
                         .fontWeight(.bold)
                 }
                 
@@ -247,7 +253,14 @@ struct GameToolBarView: View {
             }
         }
         .frame(width: 60, height: 60)
-        .background(Color.cream)
+        .background(gameManager.isInSwapMode ? Color.forestGreen : Color.cream)
+        .cornerRadius(gameManager.isInSwapMode ? 8 : 0)
+        .overlay(
+            gameManager.isInSwapMode ?
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.yellow, lineWidth: 2)
+            : nil
+        )
         .contentShape(Rectangle())
     }
     

@@ -23,6 +23,7 @@ struct GameGridView: View {
     @State private var lastTapPosition: Position?
     @State private var lastTapTime: Date = Date.distantPast
     @State private var isDragging: Bool = false
+    @State private var adjacentTilePositions: Set<Position> = []
     @Namespace private var tileNamespace
 
     var body: some View {
@@ -36,10 +37,29 @@ struct GameGridView: View {
             ZStack {
                 // Display tiles
                 ForEach(tileManager.grid.flatMap { $0 }) { tile in
-                    TileView(tile: tile, tileSize: tileSize) {
-                        tileManager.toggleTileSelection(at: tile.position)
+                    ZStack {
+                        // Determine if this is an adjacent tile in swap mode
+                        let isAdjacentInSwapMode = gameManager.isInSwapMode && adjacentTilePositions.contains(tile.position)
+                        
+                        // Create a modified tile for visualization purposes
+                        let displayTile = isAdjacentInSwapMode ? getHighlightedTile(tile) : tile
+                        
+                        // Base tile view
+                        TileView(tile: displayTile, tileSize: tileSize) {
+                            if gameManager.isInSwapMode {
+                                gameManager.selectTileForSwap(at: tile.position)
+                            } else {
+                                tileManager.toggleTileSelection(at: tile.position)
+                            }
+                        }
+                        .onTapGesture {
+                            if gameManager.isInSwapMode {
+                                gameManager.selectTileForSwap(at: tile.position)
+                            } else {
+                                processTileTap(at: tile.position, tile: tile)
+                            }
+                        }
                     }
-    
                     .position(
                         x: xPosition(for: tile, tileSize: tileSize),
                         y: yPosition(for: tile, tileSize: tileSize)
@@ -63,7 +83,7 @@ struct GameGridView: View {
             .frame(width: gridWidth, height: gridHeight)
             .background(Color(red: 0.33, green: 0.29, blue: 0.21))
             .border(Color(red: 0.68, green: 0.47, blue: 0.29), width: 3)
-            .gesture(dragGesture(tileSize: tileSize, columns: columns, rows: rows))
+            .gesture(gameManager.isInSwapMode ? nil : dragGesture(tileSize: tileSize, columns: columns, rows: rows))
             .onAppear {
                 buildPositionCache(tileSize: tileSize, columns: columns, rows: rows)
                 cacheArrowPositions(tileSize: tileSize)
@@ -72,6 +92,9 @@ struct GameGridView: View {
                 let newTileSize = newSize.width / CGFloat(columns)
                 buildPositionCache(tileSize: newTileSize, columns: columns, rows: rows)
                 cacheArrowPositions(tileSize: newTileSize)
+            }
+            .onChange(of: gameManager.adjacentTiles) { _, newPositions in
+                adjacentTilePositions = Set(newPositions)
             }
         }
         .frame(height: calculateGridHeight(for: tileManager.grid, tileSize: UIScreen.main.bounds.width / 7))
@@ -606,6 +629,72 @@ struct GameGridView: View {
     }
 
 
+    // Handle tile tap with double-tap detection
+    private func processTileTap(at position: Position, tile: Tile) {
+        let now = Date()
+        
+        // Check if this is a double-tap (same position tapped twice within a short time)
+        if let lastPosition = lastTapPosition, 
+           lastPosition == position,
+           now.timeIntervalSince(lastTapTime) < 0.3 { // 300ms threshold for double-tap
+            
+            // Only process double-tap for word submission if:
+            // 1. There are selected tiles
+            // 2. The double-tapped tile is the last selected tile
+            // 3. The selected tiles form a valid word
+            if !tileManager.selectedTiles.isEmpty && 
+               tileManager.isLastSelectedTile(tile: tile) && 
+               tileManager.validateWord() {
+                // Submit the word
+                gameManager.submitWord()
+            } else {
+                // Otherwise, just handle as a normal tap
+                tileManager.toggleTileSelection(at: position)
+            }
+            
+            // Reset tap tracking
+            lastTapPosition = nil
+            lastTapTime = Date.distantPast
+        } else {
+            // For a single tap, we need to delay the action to allow for double-tap detection
+            // Store the position and time for potential double-tap detection
+            lastTapPosition = position
+            lastTapTime = now
+            
+            // Check if this tile is the last selected tile and forms a valid word
+            // If so, we'll delay the toggle to allow for double-tap detection
+            let isLastSelectedTile = tileManager.isLastSelectedTile(tile: tile)
+            let isValidWord = !tileManager.selectedTiles.isEmpty && tileManager.validateWord()
+            
+            if isLastSelectedTile && isValidWord {
+                // Don't toggle immediately - wait to see if a double-tap follows
+                // The toggle will happen if no second tap comes within the threshold
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { // 300ms delay
+                    // Only toggle if this wasn't part of a double-tap
+                    // (if it was, lastTapTime would have been reset)
+                    if self.lastTapPosition == position && now.timeIntervalSince1970 == self.lastTapTime.timeIntervalSince1970 {
+                        self.tileManager.toggleTileSelection(at: position)
+                        // Reset tap tracking after handling
+                        self.lastTapPosition = nil
+                        self.lastTapTime = Date.distantPast
+                    }
+                }
+            } else {
+                // For non-critical tiles (not last tile of valid word), toggle immediately
+                tileManager.toggleTileSelection(at: position)
+            }
+        }
+    }
+    
+    // Create a highlighted version of a tile for visualization
+    private func getHighlightedTile(_ tile: Tile) -> Tile {
+        // Create a copy of the tile with the 'isSelected' property set to true,
+        // which will make TileView use the highlighted image
+        var highlightedTile = tile
+        highlightedTile.isSelected = true
+        return highlightedTile
+    }
+    
     private func calculateDirection(from: Position, to: Position) -> String {
         let dx = to.column - from.column
         let dy = to.row - from.row

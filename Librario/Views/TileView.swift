@@ -17,6 +17,6 @@ struct TileView: View {
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(width: tileSize, height: tileSize)
+            .contentShape(Rectangle()) // Ensure the entire area is tappable
     }
 }
-
