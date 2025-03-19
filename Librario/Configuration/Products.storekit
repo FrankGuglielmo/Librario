@@ -35,8 +35,8 @@
       "internalID" : "E7F95D8D",
       "localizations" : [
         {
-          "description" : "A pack containing 20,000 coins.",
-          "displayName" : "20,000 Coins",
+          "description" : "A pack containing 2,000 coins.",
+          "displayName" : "2,000 Coins",
           "locale" : "en_US"
         }
       ],
@@ -50,8 +50,8 @@
       "internalID" : "3DDCE89F",
       "localizations" : [
         {
-          "description" : "A pack containing 50,000 coins.",
-          "displayName" : "50,000 Coins",
+          "description" : "A pack containing 5,000 coins.",
+          "displayName" : "5,000 Coins",
           "locale" : "en_US"
         }
       ],
