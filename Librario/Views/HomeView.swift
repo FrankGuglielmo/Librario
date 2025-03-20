@@ -11,15 +11,18 @@ struct HomeView: View {
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @Environment(\.verticalSizeClass) var verticalSizeClass
     @State private var showActionSheet = false
+    @State private var showArcadeActionSheet = false
     @State private var pathStore = PathStore() // Create PathStore instance
     @Bindable var userData: UserData
     @State private var gameCenterManager = GameCenterManager.shared
-    @Bindable var gameManager: GameManager
+@Bindable var gameManager: GameManagerProtocol
+@Bindable var arcadeGameManager: GameManagerProtocol
     @State var storeManager: StoreManager
     
-    init(userData: UserData, gameManager: GameManager, storeManager: StoreManager) {
+    init(userData: UserData, gameManager: GameManagerProtocol, arcadeGameManager: GameManagerProtocol, storeManager: StoreManager) {
         self.userData = userData
         self.gameManager = gameManager
+        self.arcadeGameManager = arcadeGameManager
         self.storeManager = storeManager
     }
     
@@ -137,16 +140,48 @@ struct HomeView: View {
                                 )
                             }
                             
-                            // Settings Button (action now blank)
+                            // Arcade Mode Button
                             Button(action: {
-                                // Action is now blank
-                                AudioManager.shared.playSoundEffect(named: "switch_view_sound")
+                                if arcadeGameManager.gameState.score > 0 {
+                                    showArcadeActionSheet = true
+                                } else {
+                                    AudioManager.shared.playSoundEffect(named: "switch_view_sound")
+                                    arcadeGameManager.startNewGame(userStatistics: userData.userStatistics)
+                                    pathStore.path.append(ViewType.arcadeGame)
+                                }
                             }, label: {
-                                Image(bookImages[1])
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(height: bookHeights[1])
+                                ZStack {
+                                    if arcadeGameManager.gameState.score > 0 {
+                                        Image(horizontalSizeClass == .compact ? "Resume_Arcade_Book" : "Resume_Arcade_Book_Large")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(height: bookHeights[1])
+                                    } else {
+                                        Image(bookImages[1])
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(height: bookHeights[1])
+                                    }
+                                }
                             })
+                            .actionSheet(isPresented: $showArcadeActionSheet) {
+                                ActionSheet(
+                                    title: Text("Active Arcade Game Detected"),
+                                    message: Text("Would you like to resume your current arcade game or start a new one?"),
+                                    buttons: [
+                                        .default(Text("Resume Game")) {
+                                            AudioManager.shared.playSoundEffect(named: "switch_view_sound")
+                                            pathStore.path.append(ViewType.arcadeGame)
+                                        },
+                                        .destructive(Text("Start New Game")) {
+                                            AudioManager.shared.playSoundEffect(named: "switch_view_sound")
+                                            arcadeGameManager.startNewGame(userStatistics: userData.userStatistics)
+                                            pathStore.path.append(ViewType.arcadeGame)
+                                        },
+                                        .cancel()
+                                    ]
+                                )
+                            }
                             
                             // How to Play Button
                             Button(action: {
@@ -190,6 +225,9 @@ struct HomeView: View {
                 case .game:
                     GameView(gameManager: gameManager, userData: userData, navigationPath: $pathStore.path)
                         .navigationBarBackButtonHidden(true) // Disable back button
+                case .arcadeGame:
+                    ArcadeGameView(arcadeGameManager: arcadeGameManager, userData: userData, navigationPath: $pathStore.path)
+                        .navigationBarBackButtonHidden(true)
                 case .settings:
                     SettingsView(navigationPath: $pathStore.path)
                         .navigationBarBackButtonHidden(true)
@@ -289,17 +327,23 @@ struct HomePage2_Previews: PreviewProvider {
         Group {
             let userData = UserData()
             let storeManager = StoreManager(userData: userData)
+            let dictionaryManager = DictionaryManager()
             let gameManager = GameManager(
-                dictionaryManager: DictionaryManager(),
+                dictionaryManager: dictionaryManager,
                 userData: userData
             )
-            HomeView(userData: userData, gameManager: gameManager, storeManager: storeManager)
+            let arcadeGameManager = ArcadeGameManager(
+                dictionaryManager: dictionaryManager,
+                userData: userData
+            )
+            HomeView(userData: userData, gameManager: gameManager, arcadeGameManager: arcadeGameManager, storeManager: storeManager)
         }
     }
 }
 
 enum ViewType: Hashable, Codable {
     case game
+    case arcadeGame
     case settings
     case stats
     case tips

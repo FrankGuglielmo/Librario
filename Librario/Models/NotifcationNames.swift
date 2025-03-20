@@ -11,4 +11,5 @@ extension Notification.Name {
     static let appDidBecomeActive = Notification.Name("appDidBecomeActive")
     static let gameViewDidAppear = Notification.Name("gameViewDidAppear")
     static let gameViewDidDisappear = Notification.Name("gameViewDidDisappear")
+    static let gameplayStateChanged = Notification.Name("gameplayStateChanged")
 }

@@ -11,9 +11,15 @@ import Observation
 @Observable class GameState: Codable {
     var score: Int = 0
     var level: Int = 1
+    var gameMode: GameMode = .classic
+    
+    enum GameMode: String, Codable {
+        case classic
+        case arcade
+    }
     
     private enum CodingKeys: String, CodingKey {
-        case score, level
+        case score, level, gameMode
     }
     
     init() {}
@@ -23,12 +29,14 @@ import Observation
         let container = try decoder.container(keyedBy: CodingKeys.self)
         score = try container.decode(Int.self, forKey: .score)
         level = try container.decode(Int.self, forKey: .level)
+        gameMode = try container.decodeIfPresent(GameMode.self, forKey: .gameMode) ?? .classic
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(score, forKey: .score)
         try container.encode(level, forKey: .level)
+        try container.encode(gameMode, forKey: .gameMode)
     }
 
     // Reset the state for a new game
@@ -40,18 +48,20 @@ import Observation
     // MARK: - Persistence Methods
 
     func saveGameState() {
-        let fileURL = GameState.getDocumentsDirectory().appendingPathComponent("gameState.json")
+        let filename = gameMode == .classic ? "gameState.json" : "arcadeGameState.json"
+        let fileURL = GameState.getDocumentsDirectory().appendingPathComponent(filename)
         do {
             let data = try JSONEncoder().encode(self)
             try data.write(to: fileURL)
-            print("Game state saved successfully.")
+            print("\(gameMode) game state saved successfully.")
         } catch {
-            print("Failed to save game state: \(error)")
+            print("Failed to save \(gameMode) game state: \(error)")
         }
     }
 
-    static func loadGameState() -> GameState? {
-        let fileURL = getDocumentsDirectory().appendingPathComponent("gameState.json")
+    static func loadGameState(gameMode: GameMode = .classic) -> GameState? {
+        let filename = gameMode == .classic ? "gameState.json" : "arcadeGameState.json"
+        let fileURL = getDocumentsDirectory().appendingPathComponent(filename)
         
         let fileManager = FileManager.default
         guard fileManager.fileExists(atPath: fileURL.path) else {

@@ -113,15 +113,18 @@ class TileManager: ObservableObject, Codable {
     // MARK: - Persistence Methods
     /**
      * Saves the current state of the `TileManager` to disk.
+     *
+     * @param gameMode The game mode to save for (.classic or .arcade).
      */
-    func saveTileManager() {
-        let fileURL = TileManager.getDocumentsDirectory().appendingPathComponent("tileManager.json")
+    func saveTileManager(for gameMode: GameState.GameMode) {
+        let filename = gameMode == .classic ? "classicTileManager.json" : "arcadeTileManager.json"
+        let fileURL = TileManager.getDocumentsDirectory().appendingPathComponent(filename)
         do {
             let data = try JSONEncoder().encode(self)
             try data.write(to: fileURL)
-            print("TileManager saved successfully.")
+            print("\(gameMode) TileManager saved successfully.")
         } catch {
-            print("Failed to save TileManager: \(error)")
+            print("Failed to save \(gameMode) TileManager: \(error)")
         }
     }
     
@@ -129,10 +132,12 @@ class TileManager: ObservableObject, Codable {
      * Loads a saved `TileManager` state from disk.
      *
      * @param dictionaryManager The `DictionaryManager` used to reinitialize `WordChecker`.
+     * @param gameMode The game mode to load for (.classic or .arcade).
      * @return A `TileManager` instance if loading is successful; otherwise, `nil`.
      */
-    static func loadTileManager(dictionaryManager: DictionaryManager) -> TileManager? {
-        let fileURL = getDocumentsDirectory().appendingPathComponent("tileManager.json")
+    static func loadTileManager(dictionaryManager: DictionaryManager, for gameMode: GameState.GameMode) -> TileManager? {
+        let filename = gameMode == .classic ? "classicTileManager.json" : "arcadeTileManager.json"
+        let fileURL = getDocumentsDirectory().appendingPathComponent(filename)
         
         let fileManager = FileManager.default
         guard fileManager.fileExists(atPath: fileURL.path) else {
@@ -375,6 +380,18 @@ class TileManager: ObservableObject, Codable {
         }
     }
 
+    /**
+     * Special method for arcade mode to check hot/cold streaks without changing state
+     * Returns a tuple with the hot and cold streak status
+     */
+    func processWordSubmissionForStreak(word: String, points: Int) -> (isHot: Bool, isCold: Bool) {
+        // Just check the status without updating anything
+        return (
+            isHot: performanceEvaluator.isHotStreak,
+            isCold: performanceEvaluator.isColdStreak
+        )
+    }
+    
     /**
      * Processes the submission of a word, updating the grid and state accordingly.
      *

@@ -35,20 +35,28 @@ import Observation
             AudioManager.shared.settingsDidChange()
         }
     }
+    
+    var showDebugTimer: Bool {
+        didSet {
+            save()
+        }
+    }
 
     // Default settings
-    static let defaultSettings = Settings(musicVolume: 1.0, soundEffectsVolume: 1.0)
+    static let defaultSettings = Settings(musicVolume: 1.0, soundEffectsVolume: 1.0, showDebugTimer: false)
 
     // Coding Keys for encoding/decoding
     private enum CodingKeys: String, CodingKey {
         case musicVolume
         case soundEffectsVolume
+        case showDebugTimer
     }
 
     // Initializer
-    init(musicVolume: Float, soundEffectsVolume: Float) {
+    init(musicVolume: Float, soundEffectsVolume: Float, showDebugTimer: Bool) {
         self.musicVolume = musicVolume
         self.soundEffectsVolume = soundEffectsVolume
+        self.showDebugTimer = showDebugTimer
     }
 
     // Decodable conformance
@@ -56,6 +64,8 @@ import Observation
         let container = try decoder.container(keyedBy: CodingKeys.self)
         musicVolume = try container.decode(Float.self, forKey: .musicVolume)
         soundEffectsVolume = try container.decode(Float.self, forKey: .soundEffectsVolume)
+        // If showDebugTimer doesn't exist in older saved settings, default to false
+        showDebugTimer = try container.decodeIfPresent(Bool.self, forKey: .showDebugTimer) ?? false
     }
 
     // Encodable conformance
@@ -63,6 +73,7 @@ import Observation
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(musicVolume, forKey: .musicVolume)
         try container.encode(soundEffectsVolume, forKey: .soundEffectsVolume)
+        try container.encode(showDebugTimer, forKey: .showDebugTimer)
     }
 
     // Method to save the settings to UserDefaults
@@ -72,4 +83,3 @@ import Observation
         }
     }
 }
-

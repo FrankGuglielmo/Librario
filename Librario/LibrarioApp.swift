@@ -15,7 +15,8 @@ import StoreKit
 struct MyApp: App {
     let dictionaryManager: DictionaryManager
     let userData: UserData
-    let gameManager: GameManager
+    let gameManager: GameManagerProtocol
+    let arcadeGameManager: GameManagerProtocol
     let storeManager: StoreManager
     let gameCenterManager = GameCenterManager.shared
     @Environment(\.scenePhase) var scenePhase
@@ -32,14 +33,20 @@ struct MyApp: App {
         // Create store manager with direct access to userData
         let storeManager = StoreManager(userData: userData)
         
-        // Create game manager with direct access to userData
-        let gameManager = GameManager(
+        // Create game managers with direct access to userData - using our new protocol-based structure
+        let classicGameManager = ClassicGameManager(
+            dictionaryManager: dictionaryManager,
+            userData: userData
+        )
+        
+        let arcadeGameManager = ArcadeGameManager2(
             dictionaryManager: dictionaryManager,
             userData: userData
         )
         
         self.dictionaryManager = dictionaryManager
-        self.gameManager = gameManager
+        self.gameManager = classicGameManager
+        self.arcadeGameManager = arcadeGameManager
         self.userData = userData
         self.storeManager = storeManager
         AudioManager.shared.playMusic(named: "gameLoop1", loop: true)
@@ -49,7 +56,7 @@ struct MyApp: App {
 
     var body: some Scene {
         WindowGroup {
-            HomeView(userData: userData, gameManager: gameManager, storeManager: storeManager)
+            HomeView(userData: userData, gameManager: gameManager, arcadeGameManager: arcadeGameManager, storeManager: storeManager)
                 .onAppear {
                     // Set up a transaction listener when the app appears
                     // This is a backup in case the listener in StoreManager fails
@@ -84,14 +91,22 @@ struct MyApp: App {
                 print("Updated login streak on app launch")
             case .inactive:
                 print("App became inactive")
-                // Pause timer but don't save state yet
+                // Pause timers but don't save state yet
                 gameManager.pauseGameTimer()
+                arcadeGameManager.pauseGameTimer()
+                
+                // Also pause fire tile timer for arcade mode
+                if let arcadeManager = arcadeGameManager as? ArcadeGameManager2 {
+                    arcadeManager.pauseFireTileTimer()
+                }
             case .background:
                 print("App going into background")
                 // Update statistics with current game time before going to background
                 gameManager.updateStatisticsWithGameTime()
+                arcadeGameManager.updateStatisticsWithGameTime()
                 // Save state
                 gameManager.saveGame()
+                arcadeGameManager.saveGame()
                 userData.saveUserData()
             @unknown default:
                 break

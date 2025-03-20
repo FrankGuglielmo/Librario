@@ -1,50 +1,42 @@
 //
-//  GameManager.swift
+//  ClassicGameManager.swift
 //  Librario
 //
-//  Created by Frank Guglielmo on 9/10/24.
+//  Created on 3/19/25.
 //
 
 import Foundation
 import SwiftUI
 import Observation
 
-@Observable class GameManager: Codable {
-// Private properties for inventory management
-private var userData: UserData?
-private var userInventory: Inventory? // Reference to userData?.inventory for readability
+@Observable class ClassicGameManager: GameManagerProtocol {
+    // Private properties for inventory management
+    private var userData: UserData?
+    private var userInventory: Inventory? // Reference to userData?.inventory for readability
 
-// Extra life properties
-private var extraLivesUsedInSession: Int = 0
-private var maxExtraLivesPerSession: Int = 3
-var showExtraLifePopup: Bool = false
-private var firePositionCausingGameOver: Position? = nil
-private var extraLifeTimer: Timer?
-private var extraLifeTimeRemaining: Double = 5.0
-private var extraLifeTotalTime: Double = 5.0
+    // Extra life properties
+    private var extraLivesUsedInSession: Int = 0
+    private var maxExtraLivesPerSession: Int = 3
+    var showExtraLifePopup: Bool = false
+    private var firePositionCausingGameOver: Position? = nil
+    private var extraLifeTimer: Timer?
+    private var extraLifeTimeRemaining: Double = 5.0
+    private var extraLifeTotalTime: Double = 5.0
 
-// Swap mode properties
-var isInSwapMode: Bool = false
-var selectedSwapTile: Tile? = nil
-var adjacentTiles: [Position] = []
-var showSwapConfirmation: Bool = false
-var targetSwapTile: Tile? = nil
-    
-// Wildcard mode properties
-var isInWildcardMode: Bool = false
-var selectedWildcardTile: Tile? = nil
-var showWildcardSelection: Bool = false
-var showWildcardConfirmation: Bool = false
-var targetWildcardLetter: String? = nil
-    
-    // Game state enum to track the current state of gameplay
-    enum GameplayState {
-        case active
-        case paused
-        case levelTransition
-        case gameOver
-    }
-    
+    // Swap mode properties
+    var isInSwapMode: Bool = false
+    var selectedSwapTile: Tile? = nil
+    var adjacentTiles: [Position] = []
+    var showSwapConfirmation: Bool = false
+    var targetSwapTile: Tile? = nil
+        
+    // Wildcard mode properties
+    var isInWildcardMode: Bool = false
+    var selectedWildcardTile: Tile? = nil
+    var showWildcardSelection: Bool = false
+    var showWildcardConfirmation: Bool = false
+    var targetWildcardLetter: String? = nil
+        
     var gameOver: Bool = false {
         didSet {
             if gameOver {
@@ -75,7 +67,7 @@ var targetWildcardLetter: String? = nil
     var isInGameView: Bool = false
     
     // Track the current gameplay state
-    var gameplayState: GameplayState = .active {
+    var gameplayState: GameManager.GameplayState = .active {
         didSet {
             if oldValue != gameplayState {
                 handleGameplayStateChange(from: oldValue, to: gameplayState)
@@ -91,6 +83,61 @@ var targetWildcardLetter: String? = nil
 
     enum CodingKeys: String, CodingKey {
         case gameState, levelData, sessionData, levelSystem, tileManager
+    }
+    
+    // MARK: - Initializers
+    
+    init(dictionaryManager: DictionaryManager, userData: UserData? = nil) {
+        self.userData = userData
+        if let userData = userData {
+            self.userInventory = userData.inventory
+        }
+        self.dictionaryManager = dictionaryManager
+        
+        // Load GameState from disk if available, otherwise initialize a new GameState
+        self.gameState = GameState.loadGameState(gameMode: .classic) ?? GameState()
+        self.gameState.gameMode = .classic // Ensure classic mode
+        
+        // Initialize level and session data
+        self.levelData = LevelStatistics.loadLevelData()
+        self.sessionData = SessionStatistics.loadSessionData()
+        
+        // Load TileManager from disk if available, otherwise initialize a new TileManager
+        self.tileManager = TileManager.loadTileManager(dictionaryManager: dictionaryManager, for: .classic) ?? {
+            let performanceEvaluator = PerformanceEvaluator()
+            let letterGenerator = LetterGenerator(performanceEvaluator: performanceEvaluator)
+            let tileTypeGenerator = TileTypeGenerator(performanceEvaluator: performanceEvaluator)
+            let tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator, performanceEvaluator: performanceEvaluator)
+            let tileConverter = TileConverter()
+            let wordChecker = WordChecker(wordStore: dictionaryManager.wordDictionary)
+            return TileManager(tileGenerator: tileGenerator, tileConverter: tileConverter, wordChecker: wordChecker, performanceEvaluator: performanceEvaluator)
+        }()
+
+        setupLevelSystem()
+        setupGameOverHandler()
+        setupNotificationObservers()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        gameState = try container.decode(GameState.self, forKey: .gameState)
+        levelData = try container.decode(LevelStatistics.self, forKey: .levelData)
+        sessionData = try container.decode(SessionStatistics.self, forKey: .sessionData)
+        levelSystem = try container.decode([Int: Int].self, forKey: .levelSystem)
+        tileManager = try container.decode(TileManager.self, forKey: .tileManager)
+
+        self.dictionaryManager = DictionaryManager() // Reinitialize dictionary manager if needed
+
+        setupGameOverHandler()
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(gameState, forKey: .gameState)
+        try container.encode(levelData, forKey: .levelData)
+        try container.encode(sessionData, forKey: .sessionData)
+        try container.encode(levelSystem, forKey: .levelSystem)
+        try container.encode(tileManager, forKey: .tileManager)
     }
     
     // MARK: - Inventory Methods
@@ -133,15 +180,8 @@ var targetWildcardLetter: String? = nil
         return userInventory.powerups[type] ?? 0
     }
     
-    // MARK: - Swap Mode Methods
-    
     // MARK: - Wildcard Mode Methods
     
-    /**
-     * Enters wildcard mode if the user has wildcard powerups available.
-     * 
-     * @return `true` if wildcard mode was entered successfully; otherwise, `false`.
-     */
     func enterWildcardMode() -> Bool {
         // Check if user has wildcard powerups
         if getPowerupCount(.wildcard) > 0 {
@@ -156,9 +196,6 @@ var targetWildcardLetter: String? = nil
         return false
     }
     
-    /**
-     * Exits wildcard mode and resets all wildcard-related state.
-     */
     func exitWildcardMode() {
         isInWildcardMode = false
         selectedWildcardTile = nil
@@ -167,12 +204,6 @@ var targetWildcardLetter: String? = nil
         showWildcardConfirmation = false
     }
     
-    /**
-     * Selects a tile for wildcard letter change.
-     * 
-     * @param position The position of the tile to select.
-     * @return `true` if the selection was valid; otherwise, `false`.
-     */
     func selectTileForWildcard(at position: Position) -> Bool {
         guard isInWildcardMode else { return false }
         
@@ -193,12 +224,6 @@ var targetWildcardLetter: String? = nil
         return false
     }
     
-    /**
-     * Selects a letter for the wildcard change and shows confirmation.
-     * 
-     * @param letter The letter to change to.
-     * @return `true` if the selection was valid; otherwise, `false`.
-     */
     func selectWildcardLetter(letter: String) -> Bool {
         guard isInWildcardMode && selectedWildcardTile != nil else { return false }
         
@@ -208,10 +233,6 @@ var targetWildcardLetter: String? = nil
         return true
     }
     
-    /**
-     * Confirms the wildcard letter change, performs the change operation, decrements the powerup count,
-     * and exits wildcard mode.
-     */
     func confirmWildcardChange() {
         guard let tile = selectedWildcardTile, let letter = targetWildcardLetter else { return }
         
@@ -220,12 +241,6 @@ var targetWildcardLetter: String? = nil
         exitWildcardMode()
     }
     
-    /**
-     * Changes a tile's letter at the given position.
-     * 
-     * @param position The position of the tile to change.
-     * @param letter The new letter for the tile.
-     */
     func changeTileLetter(at position: Position, to letter: String) {
         guard let tile = tileManager.getTile(at: position) else { return }
         
@@ -240,11 +255,8 @@ var targetWildcardLetter: String? = nil
         AudioManager.shared.playSoundEffect(named: "tile_click2")
     }
     
-    /**
-     * Enters swap mode if the user has swap powerups available.
-     * 
-     * @return `true` if swap mode was entered successfully; otherwise, `false`.
-     */
+    // MARK: - Swap Mode Methods
+    
     func enterSwapMode() -> Bool {
         // Check if user has swap powerups
         if getPowerupCount(.swap) > 0 {
@@ -259,9 +271,6 @@ var targetWildcardLetter: String? = nil
         return false
     }
     
-    /**
-     * Exits swap mode and resets all swap-related state.
-     */
     func exitSwapMode() {
         isInSwapMode = false
         selectedSwapTile = nil
@@ -270,15 +279,6 @@ var targetWildcardLetter: String? = nil
         showSwapConfirmation = false
     }
     
-    /**
-     * Selects a tile for swapping. If this is the first tile selected,
-     * it will calculate and store adjacent tiles. If this is the second tile,
-     * it will check if it's adjacent and show the confirmation dialog.
-     * If the selected tile is already selected, it will deselect it.
-     * 
-     * @param position The position of the tile to select.
-     * @return `true` if the selection was valid; otherwise, `false`.
-     */
     func selectTileForSwap(at position: Position) -> Bool {
         guard isInSwapMode else { return false }
         
@@ -308,12 +308,6 @@ var targetWildcardLetter: String? = nil
         return false
     }
     
-    /**
-     * Gets all valid adjacent tile positions for a given position.
-     * 
-     * @param position The position to get adjacent tiles for.
-     * @return An array of adjacent positions.
-     */
     func getAdjacentTiles(to position: Position) -> [Position] {
         let isEvenColumn = position.column % 2 == 0
         var adjacentPositions: [Position] = []
@@ -344,23 +338,10 @@ var targetWildcardLetter: String? = nil
         }
     }
     
-    /**
-     * Checks if two tiles can be swapped.
-     * 
-     * @param from The position of the first tile.
-     * @param to The position of the second tile.
-     * @return `true` if the tiles can be swapped; otherwise, `false`.
-     */
     func canSwapTiles(from: Position, to: Position) -> Bool {
         return adjacentTiles.contains(to)
     }
     
-    /**
-     * Swaps the tiles at the given positions.
-     * 
-     * @param from The position of the first tile.
-     * @param to The position of the second tile.
-     */
     func swapTiles(from: Position, to: Position) {
         guard let fromTile = tileManager.getTile(at: from),
               let toTile = tileManager.getTile(at: to) else { return }
@@ -380,115 +361,14 @@ var targetWildcardLetter: String? = nil
         AudioManager.shared.playSoundEffect(named: "tile_click2")
     }
     
-    /**
-     * Confirms the swap, performs the swap operation, decrements the powerup count,
-     * and exits swap mode.
-     * 
-     * @param from The position of the first tile.
-     * @param to The position of the second tile.
-     */
     func confirmSwap(from: Position, to: Position) {
         swapTiles(from: from, to: to)
         usePowerup(.swap) // Decrement the powerup count
         exitSwapMode()
     }
 
-    /**
-     * Initializes a new `GameManager` with the provided `DictionaryManager` and optional `UserData`.
-     *
-     * @param dictionaryManager The `DictionaryManager` instance used to manage dictionary data.
-     * @param userData The optional `UserData` instance for accessing user's inventory and statistics.
-     */
-    init(dictionaryManager: DictionaryManager, userData: UserData? = nil) {
-        self.userData = userData
-        if let userData = userData {
-            self.userInventory = userData.inventory
-        }
-        self.dictionaryManager = dictionaryManager
-        
-        // Load GameState from disk if available, otherwise initialize a new GameState
-        self.gameState = GameState.loadGameState(gameMode: .classic) ?? GameState()
-        self.gameState.gameMode = .classic // Ensure classic mode
-        
-        // Initialize level and session data
-        self.levelData = LevelStatistics.loadLevelData()
-        self.sessionData = SessionStatistics.loadSessionData()
-        
-        // Load TileManager from disk if available, otherwise initialize a new TileManager
-        self.tileManager = TileManager.loadTileManager(dictionaryManager: dictionaryManager, for: .classic) ?? {
-            let performanceEvaluator = PerformanceEvaluator()
-            let letterGenerator = LetterGenerator(performanceEvaluator: performanceEvaluator)
-            let tileTypeGenerator = TileTypeGenerator(performanceEvaluator: performanceEvaluator)
-            let tileGenerator = TileGenerator(letterGenerator: letterGenerator, tileTypeGenerator: tileTypeGenerator, performanceEvaluator: performanceEvaluator)
-            let tileConverter = TileConverter()
-            let wordChecker = WordChecker(wordStore: dictionaryManager.wordDictionary)
-            return TileManager(tileGenerator: tileGenerator, tileConverter: tileConverter, wordChecker: wordChecker, performanceEvaluator: performanceEvaluator)
-        }()
-
-        setupLevelSystem()
-        setupGameOverHandler()
-        setupNotificationObservers()
-    }
+    // MARK: - Game Management Methods
     
-    /**
-     * Alternative initializer that accepts pre-created gameState and tileManager.
-     * Used by subclasses like ArcadeGameManager to provide their own objects.
-     */
-    init(dictionaryManager: DictionaryManager, tileManager: TileManager, gameState: GameState, userData: UserData? = nil) {
-        self.userData = userData
-        if let userData = userData {
-            self.userInventory = userData.inventory
-        }
-        self.dictionaryManager = dictionaryManager
-        self.tileManager = tileManager
-        self.gameState = gameState
-        
-        // Initialize level and session data
-        self.levelData = LevelStatistics.loadLevelData()
-        self.sessionData = SessionStatistics.loadSessionData()
-
-        setupLevelSystem()
-        setupGameOverHandler()
-        setupNotificationObservers()
-    }
-
-    /**
-     * Decodes a `GameManager` instance from the given decoder.
-     *
-     * @param decoder The decoder to read data from.
-     * @throws DecodingError If decoding fails.
-     */
-    required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        gameState = try container.decode(GameState.self, forKey: .gameState)
-        levelData = try container.decode(LevelStatistics.self, forKey: .levelData)
-        sessionData = try container.decode(SessionStatistics.self, forKey: .sessionData)
-        levelSystem = try container.decode([Int: Int].self, forKey: .levelSystem)
-        tileManager = try container.decode(TileManager.self, forKey: .tileManager)
-
-        self.dictionaryManager = DictionaryManager() // Reinitialize dictionary manager if needed
-
-        setupGameOverHandler()
-    }
-
-    /**
-     * Encodes the `GameManager` instance into the given encoder.
-     *
-     * @param encoder The encoder to write data to.
-     * @throws EncodingError If encoding fails.
-     */
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(gameState, forKey: .gameState)
-        try container.encode(levelData, forKey: .levelData)
-        try container.encode(sessionData, forKey: .sessionData)
-        try container.encode(levelSystem, forKey: .levelSystem)
-        try container.encode(tileManager, forKey: .tileManager)
-    }
-
-    /**
-     * Sets up the level system by initializing the experience required for each level.
-     */
     private func setupLevelSystem() {
         let experienceScale = 2250.0
         for level in 1...999 {
@@ -497,11 +377,6 @@ var targetWildcardLetter: String? = nil
         }
     }
 
-    /**
-     * Starts a new game session, resetting necessary game data and updating user statistics.
-     *
-     * @param userStatistics The `UserStatistics` instance to update with the new game data.
-     */
     func startNewGame(userStatistics: UserStatistics) {
         // If there was a meaningful game that was being played before, (score > 0), reset everything
         if gameState.score != 0 {
@@ -509,19 +384,15 @@ var targetWildcardLetter: String? = nil
             handleSessionCompletion(userStatistics: userStatistics)
             userStatistics.totalGamesPlayed += 1
             gameState.reset()
+            gameState.gameMode = .classic // Ensure classic mode
             levelData = LevelStatistics()
             sessionData = SessionStatistics()
             tileManager.scrambleLock = false
             tileManager.generateInitialGrid()
         }
         // Otherwise, keep the board and gameState as is
-        
     }
 
-    /**
-     * Submits the currently selected word, updates scores, and processes word validation and tile submission.
-     * Also updates the user's inventory of coins and diamonds based on special tiles used.
-     */
     func submitWord() {
         if self.gameOver || !tileManager.validateWord() {
             return
@@ -548,13 +419,6 @@ var targetWildcardLetter: String? = nil
         tileManager.processWordSubmission(word: word, points: points, level: gameState.level)
     }
     
-    /**
-     * Updates the user's inventory based on the special tiles used in the submitted word.
-     * - Diamond tiles: Add 1 diamond per diamond tile used
-     * - Gold tiles: Add coins equal to the word length multiplied by the number of gold tiles used
-     *
-     * @param word The submitted word
-     */
     private func updateInventoryFromSubmittedWord(word: String) {
         guard let userInventory = userInventory, let userData = userData else { return }
         
@@ -587,13 +451,7 @@ var targetWildcardLetter: String? = nil
         }
     }
 
-
-    /**
-     * Checks if the player has progressed to the next level based on the current score.
-     *
-     * @return `true` if the player has advanced to the next level; otherwise, `false`.
-     */
-    func checkLevelProgression() -> Bool{
+    func checkLevelProgression() -> Bool {
         if gameState.level < 999 && gameState.score >= levelSystem[gameState.level]! {
             gameState.level += 1
             print("Level progressed to: \(gameState.level)")
@@ -602,9 +460,6 @@ var targetWildcardLetter: String? = nil
         return false
     }
 
-    /**
-     * Updates the session statistics based on the current level statistics upon level completion.
-     */
     func handleLevelCompletion() {
         // Update statistics with current game time before completing level
         updateStatisticsWithGameTime()
@@ -614,11 +469,6 @@ var targetWildcardLetter: String? = nil
         sessionData.saveSessionData()
     }
     
-    /**
-     * Updates the session statistics and user statistics upon game session completion.
-     *
-     * @param userStatistics The `UserStatistics` instance to update with session data.
-     */
     func handleSessionCompletion(userStatistics: UserStatistics) {
         // Update statistics with current game time before completing session
         updateStatisticsWithGameTime()
@@ -628,16 +478,10 @@ var targetWildcardLetter: String? = nil
         userStatistics.saveUserStatistics()
     }
     
-    /**
-     * Resets the level statistics to their initial state.
-     */
     func resetLevelStatistics() {
         levelData = LevelStatistics()
     }
 
-    /**
-     * Completes the current level, updating session data accordingly.
-     */
     func completeLevel() {
         // Update statistics with current game time before completing level
         updateStatisticsWithGameTime()
@@ -646,24 +490,20 @@ var targetWildcardLetter: String? = nil
         levelData = LevelStatistics()
     }
 
-    /**
-     * Saves the current game state, level data, session data, and tile manager to persistent storage.
-     */
     func saveGame() {
         // Update statistics with current game time before saving
         updateStatisticsWithGameTime()
         
+        // Ensure gameMode is set to classic
+        gameState.gameMode = .classic
+        
+        // Save all game data
         gameState.saveGameState()
         levelData.saveLevelData(levelData)
         sessionData.saveSessionData()
-        tileManager.saveTileManager(for: gameState.gameMode)
+        tileManager.saveTileManager(for: .classic)
     }
 
-    /**
-     * Updates the user's statistics with the latest session data.
-     *
-     * @param userStatistics The `UserStatistics` instance to update.
-     */
     func updateUserStatistics(_ userStatistics: UserStatistics) {
         // Update statistics with current game time before updating user statistics
         updateStatisticsWithGameTime()
@@ -674,22 +514,12 @@ var targetWildcardLetter: String? = nil
         userStatistics.saveUserStatistics()
     }
 
-        // MARK: - Extra Life Methods
+    // MARK: - Extra Life Methods
     
-    /**
-     * Checks if the player can use an extra life powerup.
-     *
-     * @return `true` if the player has an extra life available and has used fewer than 3 in the current session; otherwise, `false`.
-     */
     func canUseExtraLife() -> Bool {
         return getPowerupCount(.extraLife) > 0 && extraLivesUsedInSession < maxExtraLivesPerSession
     }
     
-    /**
-     * Uses an extra life powerup and generates a new board without special tiles.
-     *
-     * @return `true` if the extra life was successfully used; otherwise, `false`.
-     */
     func useExtraLifeAndContinue() -> Bool {
         if canUseExtraLife() {
             if useExtraLifePowerup() {
@@ -718,36 +548,18 @@ var targetWildcardLetter: String? = nil
         return false
     }
     
-    /**
-     * Gets the number of extra lives used in the current session.
-     *
-     * @return The number of extra lives used in the current session.
-     */
     func getExtraLivesUsedInSession() -> Int {
         return extraLivesUsedInSession
     }
     
-    /**
-     * Gets the maximum number of extra lives allowed per session.
-     *
-     * @return The maximum number of extra lives allowed per session.
-     */
     func getMaxExtraLivesPerSession() -> Int {
         return maxExtraLivesPerSession
     }
     
-    /**
-     * Gets the current extra life timer progress as a percentage (0.0 to 1.0).
-     *
-     * @return The current timer progress as a percentage.
-     */
     func getExtraLifeTimerProgress() -> Double {
         return extraLifeTimeRemaining / extraLifeTotalTime
     }
     
-    /**
-     * Starts the extra life timer.
-     */
     func startExtraLifeTimer() {
         // Reset the timer
         extraLifeTimeRemaining = extraLifeTotalTime
@@ -769,20 +581,11 @@ var targetWildcardLetter: String? = nil
         }
     }
     
-    /**
-     * Stops the extra life timer.
-     */
     func stopExtraLifeTimer() {
         extraLifeTimer?.invalidate()
         extraLifeTimer = nil
     }
     
-    /**
-     * Shows the extra life popup if the player has extra lives available.
-     *
-     * @param firePosition The position of the fire tile that triggered the game over.
-     * @return `true` if the popup was shown; otherwise, `false`.
-     */
     func showExtraLifePopupIfAvailable(firePosition: Position) -> Bool {
         if canUseExtraLife() {
             showExtraLifePopup = true
@@ -793,9 +596,6 @@ var targetWildcardLetter: String? = nil
         return false
     }
     
-    /**
-     * Proceeds with game over if the player chooses not to use an extra life or time expires.
-     */
     func proceedWithGameOver() {
         stopExtraLifeTimer()
         showExtraLifePopup = false
@@ -803,9 +603,6 @@ var targetWildcardLetter: String? = nil
         handleGameOver()
     }
 
-    /**
-     * Handles the game over state by playing the game over sound and updating the game state.
-     */
     func handleGameOver() {
         DispatchQueue.main.async {
             // First check if we can show the extra life popup
@@ -822,10 +619,9 @@ var targetWildcardLetter: String? = nil
         }
     }
     
-    /**
-     * Handles changes in gameplay state.
-     */
-    private func handleGameplayStateChange(from oldState: GameplayState, to newState: GameplayState) {
+    // MARK: - State & Notification Management
+    
+    private func handleGameplayStateChange(from oldState: GameManager.GameplayState, to newState: GameManager.GameplayState) {
         print("Gameplay state changed from \(oldState) to \(newState)")
         
         // Post notification for state change that other components can observe
@@ -847,25 +643,17 @@ var targetWildcardLetter: String? = nil
         }
     }
     
-    /**
-     * Sets up the game over handler by assigning a closure to handle game over events from the `TileManager`.
-     */
     private func setupGameOverHandler() {
         tileManager.gameOverHandler = { [weak self] in
             self?.handleGameOver()
         }
     }
     
-    /**
-     * Checks if there are any fire tiles present on the game board.
-     *
-     * @return `true` if there is at least one fire tile; otherwise, `false`.
-     */
     func hasFireTile() -> Bool {
-        // Assuming tileManager.tiles is a 2D array of tiles representing the grid
+        // Check if there are any fire tiles on the board
         for row in tileManager.grid {
             for tile in row {
-                if tile.type == .fire { // Assuming fire tiles have a `TileType` of .fire
+                if tile.type == .fire {
                     return true
                 }
             }
@@ -873,9 +661,6 @@ var targetWildcardLetter: String? = nil
         return false
     }
     
-    /**
-     * Handles the presence of fire tiles by changing the sprite based on fire tile detection.
-     */
     func handleFireTile() {
         if hasFireTile() {
             changeSprite(to: "nervous_sprite") // Change to nervous sprite
@@ -884,20 +669,11 @@ var targetWildcardLetter: String? = nil
         }
     }
     
-    /**
-     * Changes the current sprite to the specified sprite for a given duration.
-     *
-     * @param sprite The name of the sprite to change to.
-     * @param duration The duration for which the sprite should be displayed. Defaults to 1.0 seconds.
-     */
     func changeSprite(to sprite: String, for duration: TimeInterval = 1.0) {
         // Call the spriteChangeHandler closure to update the sprite
         spriteChangeHandler?(sprite, duration)
     }
     
-    /**
-     * Sets up notification observers for app lifecycle and view transitions.
-     */
     private func setupNotificationObservers() {
         // App lifecycle notifications
         NotificationCenter.default.addObserver(
@@ -923,9 +699,6 @@ var targetWildcardLetter: String? = nil
         )
     }
     
-    /**
-     * Handles the app becoming active again after being in the background.
-     */
     @objc private func handleAppDidBecomeActive() {
         print("App became active")
         // Only restart timer if we're in GameView and gameplay is active
@@ -934,9 +707,6 @@ var targetWildcardLetter: String? = nil
         }
     }
     
-    /**
-     * Handles the GameView appearing.
-     */
     @objc private func handleGameViewDidAppear() {
         print("GameView appeared")
         isInGameView = true
@@ -946,9 +716,6 @@ var targetWildcardLetter: String? = nil
         }
     }
     
-    /**
-     * Handles the GameView disappearing.
-     */
     @objc private func handleGameViewDidDisappear(_ notification: Notification) {
         print("GameView disappeared")
         isInGameView = false
@@ -967,10 +734,6 @@ var targetWildcardLetter: String? = nil
         }
     }
 
-    /**
-     * Updates the user's lifetime statistics with the current session data.
-     * This is called when leaving the game view to ensure lifetime stats are current.
-     */
     func updateUserLifetimeStatistics(userData: UserData? = nil) {
         print("--- Starting updateUserLifetimeStatistics ---")
         
@@ -1011,9 +774,8 @@ var targetWildcardLetter: String? = nil
         print("--- Finished updateUserLifetimeStatistics ---")
     }
 
-    /**
-     * Updates statistics with the current game time.
-     */
+    // MARK: - Timer Methods
+    
     func updateStatisticsWithGameTime() {
         // Calculate the current game time if timer is still running
         var timeToAdd: TimeInterval = 0.0
@@ -1047,7 +809,6 @@ var targetWildcardLetter: String? = nil
         }
     }
     
-    // Start the game timer
     func startGameTimer() {
         // Avoid multiple timers
         guard gameStartTime == nil else { return }
@@ -1055,7 +816,6 @@ var targetWildcardLetter: String? = nil
         print("Game timer started.")
     }
     
-    // Pause the game timer
     func pauseGameTimer() {
         if let startTime = gameStartTime {
             // Add elapsed time to accumulated time
@@ -1065,7 +825,6 @@ var targetWildcardLetter: String? = nil
         }
     }
     
-    // Resume the game timer
     func resumeGameTimer() {
         if gameStartTime == nil {
             gameStartTime = Date()
@@ -1073,29 +832,4 @@ var targetWildcardLetter: String? = nil
         }
     }
     
-    // Stop the game timer and update statistics
     func stopGameTimer() {
-        pauseGameTimer() // Pause first to accumulate time
-        updateStatisticsWithGameTime()
-        // Reset the timer
-        accumulatedGameTime = 0.0
-        print("Game timer stopped and reset.")
-    }
-    
-    // For backward compatibility
-    func startLevelTimer() {
-        startGameTimer()
-    }
-    
-    func pauseLevelTimer() {
-        pauseGameTimer()
-    }
-    
-    func resumeLevelTimer() {
-        resumeGameTimer()
-    }
-    
-    func stopLevelTimer() {
-        stopGameTimer()
-    }
-}

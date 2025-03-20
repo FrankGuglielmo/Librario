@@ -1,24 +1,28 @@
 //
-//  ContentView.swift
+//  ArcadeGameView.swift
 //  Librario
 //
-//  Created by Frank Guglielmo on 8/18/24.
+//  Created on 3/19/25.
 //
 
 import SwiftUI
 
-struct GameView: View {
-    @Bindable var gameManager: GameManagerProtocol
+struct ArcadeGameView: View {
+    @Bindable var arcadeGameManager: GameManagerProtocol
     @Bindable var userData: UserData
     @Binding var navigationPath: NavigationPath
     @State private var currentSprite = "normal_sprite"
     @State private var bubbleText = ""
     @State private var showReminderBubble = false
-    @State private var showLevelUp = false // State to control LevelUpView visibility
-    @State private var showPerformanceDebug = false // State to control performance debug visibility
-    @State private var showTimerDebug = false // State to control timer debug visibility
-    @State private var showScrambleConfirmation = false // State to control scramble confirmation dialog
+    @State private var showLevelUp = false
+    @State private var showPerformanceDebug = false
+    @State private var showTimerDebug = false  // Debug view toggle
+    @State private var showScrambleConfirmation = false
+    @State private var timerColor: Color = .green
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    
+    // Access shared settings
+    @Bindable private var settings = Settings.shared
     
     let praisePhrases = ["Nice word!", "Fantastic!", "Awesome!", "Well done!", "Impressive!"]
     
@@ -61,7 +65,35 @@ struct GameView: View {
                 let spriteSize: CGFloat = isCompact ? geometry.size.width * 0.32 : geometry.size.width * 0.15
                 let SubmitBubbleSize: CGFloat = isCompact ? geometry.size.width * 0.5 : geometry.size.width * 0.5
                 
-                VStack {
+                VStack(spacing: 0) {
+                    // Arcade Mode Timer - only visible when debug mode is enabled
+                    if settings.showDebugTimer {
+                        ZStack(alignment: .leading) {
+                            Rectangle()
+                                .frame(height: 8)
+                                .opacity(0.3)
+                                .foregroundColor(.gray)
+                            
+                            Rectangle()
+                                .frame(width: getTimerWidth(geometry: geometry), height: 8)
+                                .foregroundColor(timerColor)
+                                .animation(.linear, value: arcadeGameManager.nextFireTileCountdown)
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 8)
+                        
+                        // Timer text
+                        Text("Next Fire Tile: \(Int(arcadeGameManager.nextFireTileCountdown))s")
+                            .font(.caption)
+                            .foregroundColor(.white)
+                            .padding(.bottom, 4)
+                    } else {
+                        // Add empty spacer with zero height when timer is hidden
+                        // This ensures consistent layout between both states
+                        Spacer()
+                            .frame(height: 0)
+                    }
+                    
                     HStack {
                         ZStack {
                             // Sprite button that triggers the scramble function
@@ -81,7 +113,7 @@ struct GameView: View {
                                 titleVisibility: .visible
                             ) {
                                 Button("Scramble", role: .destructive) {
-                                    gameManager.tileManager.scramble()
+                                    arcadeGameManager.tileManager.scramble()
                                     AudioManager.shared.playSoundEffect(named: "tile_drop")
                                 }
                                 Button("Cancel", role: .cancel) {}
@@ -90,22 +122,22 @@ struct GameView: View {
                             }
                             
                             // Show the praise bubble, reminder bubble, swap mode or wildcard mode instructions
-                            if gameManager.isInWildcardMode {
-                                let message = gameManager.selectedWildcardTile == nil ?
+                            if arcadeGameManager.isInWildcardMode {
+                                let message = arcadeGameManager.selectedWildcardTile == nil ?
                                 "Select a tile to change" :
                                 "Choose a new letter"
                                 TextBubbleView(text: message)
                                     .offset(x: 75, y: -50) // Position the bubble above the sprite
                                     .transition(.opacity)
-                                    .animation(.easeInOut(duration: 0.5), value: gameManager.isInWildcardMode)
-                            } else if gameManager.isInSwapMode {
-                                let message = gameManager.selectedSwapTile == nil ?
+                                    .animation(.easeInOut(duration: 0.5), value: arcadeGameManager.isInWildcardMode)
+                            } else if arcadeGameManager.isInSwapMode {
+                                let message = arcadeGameManager.selectedSwapTile == nil ?
                                 "Select a tile to swap" :
                                 "Select an adjacent tile"
                                 TextBubbleView(text: message)
                                     .offset(x: 75, y: -50) // Position the bubble above the sprite
                                     .transition(.opacity)
-                                    .animation(.easeInOut(duration: 0.5), value: gameManager.isInSwapMode)
+                                    .animation(.easeInOut(duration: 0.5), value: arcadeGameManager.isInSwapMode)
                             } else if currentSprite == "happy_sprite" && !bubbleText.isEmpty {
                                 TextBubbleView(text: bubbleText)
                                     .offset(x: 75, y: -50) // Position the bubble above the sprite
@@ -123,18 +155,16 @@ struct GameView: View {
                             Spacer()
                         }
                         
-                        SubmitWordView(tileManager: gameManager.tileManager, gameManager: gameManager)
+                        SubmitWordView(tileManager: arcadeGameManager.tileManager, gameManager: arcadeGameManager)
                             .frame(width: SubmitBubbleSize)
                     }
                     .frame(maxWidth: .infinity, maxHeight: 300)
                     .padding()
                     .fixedSize(horizontal: false, vertical: true)
                     
-                    GameGridView(gameManager: gameManager, tileManager: gameManager.tileManager)
+                    GameGridView(gameManager: arcadeGameManager, tileManager: arcadeGameManager.tileManager)
                     
-                    GameToolBarView(gameManager: gameManager, navigationPath: $navigationPath)
-                    
-                    
+                    GameToolBarView(gameManager: arcadeGameManager, navigationPath: $navigationPath)
                 }
                 .frame(maxHeight: .infinity)
             }
@@ -144,38 +174,36 @@ struct GameView: View {
                 HStack {
                     // Performance debug view (top left)
                     if showPerformanceDebug {
-                        PerformanceDebugView(tileManager: gameManager.tileManager)
+                        PerformanceDebugView(tileManager: arcadeGameManager.tileManager)
                     }
                     
                     Spacer()
                     
                     // Timer debug view (top right)
                     if showTimerDebug {
-                        TimerDebugView(gameManager: gameManager, userData: userData)
+                        TimerDebugView(gameManager: arcadeGameManager, userData: userData)
                     }
                 }
                 Spacer()
             }
             .zIndex(2)
             
-            // Text bubble for wildcard mode is now handled in the sprite button section like swap mode
-            
             // Wildcard selection popup
-            if gameManager.showWildcardSelection {
-                WildcardPopupView(gameManager: gameManager)
+            if arcadeGameManager.showWildcardSelection {
+                WildcardPopupView(gameManager: arcadeGameManager)
                     .zIndex(3)
             }
             
             // Wildcard confirmation popup
-            if gameManager.showWildcardConfirmation {
-                WildcardConfirmationView(gameManager: gameManager)
+            if arcadeGameManager.showWildcardConfirmation {
+                WildcardConfirmationView(gameManager: arcadeGameManager)
                     .zIndex(3)
             }
             
             // Swap confirmation card
-            if gameManager.showSwapConfirmation,
-                let fromTile = gameManager.selectedSwapTile,
-               let toTile = gameManager.targetSwapTile {
+            if arcadeGameManager.showSwapConfirmation,
+               let fromTile = arcadeGameManager.selectedSwapTile,
+               let toTile = arcadeGameManager.targetSwapTile {
                 CardView(cards: [
                     Card(
                         title: "Confirm Swap",
@@ -188,14 +216,14 @@ struct GameView: View {
                                 title: "Confirm",
                                 cardColor: .sapphire,
                                 action: {
-                                    gameManager.confirmSwap(from: fromTile.position, to: toTile.position)
+                                    arcadeGameManager.confirmSwap(from: fromTile.position, to: toTile.position)
                                 }
                             ),
                             CardButton(
                                 title: "Cancel",
                                 cardColor: .sapphire,
                                 action: {
-                                    gameManager.exitSwapMode()
+                                    arcadeGameManager.exitSwapMode()
                                 }
                             )
                         ]
@@ -234,31 +262,31 @@ struct GameView: View {
             
             // Show LevelUpView based on showLevelUp state
             if showLevelUp {
-                LevelUpView(gameManager: gameManager, userData: userData, navigationPath: $navigationPath, onDismiss: {
+                LevelUpView(gameManager: arcadeGameManager, userData: userData, navigationPath: $navigationPath, onDismiss: {
                     showLevelUp = false
                 })
                 .zIndex(1)
                 .onAppear {
-                    gameManager.pauseGameTimer()
+                    arcadeGameManager.pauseGameTimer()
                 }
             }
             
             // Show Extra Life popup if available
-            if gameManager.showExtraLifePopup {
-                ExtraLifePopupView(gameManager: gameManager)
+            if arcadeGameManager.showExtraLifePopup {
+                ExtraLifePopupView(gameManager: arcadeGameManager)
                     .zIndex(2)
                     .onAppear {
-                        gameManager.pauseGameTimer()
+                        arcadeGameManager.pauseGameTimer()
                     }
             }
             
             // Show GameOverView directly based on gameState.gameOver
-            if gameManager.gameOver {
-                GameOverView(gameManager: gameManager, userData: userData, navigationPath: $navigationPath)
+            if arcadeGameManager.gameOver {
+                GameOverView(gameManager: arcadeGameManager, userData: userData, navigationPath: $navigationPath)
                     .zIndex(1)
                     .onAppear {
-                        gameManager.stopGameTimer()
-                        userData.userStatistics.updateHighestLevel(level: gameManager.gameState.level, score: gameManager.gameState.score)
+                        arcadeGameManager.stopGameTimer()
+                        userData.userStatistics.updateHighestLevel(level: arcadeGameManager.gameState.level, score: arcadeGameManager.gameState.score)
                     }
             }
         }
@@ -267,17 +295,17 @@ struct GameView: View {
             NotificationCenter.default.post(name: .gameViewDidAppear, object: nil)
             
             // Set gameplay state to active if not in game over state
-            if !gameManager.gameOver {
-                gameManager.gameplayState = .active
+            if !arcadeGameManager.gameOver {
+                arcadeGameManager.gameplayState = .active
             }
             
             // Set up the sprite change handler
-            gameManager.spriteChangeHandler = { sprite, duration in
+            arcadeGameManager.spriteChangeHandler = { sprite, duration in
                 changeSprite(to: sprite, for: duration)
             }
             
             // Listen for fire tile state changes from the TileManager
-            gameManager.tileManager.fireTileChangeHandler = { hasFireTile in
+            arcadeGameManager.tileManager.fireTileChangeHandler = { hasFireTile in
                 if hasFireTile {
                     // Keep nervous sprite active as long as there is a fire tile
                     changeSprite(to: "nervous_sprite")
@@ -288,10 +316,13 @@ struct GameView: View {
             }
             
             // Initial fire tile check when view appears
-            gameManager.tileManager.checkFireTiles()
+            arcadeGameManager.tileManager.checkFireTiles()
             
             // Start the reminder timer
             startReminderTimer()
+            
+            // Start arcade timer
+            arcadeGameManager.startFireTileTimer()
         }
         .onDisappear {
             // Update userData reference in the notification for GameManager to use
@@ -301,11 +332,21 @@ struct GameView: View {
                 userInfo: ["userData": userData]
             )
         }
-        .onChange(of: gameManager.gameState.score, {
-            if gameManager.checkLevelProgression() {
+        .onChange(of: arcadeGameManager.gameState.score) {
+            if arcadeGameManager.checkLevelProgression() {
                 showLevelUp = true // Show LevelUpView when level progression is reached
             }
-        })
+        }
+        .onChange(of: arcadeGameManager.nextFireTileCountdown) { _, newValue in
+            // Update timer color based on urgency
+            if newValue < 3 {
+                timerColor = .red
+            } else if newValue < 5 {
+                timerColor = .orange
+            } else {
+                timerColor = .green
+            }
+        }
     }
     
     // Function to change the sprite in the UI
@@ -335,7 +376,7 @@ struct GameView: View {
     // Start a timer to show a reminder bubble periodically
     private func startReminderTimer() {
         Timer.scheduledTimer(withTimeInterval: 90, repeats: true) { _ in
-            if currentSprite == "normal_sprite" && gameManager.tileManager.selectedTiles.isEmpty && bubbleText == "" {
+            if currentSprite == "normal_sprite" && arcadeGameManager.tileManager.selectedTiles.isEmpty && bubbleText == "" {
                 withAnimation {
                     currentSprite = "happy_sprite"
                     showReminderBubble = true
@@ -351,8 +392,21 @@ struct GameView: View {
             }
         }
     }
+    
+    private func getTimerWidth(geometry: GeometryProxy) -> CGFloat {
+        let percentage = arcadeGameManager.nextFireTileCountdown / arcadeGameManager.currentFireTileInterval
+        return geometry.size.width * CGFloat(max(0, min(1, percentage)))
+    }
 }
 
 #Preview {
-    GameView(gameManager: GameManager(dictionaryManager: DictionaryManager()), userData: UserData(), navigationPath: .constant(NavigationPath()))
+    let userData = UserData()
+    let dictionaryManager = DictionaryManager()
+    let arcadeGameManager = ArcadeGameManager(dictionaryManager: dictionaryManager, userData: userData)
+    
+    return ArcadeGameView(
+        arcadeGameManager: arcadeGameManager,
+        userData: userData,
+        navigationPath: .constant(NavigationPath())
+    )
 }

@@ -18,7 +18,7 @@ struct SettingsView: View {
             subtitle: "Adjust your game preferences",
             cardColor: .crimson
         ) {
-            VStack(spacing: 48) {
+            VStack(spacing: 40) {
                 // Music Slider
                 VStack(spacing: 12) {
                     Text("Music Volume")
@@ -41,6 +41,23 @@ struct SettingsView: View {
                                  borderColor: CardColor.crimson.borderColor,
                                  emptyProgressColor: .brown,
                                  fullProgressColor: CardColor.crimson.complementaryColor)
+                }
+                
+                // Debug Options
+                VStack(spacing: 12) {
+                    Text("Developer Options")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    Toggle("Show Debug Timer", isOn: $settings.showDebugTimer)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.brown.opacity(0.3))
+                                .stroke(CardColor.crimson.borderColor, lineWidth: 2)
+                        )
+                        .toggleStyle(SwitchToggleStyle(tint: CardColor.crimson.complementaryColor))
+                        .foregroundColor(.white)
                 }
             }
             .padding(.horizontal)
