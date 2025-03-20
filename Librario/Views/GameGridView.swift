@@ -48,6 +48,8 @@ struct GameGridView: View {
                         TileView(tile: displayTile, tileSize: tileSize) {
                             if gameManager.isInSwapMode {
                                 gameManager.selectTileForSwap(at: tile.position)
+                            } else if gameManager.isInWildcardMode {
+                                gameManager.selectTileForWildcard(at: tile.position)
                             } else {
                                 tileManager.toggleTileSelection(at: tile.position)
                             }
@@ -55,6 +57,8 @@ struct GameGridView: View {
                         .onTapGesture {
                             if gameManager.isInSwapMode {
                                 gameManager.selectTileForSwap(at: tile.position)
+                            } else if gameManager.isInWildcardMode {
+                                gameManager.selectTileForWildcard(at: tile.position)
                             } else {
                                 processTileTap(at: tile.position, tile: tile)
                             }
@@ -83,7 +87,7 @@ struct GameGridView: View {
             .frame(width: gridWidth, height: gridHeight)
             .background(Color(red: 0.33, green: 0.29, blue: 0.21))
             .border(Color(red: 0.68, green: 0.47, blue: 0.29), width: 3)
-            .gesture(gameManager.isInSwapMode ? nil : dragGesture(tileSize: tileSize, columns: columns, rows: rows))
+            .gesture((gameManager.isInSwapMode || gameManager.isInWildcardMode) ? nil : dragGesture(tileSize: tileSize, columns: columns, rows: rows))
             .onAppear {
                 buildPositionCache(tileSize: tileSize, columns: columns, rows: rows)
                 cacheArrowPositions(tileSize: tileSize)

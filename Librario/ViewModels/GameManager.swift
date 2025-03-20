@@ -14,12 +14,28 @@ import Observation
 private var userData: UserData?
 private var userInventory: Inventory? // Reference to userData?.inventory for readability
 
+// Extra life properties
+private var extraLivesUsedInSession: Int = 0
+private var maxExtraLivesPerSession: Int = 3
+var showExtraLifePopup: Bool = false
+private var firePositionCausingGameOver: Position? = nil
+private var extraLifeTimer: Timer?
+private var extraLifeTimeRemaining: Double = 5.0
+private var extraLifeTotalTime: Double = 5.0
+
 // Swap mode properties
 var isInSwapMode: Bool = false
 var selectedSwapTile: Tile? = nil
 var adjacentTiles: [Position] = []
 var showSwapConfirmation: Bool = false
 var targetSwapTile: Tile? = nil
+    
+// Wildcard mode properties
+var isInWildcardMode: Bool = false
+var selectedWildcardTile: Tile? = nil
+var showWildcardSelection: Bool = false
+var showWildcardConfirmation: Bool = false
+var targetWildcardLetter: String? = nil
     
     // Game state enum to track the current state of gameplay
     enum GameplayState {
@@ -118,6 +134,111 @@ var targetSwapTile: Tile? = nil
     }
     
     // MARK: - Swap Mode Methods
+    
+    // MARK: - Wildcard Mode Methods
+    
+    /**
+     * Enters wildcard mode if the user has wildcard powerups available.
+     * 
+     * @return `true` if wildcard mode was entered successfully; otherwise, `false`.
+     */
+    func enterWildcardMode() -> Bool {
+        // Check if user has wildcard powerups
+        if getPowerupCount(.wildcard) > 0 {
+            isInWildcardMode = true
+            tileManager.clearSelection() // Clear any selected tiles
+            selectedWildcardTile = nil
+            targetWildcardLetter = nil
+            showWildcardSelection = false
+            showWildcardConfirmation = false
+            return true
+        }
+        return false
+    }
+    
+    /**
+     * Exits wildcard mode and resets all wildcard-related state.
+     */
+    func exitWildcardMode() {
+        isInWildcardMode = false
+        selectedWildcardTile = nil
+        targetWildcardLetter = nil
+        showWildcardSelection = false
+        showWildcardConfirmation = false
+    }
+    
+    /**
+     * Selects a tile for wildcard letter change.
+     * 
+     * @param position The position of the tile to select.
+     * @return `true` if the selection was valid; otherwise, `false`.
+     */
+    func selectTileForWildcard(at position: Position) -> Bool {
+        guard isInWildcardMode else { return false }
+        
+        if selectedWildcardTile == nil {
+            // First selection - store the tile and show letter selection
+            if let tile = tileManager.getTile(at: position) {
+                selectedWildcardTile = tile
+                showWildcardSelection = true
+                return true
+            }
+        } else if selectedWildcardTile!.position == position {
+            // Tapped the same tile again - deselect it
+            selectedWildcardTile = nil
+            showWildcardSelection = false
+            return true
+        }
+        
+        return false
+    }
+    
+    /**
+     * Selects a letter for the wildcard change and shows confirmation.
+     * 
+     * @param letter The letter to change to.
+     * @return `true` if the selection was valid; otherwise, `false`.
+     */
+    func selectWildcardLetter(letter: String) -> Bool {
+        guard isInWildcardMode && selectedWildcardTile != nil else { return false }
+        
+        targetWildcardLetter = letter
+        showWildcardSelection = false
+        showWildcardConfirmation = true
+        return true
+    }
+    
+    /**
+     * Confirms the wildcard letter change, performs the change operation, decrements the powerup count,
+     * and exits wildcard mode.
+     */
+    func confirmWildcardChange() {
+        guard let tile = selectedWildcardTile, let letter = targetWildcardLetter else { return }
+        
+        changeTileLetter(at: tile.position, to: letter)
+        usePowerup(.wildcard) // Decrement the powerup count
+        exitWildcardMode()
+    }
+    
+    /**
+     * Changes a tile's letter at the given position.
+     * 
+     * @param position The position of the tile to change.
+     * @param letter The new letter for the tile.
+     */
+    func changeTileLetter(at position: Position, to letter: String) {
+        guard let tile = tileManager.getTile(at: position) else { return }
+        
+        // Create a new tile with the same properties but different letter
+        var newTile = tile
+        newTile.letter = letter
+        
+        // Update the grid
+        tileManager.updateTile(at: position, with: newTile)
+        
+        // Play a sound effect for the change
+        AudioManager.shared.playSoundEffect(named: "tile_click2")
+    }
     
     /**
      * Enters swap mode if the user has swap powerups available.
@@ -530,11 +651,148 @@ var targetSwapTile: Tile? = nil
         userStatistics.saveUserStatistics()
     }
 
+        // MARK: - Extra Life Methods
+    
+    /**
+     * Checks if the player can use an extra life powerup.
+     *
+     * @return `true` if the player has an extra life available and has used fewer than 3 in the current session; otherwise, `false`.
+     */
+    func canUseExtraLife() -> Bool {
+        return getPowerupCount(.extraLife) > 0 && extraLivesUsedInSession < maxExtraLivesPerSession
+    }
+    
+    /**
+     * Uses an extra life powerup and generates a new board without special tiles.
+     *
+     * @return `true` if the extra life was successfully used; otherwise, `false`.
+     */
+    func useExtraLifeAndContinue() -> Bool {
+        if canUseExtraLife() {
+            if useExtraLifePowerup() {
+                // Update the extra life count first
+                extraLivesUsedInSession += 1
+                
+                // First update UI state to dismiss popup immediately
+                showExtraLifePopup = false
+                firePositionCausingGameOver = nil
+                
+                // Reset game state
+                gameOver = false
+                gameplayState = .active
+                
+                // Use DispatchQueue.main.async to allow the UI to update before the potentially intensive scramble operation
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    // Generate a completely new board with only regular tiles
+                    // This is done after UI updates to prevent blocking the main thread
+                    self.tileManager.scramble(regularTilesOnly: true)
+                }
+                
+                return true
+            }
+        }
+        return false
+    }
+    
+    /**
+     * Gets the number of extra lives used in the current session.
+     *
+     * @return The number of extra lives used in the current session.
+     */
+    func getExtraLivesUsedInSession() -> Int {
+        return extraLivesUsedInSession
+    }
+    
+    /**
+     * Gets the maximum number of extra lives allowed per session.
+     *
+     * @return The maximum number of extra lives allowed per session.
+     */
+    func getMaxExtraLivesPerSession() -> Int {
+        return maxExtraLivesPerSession
+    }
+    
+    /**
+     * Gets the current extra life timer progress as a percentage (0.0 to 1.0).
+     *
+     * @return The current timer progress as a percentage.
+     */
+    func getExtraLifeTimerProgress() -> Double {
+        return extraLifeTimeRemaining / extraLifeTotalTime
+    }
+    
+    /**
+     * Starts the extra life timer.
+     */
+    func startExtraLifeTimer() {
+        // Reset the timer
+        extraLifeTimeRemaining = extraLifeTotalTime
+        
+        // Cancel any existing timer
+        extraLifeTimer?.invalidate()
+        
+        // Create a new timer that fires every 0.1 seconds
+        extraLifeTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            
+            if self.extraLifeTimeRemaining > 0 {
+                self.extraLifeTimeRemaining -= 0.1
+            } else {
+                // Time's up, proceed with game over
+                self.stopExtraLifeTimer()
+                self.proceedWithGameOver()
+            }
+        }
+    }
+    
+    /**
+     * Stops the extra life timer.
+     */
+    func stopExtraLifeTimer() {
+        extraLifeTimer?.invalidate()
+        extraLifeTimer = nil
+    }
+    
+    /**
+     * Shows the extra life popup if the player has extra lives available.
+     *
+     * @param firePosition The position of the fire tile that triggered the game over.
+     * @return `true` if the popup was shown; otherwise, `false`.
+     */
+    func showExtraLifePopupIfAvailable(firePosition: Position) -> Bool {
+        if canUseExtraLife() {
+            showExtraLifePopup = true
+            firePositionCausingGameOver = firePosition
+            startExtraLifeTimer()
+            return true
+        }
+        return false
+    }
+    
+    /**
+     * Proceeds with game over if the player chooses not to use an extra life or time expires.
+     */
+    func proceedWithGameOver() {
+        stopExtraLifeTimer()
+        showExtraLifePopup = false
+        firePositionCausingGameOver = nil
+        handleGameOver()
+    }
+
     /**
      * Handles the game over state by playing the game over sound and updating the game state.
      */
     func handleGameOver() {
         DispatchQueue.main.async {
+            // First check if we can show the extra life popup
+            if let firePosition = self.tileManager.findBottomRowFireTile(),
+               self.showExtraLifePopupIfAvailable(firePosition: firePosition) {
+                // If we can show the popup, don't trigger game over yet
+                return
+            }
+            
+            // Otherwise proceed with normal game over
             AudioManager.shared.playSoundEffect(named: "game_over_sound")
             self.gameOver = true
             // gameplayState will be updated via the didSet on gameOver

@@ -246,8 +246,8 @@ struct GameToolBarView: View {
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                         .frame(width: 18, height: 18)
-                        .background(Color.red)
-                        .clipShape(Circle())
+                        .background(Color.gray)
+                        .clipShape(RoundedRectangle(cornerRadius: 2))
                         .offset(x: 18, y: -18)
                 }
             }
@@ -258,71 +258,66 @@ struct GameToolBarView: View {
         .overlay(
             gameManager.isInSwapMode ?
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.yellow, lineWidth: 2)
+                .stroke(Color.white, lineWidth: 2)
             : nil
         )
-        .contentShape(Rectangle())
+        
     }
     
-    // Extra Life button
+    // Extra Life view (non-interactive)
     private func extraLifeButton() -> some View {
-        Button(action: {
-            if gameManager.useExtraLifePowerup() {
-                // Extra life functionality would be implemented here
-                print("Extra life powerup used")
-            } else {
-                // Not enough powerups
-                AudioManager.shared.playSoundEffect(named: "incorrect_selection")
+        ZStack {
+            VStack {
+                Image(systemName: "heart.fill")
+                    .font(.title3)
+                    .foregroundStyle(Color.darkGrey)
+                Text("Life")
+                    .font(.footnote)
+                    .foregroundStyle(Color.darkGrey)
+                    .fontWeight(.bold)
             }
-        }) {
-            ZStack {
-                VStack {
-                    Image(systemName: "heart.fill")
-                        .font(.title3)
-                        .foregroundStyle(Color.darkGrey)
-                    Text("Life")
-                        .font(.footnote)
-                        .foregroundStyle(Color.darkGrey)
-                        .fontWeight(.bold)
-                }
-                
-                // Count indicator
-                if gameManager.getPowerupCount(.extraLife) > 0 {
-                    Text("\(gameManager.getPowerupCount(.extraLife))")
-                        .font(.caption2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                        .frame(width: 18, height: 18)
-                        .background(Color.red)
-                        .clipShape(Circle())
-                        .offset(x: 18, y: -18)
-                }
+            
+            // Count indicator
+            if gameManager.getPowerupCount(.extraLife) > 0 {
+                Text("\(gameManager.getPowerupCount(.extraLife))")
+                    .font(.caption2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .frame(width: 18, height: 18)
+                    .background(Color.gray)
+                    .clipShape(RoundedRectangle(cornerRadius: 2))
+                    .offset(x: 20, y: -18)
             }
         }
         .frame(width: 60, height: 60)
         .background(Color.cream)
-        .contentShape(Rectangle())
     }
     
     // Wildcard button
     private func wildcardButton() -> some View {
         Button(action: {
-            if gameManager.useWildcardPowerup() {
-                // Wildcard functionality would be implemented here
-                print("Wildcard powerup used")
+            if gameManager.isInWildcardMode {
+                // If already in wildcard mode, exit it
+                gameManager.exitWildcardMode()
             } else {
-                // Not enough powerups
-                AudioManager.shared.playSoundEffect(named: "incorrect_selection")
+                // Try to enter wildcard mode
+                if !gameManager.enterWildcardMode() {
+                    // Not enough powerups
+                    AudioManager.shared.playSoundEffect(named: "incorrect_selection")
+                } else {
+                    // Successfully entered wildcard mode
+                    gameManager.changeSprite(to: "happy_sprite")
+                }
             }
         }) {
             ZStack {
                 VStack {
                     Image(systemName: "sparkles")
                         .font(.title3)
-                        .foregroundStyle(Color.darkGrey)
+                        .foregroundStyle(gameManager.isInWildcardMode ? Color.white : Color.darkGrey)
                     Text("Wild")
                         .font(.footnote)
-                        .foregroundStyle(Color.darkGrey)
+                        .foregroundStyle(gameManager.isInWildcardMode ? Color.white : Color.darkGrey)
                         .fontWeight(.bold)
                 }
                 
@@ -333,15 +328,22 @@ struct GameToolBarView: View {
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                         .frame(width: 18, height: 18)
-                        .background(Color.red)
-                        .clipShape(Circle())
+                        .background(Color.gray)
+                        .clipShape(RoundedRectangle(cornerRadius: 2))
                         .offset(x: 18, y: -18)
                 }
             }
         }
         .frame(width: 60, height: 60)
-        .background(Color.cream)
-        .contentShape(Rectangle())
+        .background(gameManager.isInWildcardMode ? Color.forestGreen : Color.cream)
+        .cornerRadius(gameManager.isInWildcardMode ? 8 : 0)
+        .overlay(
+            gameManager.isInWildcardMode ?
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.white, lineWidth: 2)
+            : nil
+        )
+        
     }
 
     // Level display
@@ -368,6 +370,8 @@ struct GameToolBarView_Previews: PreviewProvider {
         gameManager.gameState.score = 150
         gameManager.gameState.level = 2
         gameManager.levelSystem = [1: 100, 2: 200, 3: 400]
+        
+        gameManager.isInSwapMode = true
 
         return Group {
             // Compact size class preview (e.g., iPhone)

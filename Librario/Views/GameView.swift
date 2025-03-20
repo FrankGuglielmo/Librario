@@ -19,9 +19,9 @@ struct GameView: View {
     @State private var showTimerDebug = false // State to control timer debug visibility
     @State private var showScrambleConfirmation = false // State to control scramble confirmation dialog
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
-
+    
     let praisePhrases = ["Nice word!", "Fantastic!", "Awesome!", "Well done!", "Impressive!"]
-
+    
     var body: some View {
         return ZStack {
             // Background color filling the entire safe area
@@ -30,7 +30,7 @@ struct GameView: View {
                 .scaledToFill()
                 .frame(minWidth: 0)
                 .edgesIgnoringSafeArea(.all)
-                
+            
             // Add hidden gesture recognizers to toggle debug views
             // These are developer features that won't be obvious to regular users
             HStack {
@@ -54,7 +54,7 @@ struct GameView: View {
                         showTimerDebug.toggle()
                     }
             }
-
+            
             GeometryReader { geometry in
                 let isCompact = horizontalSizeClass == .compact
                 
@@ -88,12 +88,20 @@ struct GameView: View {
                             } message: {
                                 Text("This will rearrange all tiles and add more fire tiles.")
                             }
-
-                            // Show the praise bubble, reminder bubble, or swap mode instructions
-                            if gameManager.isInSwapMode {
-                                let message = gameManager.selectedSwapTile == nil ? 
-                                            "Select a tile to swap" : 
-                                            "Select an adjacent tile"
+                            
+                            // Show the praise bubble, reminder bubble, swap mode or wildcard mode instructions
+                            if gameManager.isInWildcardMode {
+                                let message = gameManager.selectedWildcardTile == nil ?
+                                "Select a tile to change" :
+                                "Choose a new letter"
+                                TextBubbleView(text: message)
+                                    .offset(x: 75, y: -50) // Position the bubble above the sprite
+                                    .transition(.opacity)
+                                    .animation(.easeInOut(duration: 0.5), value: gameManager.isInWildcardMode)
+                            } else if gameManager.isInSwapMode {
+                                let message = gameManager.selectedSwapTile == nil ?
+                                "Select a tile to swap" :
+                                "Select an adjacent tile"
                                 TextBubbleView(text: message)
                                     .offset(x: 75, y: -50) // Position the bubble above the sprite
                                     .transition(.opacity)
@@ -121,11 +129,11 @@ struct GameView: View {
                     .frame(maxWidth: .infinity, maxHeight: 300)
                     .padding()
                     .fixedSize(horizontal: false, vertical: true)
-
+                    
                     GameGridView(gameManager: gameManager, tileManager: gameManager.tileManager)
-
+                    
                     GameToolBarView(gameManager: gameManager, navigationPath: $navigationPath)
-                        
+                    
                     
                 }
                 .frame(maxHeight: .infinity)
@@ -150,11 +158,23 @@ struct GameView: View {
             }
             .zIndex(2)
             
-            // Remove the duplicate swap mode text bubble - we already added it to the sprite
+            // Text bubble for wildcard mode is now handled in the sprite button section like swap mode
+            
+            // Wildcard selection popup
+            if gameManager.showWildcardSelection {
+                WildcardPopupView(gameManager: gameManager)
+                    .zIndex(3)
+            }
+            
+            // Wildcard confirmation popup
+            if gameManager.showWildcardConfirmation {
+                WildcardConfirmationView(gameManager: gameManager)
+                    .zIndex(3)
+            }
             
             // Swap confirmation card
-            if gameManager.showSwapConfirmation, 
-               let fromTile = gameManager.selectedSwapTile,
+            if gameManager.showSwapConfirmation,
+                let fromTile = gameManager.selectedSwapTile,
                let toTile = gameManager.targetSwapTile {
                 CardView(cards: [
                     Card(
@@ -211,7 +231,7 @@ struct GameView: View {
                 ])
                 .zIndex(3)
             }
-
+            
             // Show LevelUpView based on showLevelUp state
             if showLevelUp {
                 LevelUpView(gameManager: gameManager, userData: userData, navigationPath: $navigationPath, onDismiss: {
@@ -221,6 +241,15 @@ struct GameView: View {
                 .onAppear {
                     gameManager.pauseGameTimer()
                 }
+            }
+            
+            // Show Extra Life popup if available
+            if gameManager.showExtraLifePopup {
+                ExtraLifePopupView(gameManager: gameManager)
+                    .zIndex(2)
+                    .onAppear {
+                        gameManager.pauseGameTimer()
+                    }
             }
             
             // Show GameOverView directly based on gameState.gameOver
@@ -246,7 +275,7 @@ struct GameView: View {
             gameManager.spriteChangeHandler = { sprite, duration in
                 changeSprite(to: sprite, for: duration)
             }
-
+            
             // Listen for fire tile state changes from the TileManager
             gameManager.tileManager.fireTileChangeHandler = { hasFireTile in
                 if hasFireTile {
@@ -257,10 +286,10 @@ struct GameView: View {
                     changeSprite(to: "normal_sprite")
                 }
             }
-
+            
             // Initial fire tile check when view appears
             gameManager.tileManager.checkFireTiles()
-
+            
             // Start the reminder timer
             startReminderTimer()
         }
@@ -278,7 +307,7 @@ struct GameView: View {
             }
         })
     }
-
+    
     // Function to change the sprite in the UI
     private func changeSprite(to sprite: String) {
         currentSprite = sprite
@@ -291,7 +320,7 @@ struct GameView: View {
         } else {
             bubbleText = "" // Clear the bubble text for other sprites
         }
-
+        
         currentSprite = sprite
         
         DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
@@ -302,7 +331,7 @@ struct GameView: View {
             }
         }
     }
-
+    
     // Start a timer to show a reminder bubble periodically
     private func startReminderTimer() {
         Timer.scheduledTimer(withTimeInterval: 90, repeats: true) { _ in
