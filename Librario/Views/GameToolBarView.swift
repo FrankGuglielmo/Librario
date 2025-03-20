@@ -246,8 +246,8 @@ struct GameToolBarView: View {
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                         .frame(width: 18, height: 18)
-                        .background(Color.red)
-                        .clipShape(Circle())
+                        .background(Color.gray)
+                        .clipShape(RoundedRectangle(cornerRadius: 2))
                         .offset(x: 18, y: -18)
                 }
             }
@@ -258,10 +258,10 @@ struct GameToolBarView: View {
         .overlay(
             gameManager.isInSwapMode ?
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.yellow, lineWidth: 2)
+                .stroke(Color.white, lineWidth: 2)
             : nil
         )
-        .contentShape(Rectangle())
+        
     }
     
     // Extra Life view (non-interactive)
@@ -284,9 +284,9 @@ struct GameToolBarView: View {
                     .fontWeight(.bold)
                     .foregroundColor(.white)
                     .frame(width: 18, height: 18)
-                    .background(Color.red)
-                    .clipShape(Circle())
-                    .offset(x: 18, y: -18)
+                    .background(Color.gray)
+                    .clipShape(RoundedRectangle(cornerRadius: 2))
+                    .offset(x: 20, y: -18)
             }
         }
         .frame(width: 60, height: 60)
@@ -328,8 +328,8 @@ struct GameToolBarView: View {
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                         .frame(width: 18, height: 18)
-                        .background(Color.red)
-                        .clipShape(Circle())
+                        .background(Color.gray)
+                        .clipShape(RoundedRectangle(cornerRadius: 2))
                         .offset(x: 18, y: -18)
                 }
             }
@@ -340,10 +340,10 @@ struct GameToolBarView: View {
         .overlay(
             gameManager.isInWildcardMode ?
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.yellow, lineWidth: 2)
+                .stroke(Color.white, lineWidth: 2)
             : nil
         )
-        .contentShape(Rectangle())
+        
     }
 
     // Level display
@@ -370,6 +370,8 @@ struct GameToolBarView_Previews: PreviewProvider {
         gameManager.gameState.score = 150
         gameManager.gameState.level = 2
         gameManager.levelSystem = [1: 100, 2: 200, 3: 400]
+        
+        gameManager.isInSwapMode = true
 
         return Group {
             // Compact size class preview (e.g., iPhone)
